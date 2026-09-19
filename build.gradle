@@ -45,6 +45,20 @@ dependencies {
 	modImplementation("mchorse:bbs:${project.bbs_version}") { transitive = false }
 }
 
+/* Windows Java can fail to connect its selector's Unix-domain socket in the user temp
+ * directory (PipeImpl: Invalid argument: connect), which kills runClient. Same guard as
+ * BBS's own build file: keep those short-lived sockets local to this checkout, which also
+ * covers the integrated server the client starts. */
+tasks.named('runClient', JavaExec) {
+	if (System.getProperty('os.name').startsWith('Windows')) {
+		def socketDir = layout.projectDirectory.dir('.gradle/sockets').asFile
+		systemProperty 'jdk.net.unixdomain.tmpdir', socketDir.absolutePath
+		doFirst {
+			socketDir.mkdirs()
+		}
+	}
+}
+
 /* Loom caches the remapped BBS by its Maven coordinates, and BBS's version does not change while
  * it is being worked on — so a rebuilt BBS is silently ignored, and it looks exactly like the
  * changes to BBS not existing. A flag one has to remember is a flag one forgets, so this notices
