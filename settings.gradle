@@ -9,4 +9,5 @@ pluginManagement {
 	}
 }
 
+// Should match your modid
 rootProject.name = 'bbs-lod'

@@ -14,7 +14,7 @@ Mod Minecraft 1.20.1, Fabric, Java 17. Berdiri sendiri, dipasang bersama BBS.
    per asset key. Tentukan per-form, jangan ubah shared state.
 5. **Restore override visible hanya di `FilmEvents.RENDER_AFTER` / `SHUTDOWN`**, bukan di
    `FormRenderEvents.AFTER` — shadow dan name tag digambar setelahnya.
-6. **Sebelum yield, build harus jalan**: `sh ../bbsrc/gradlew build` dari sini.
+6. **Sebelum yield, build harus jalan**: `sh ./gradlew build` dari sini.
 
 ## STRUCTURE
 
@@ -64,19 +64,19 @@ Mod Minecraft 1.20.1, Fabric, Java 17. Berdiri sendiri, dipasang bersama BBS.
 ## COMMANDS
 
 ```bash
-# Publish BBS ke maven local (dari bbsrc, TANPA ubah file bbsrc):
-sh ./gradlew publishToMavenLocal --init-script ../bbs-lod/bbs-publish-init.gradle --no-daemon
+# Publish BBS ke maven local (jalankan DARI bbsrc/, TANPA ubah file bbsrc):
+sh ./gradlew publishToMavenLocal --init-script ../bbs-publish-init.gradle --no-daemon
 # ^ work-around: Gradle 9 fail kalau duplicate jar entry; api/AGENTS.md ada di dua source
 #   set BBS. Init script set duplicatesStrategy=EXCLUDE di semua task Jar.
 
-# Build add-on (dari sini):
-sh ../bbsrc/gradlew build --no-daemon
+# Build add-on (dari root project ini):
+sh ./gradlew build --no-daemon
 
 # Jalankan dev client (Sodium ikut; Iris tidak):
-sh ../bbsrc/gradlew runClient --no-daemon
+sh ./gradlew runClient --no-daemon
 
 # Dependencies report:
-sh ../bbsrc/gradlew dependencies --configuration runtimeClasspath --no-daemon
+sh ./gradlew dependencies --configuration runtimeClasspath --no-daemon
 ```
 
 Versi (kunci dari `bbsrc/gradle.properties`): minecraft 1.20.1, yarn 1.20.1+build.10,
@@ -86,7 +86,7 @@ BBS terpublish sebagai `mchorse:bbs:2.6.1-1.20.1` (versi = mod_version + "-" + m
 ## NOTES
 
 - `bbsrc/` adalah symlink ke `App/bbs-fs-F6-Fix`; wrapper resolve ke path fisik tapi
-  build project yang sama. Add-on ini sibling dari symlink tersebut.
+  build project yang sama. Project ini ada di root `bbs-lod-1.20.1`, dan `bbsrc` adalah symlink di dalamnya — jangan di-commit (sudah di-ignore).
 - Dev client jalan TANPA Iris (shader kagak ketest); Sodium sudah include.
 - Settings client ada di `run/config/bbs/settings/bbslod.json` — juga editable via settings
   screen BBS. Default: enabled, cull 128, simplify 64, bone_cull_depth 3, fov_bias true.

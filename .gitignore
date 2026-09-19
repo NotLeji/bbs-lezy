@@ -1,10 +1,44 @@
+# gradle
+
 .gradle/
 build/
-run/
-*.log
+out/
+classes/
+
+# eclipse
+
+*.launch
+
+# idea
+
 .idea/
-.vscode/
 *.iml
+*.ipr
+*.iws
+
+# vscode
+
+.settings/
+.vscode/
+bin/
 .classpath
 .project
-.settings/
+
+# macos
+
+*.DS_Store
+
+# fabric
+
+run/
+
+# java
+
+hs_err_*.log
+replay_*.log
+*.hprof
+*.jfr
+
+# bbsrc is its own git repo (symlink to App/bbs-fs-F6-Fix) — never commit it
+/bbsrc
+run-client.log
