@@ -74,7 +74,7 @@ public class LodEngine
 
             if (frames % 200 == 0)
             {
-                LOGGER.info("bbslod: frames={} tier1={} tier2={} mixinHits={}", frames, tier1, tier2, LodState.mixinHits);
+                LOGGER.info("bbslod: frames={} tier1={} tier2={} mixinHits={} occHits={}", frames, tier1, tier2, LodState.mixinHits, LodState.occlusionHits);
 
                 /* mixinHits staying at 0 while tier1 > 0 means the Phase 4 mixin is not
                  * applying — the BBS render target moved and bone culling is silently off. */
@@ -86,7 +86,7 @@ public class LodEngine
             }
         }
 
-        LodState.push(tier);
+        LodState.push(tier, active ? form : null);
     }
 
     private static void after(Form form, FormRenderingContext context)
@@ -185,11 +185,16 @@ public class LodEngine
     private static void onRenderAfter(BaseFilmController controller, WorldRenderContext context)
     {
         clearOverrides(controller);
+
+        /* The depth buffer here holds every opaque block and every form drawn this frame, which
+         * is exactly the set of things that can hide a bone; next frame's bone tests read it. */
+        LodOcclusion.capture();
     }
 
     private static void onShutdown(BaseFilmController controller)
     {
         clearOverrides(controller);
+        LodOcclusion.reset();
     }
 
     /**

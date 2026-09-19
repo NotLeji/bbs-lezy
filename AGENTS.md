@@ -1,7 +1,7 @@
 # BBS LOD — AGENT RULES
 
-Add-on BBS FS: distance culling + tiered model simplification untuk scene film.
-Mod Minecraft 1.20.1, Fabric, Java 17. Berdiri sendiri, dipasang bersama BBS.
+Add-on BBS FS: distance culling + tiered model simplification + per-bone occlusion culling untuk
+scene film.
 
 1. **Selalu `git commit` setelah selesai mengerjakan task.** Tak ada pengecualian: setiap
    perubahan yang sampai ke `src/`, `build.gradle`, `*.json`, atau dokumen ini langsung
@@ -25,9 +25,10 @@ Mod Minecraft 1.20.1, Fabric, Java 17. Berdiri sendiri, dipasang bersama BBS.
 │   ├── BBSLodClient.java       # client entrypoint (bbs-client-addon), wiring Fabric events
 │   ├── LodSettings.java        # holder settings client
 │   ├── LodEngine.java          # tier math + bookkeeping visible
-│   ├── LodState.java           # stack tier per-render (dibaca mixin)
+│   ├── LodState.java           # stack tier + form per-render (dibaca mixin)
 │   ├── LodBoneDepth.java       # cache depth ModelGroup
-│   └── mixin/client/CubicVAORendererMixin.java  # tier-1 bone cull, fail-safe
+│   ├── LodOcclusion.java       # snapshot depth buffer + per-bone occlusion test + hysteresis
+│   └── mixin/client/CubicVAORendererMixin.java  # tier-1 bone cull + occlusion skip, fail-safe
 ├── src/main/resources/
 │   ├── fabric.mod.json         # id bbslod, depends bbs >=2.6.1-1.20.1
 │   └── bbslod.mixins.json      # required:false, defaultRequire:0
@@ -50,6 +51,17 @@ Mod Minecraft 1.20.1, Fabric, Java 17. Berdiri sendiri, dipasang bersama BBS.
   tetap jalan cull-only. Itu sengaja, jangan diubah jadi `required: true`.
 - Build file `build.gradle` selain blok repositories/dependencies sodium adalah verbatim
   dari `docs/addon-template/build.gradle`. Jangan tambah konfigurasi tanpa alasan.
+- **Occlusion culling (`occlusion`, default off) experimental dan sengaja opt-in**: satu-satunya
+  raw GL di add-on ini di luar BBS. Depth di-capture di `FilmEvents.RENDER_AFTER`, di-blit ke FBO
+  window/4 + satu readback per frame, dipakai frame depan — jadi keputusan telat 1-2 frame dan
+  butuh hysteresis 2-frame. Setiap kegagalan GL (snapshot uniform, FBO incomplete, exception)
+  mematikan fitur untuk session itu, bukan cull salah. Ukur biaya readback di scene target
+  sebelum default diubah jadi true.
+- **`LodOcclusion` wajib restore binding read+draw framebuffer di `finally`**: GlStateManager MC
+  cache binding yang dia anggap aktif; FBO kecil kita ditinggal terikat = sisa frame rusak.
+- State occlusion di-key per (Form, ModelGroup) karena ModelGroup dipakai bersama antar form;
+  `LodState.push(tier, form)` hanya bawa form saat engine aktif, sehingga pass UI/picking/shadow
+  tidak pernah nyoba snapshot yang bukan deskripsi mereka.
 
 ## ANTI-PATTERNS
 
@@ -89,8 +101,14 @@ BBS terpublish sebagai `mchorse:bbs:2.6.1-1.20.1` (versi = mod_version + "-" + m
   build project yang sama. Project ini ada di root `bbs-lod-1.20.1`, dan `bbsrc` adalah symlink di dalamnya — jangan di-commit (sudah di-ignore).
 - Dev client jalan TANPA Iris (shader kagak ketest); Sodium sudah include.
 - Settings client ada di `run/config/bbs/settings/bbslod.json` — juga editable via settings
-  screen BBS. Default: enabled, cull 128, simplify 64, bone_cull_depth 3, fov_bias true.
-- Debug: set `debug: true` → log tiap 200 frame `frames/tier1/tier2/mixinHits`.
-  `mixinHits = 0` padahal `tier1 > 0` → mixin tidak apply (target BBS pindah).
-- Verifikasi behavioral (cull, simplify, shadow, picking, FOV bias, persistensi) hanya
+  screen BBS. Default: enabled, cull 128, simplify 64, bone_cull_depth 3, fov_bias true,
+  occlusion false, occlusion_bias 0.5.
+- Debug: set `debug: true` → log tiap 200 frame `frames/tier1/tier2/mixinHits/occHits`.
+  `mixinHits = 0` padahal `tier1 > 0` → mixin tidak apply (target BBS pindah). `occHits = 0`
+  padahal `occlusion: true` → snapshot kagak ke-capture atau semuanya gagal cull; cek log untuk
+  warning auto-disable.
+- Occlusion: cuman nutupin bone di belakang yg **opaque dan sudah gambar lebih dulu** dalam frame
+  (terrain + form sebelumnya). Form translucent (air, glass) kagak nulis depth = kagak occlude.
+  Test pakai 9 titik box geometry + bias eye-space (block) + hysteresis anti-flicker.
+- Verifikasi behavioral (cull, simplify, shadow, picking, FOV bias, occlusion, persistensi) hanya
   bisa manual di scene film asli — lihat plan `local://bbs-lod-addon-plan.md`.

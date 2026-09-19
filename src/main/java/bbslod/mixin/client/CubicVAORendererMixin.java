@@ -1,6 +1,7 @@
 package bbslod.mixin.client;
 
 import bbslod.LodBoneDepth;
+import bbslod.LodOcclusion;
 import bbslod.LodSettings;
 import bbslod.LodState;
 import mchorse.bbs_mod.cubic.data.model.Model;
@@ -15,7 +16,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Tier 1: skip bones deeper than the configured depth, so a distant actor loses its
- * fingers and accessories before it loses anything else.
+ * fingers and accessories before it loses anything else — and skip bones whose geometry is
+ * behind terrain or another model, whatever the distance.
  *
  * <p>Returns {@code false} exactly as the method's own {@code !group.isVisible()} path does, so
  * the caller treats the group as drawn-nowhere and proceeds. Read-only — no {@link ModelGroup} or
@@ -34,6 +36,17 @@ public abstract class CubicVAORendererMixin
         if (maxDepth > 0 && LodState.current() >= 1 && group != null && LodBoneDepth.depth(group) >= maxDepth)
         {
             LodState.mixinHits++;
+            cir.setReturnValue(false);
+
+            return;
+        }
+
+        /* The occlusion test only runs while a world-replay form is on the stack: the engine
+         * pushes a null form for every other pass, so previews, picking and shadow renders
+         * never test a snapshot that does not describe them. */
+        if (group != null && LodOcclusion.isOccluded(LodState.currentForm(), stack, group))
+        {
+            LodState.occlusionHits++;
             cir.setReturnValue(false);
         }
     }
