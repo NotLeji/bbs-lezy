@@ -18,6 +18,8 @@ public class LodSettings
     public static ValueFloat simplifyDistance;
     public static ValueInt boneCullDepth;
     public static ValueBoolean fovBias;
+    public static ValueBoolean occlusion;
+    public static ValueFloat occlusionBias;
     public static ValueBoolean debug;
 
     public static void register(SettingsBuilder builder)
@@ -29,6 +31,8 @@ public class LodSettings
         simplifyDistance = builder.getFloat("simplify_distance", 64F, 0F, 1024F);
         boneCullDepth = builder.getInt("bone_cull_depth", 3, 0, 8);
         fovBias = builder.getBoolean("fov_bias", true);
+        occlusion = builder.getBoolean("occlusion", false);
+        occlusionBias = builder.getFloat("occlusion_bias", 0.5F, 0F, 8F);
         debug = builder.getBoolean("debug", false);
     }
 }

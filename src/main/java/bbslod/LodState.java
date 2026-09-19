@@ -1,25 +1,34 @@
 package bbslod;
 
+import mchorse.bbs_mod.forms.forms.Form;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 /**
- * Per-render tier stack, read by the Phase 4 mixin.
+ * Per-render tier and form stack, read by the bone mixin.
  *
  * <p>Render-thread only, and a stack rather than a plain field on purpose: {@code FormUtilsClient.render}
  * is reentrant through {@code renderBodyParts}, and {@code ModelFormRenderer} renders body parts inside
  * its own pass, so a single static field would be clobbered by the nesting.</p>
+ *
+ * <p>Two parallel deques rather than one of records: tiers are small ints (cached Integers, so
+ * pushing allocates nothing) and forms are nullable references, and the bone culler needs both
+ * at every nesting level.</p>
  */
 public class LodState
 {
     private static final Deque<Integer> tiers = new ArrayDeque<>();
+    private static final Deque<Form> forms = new ArrayDeque<>();
 
-    /** Bumped by the Phase 4 mixin every bone it skips, so silent mixin degradation is visible. */
+    /** Bumped by the bone mixin every bone it skips, so silent mixin degradation is visible. */
     public static long mixinHits;
+    public static long occlusionHits;
 
-    public static void push(int tier)
+    public static void push(int tier, Form form)
     {
         tiers.push(tier);
+        forms.push(form);
     }
 
     public static void pop()
@@ -27,11 +36,21 @@ public class LodState
         if (!tiers.isEmpty())
         {
             tiers.pop();
+            forms.pop();
         }
     }
 
+    /** The active LOD tier: 0 outside a world-replay form, so the bone mixin is inert in
+     * the UI, picking and shadow passes without a second gate. */
     public static int current()
     {
         return tiers.isEmpty() ? 0 : tiers.peek();
+    }
+
+    /** The form being rendered, or null in passes occlusion has no business in (the stack is
+     * only pushed with a form while the engine is active). */
+    public static Form currentForm()
+    {
+        return forms.isEmpty() ? null : forms.peek();
     }
 }
