@@ -139,7 +139,14 @@ public class LodEngine
 
         if (LodSettings.fovBias.get())
         {
-            distance *= Math.tan(camera.fov / 2F) / Math.tan(REFERENCE_FOV / 2F);
+            /* Clamped on purpose. Below the reference fov (a telephoto shot) the factor shrinks
+             * the effective distance, so detail survives further out — that is the point of the
+             * bias. Above it (a wide-angle shot) an unclamped factor would double the effective
+             * distance and cull actors that are plainly visible at the edges of the frame, so it
+             * is held at 1: a wide shot never culls earlier than the raw distance. */
+            float factor = (float) (Math.tan(camera.fov / 2F) / Math.tan(REFERENCE_FOV / 2F));
+
+            distance *= Math.min(1F, factor);
         }
 
         float cullDistance = perForm(form, BBSLod.CULL, LodSettings.cullDistance.get());
