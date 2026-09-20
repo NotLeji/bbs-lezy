@@ -38,29 +38,32 @@ public class LodBoneSize
         center.set(min).add(max).mul(0.5F * PIXEL);
         extents.set(max).sub(min).mul(0.5F * PIXEL);
 
-        float boneWorldX = LodState.formX + center.x;
-        float boneWorldY = LodState.formY + center.y;
-        float boneWorldZ = LodState.formZ + center.z;
+        Matrix4f matrix = stack.peek().getPositionMatrix();
 
-        float dx = boneWorldX - LodState.cameraX;
-        float dy = boneWorldY - LodState.cameraY;
-        float dz = boneWorldZ - LodState.cameraZ;
+        matrix.transformPosition(center);
+        matrix.transformDirection(extents);
 
-        /* The look vector points forward. The dot product gives the distance along the camera's
-         * view axis (equivalent to -Z in view space). If it's negative, the bone is behind the
-         * camera and we cull it immediately. */
-        float depth = dx * LodState.cameraLookX + dy * LodState.cameraLookY + dz * LodState.cameraLookZ;
+        /* The stack is the render camera's view space; boneToWorld recasts it into the film
+         * camera's, which is identity unless a film camera is driving the rules. */
+        LodState.boneToWorld.transformPosition(center);
 
-        if (depth < 0.001F)
+        /* View space looks down negative Z, so anything at or behind the camera never projects. */
+        if (center.z >= 0F)
         {
             return true;
         }
 
-        Matrix4f matrix = stack.peek().getPositionMatrix();
-        matrix.transformDirection(extents);
+        float depth = -center.z;
         float radius = extents.length();
-
+        float projectedX = Math.abs(center.x) / depth;
+        float projectedY = Math.abs(center.y) / depth;
         float projectedRadius = radius / depth;
+
+        /* Clear of the frustum on either axis — the bone's nearest point is already off frame. */
+        if (projectedX - projectedRadius > viewHalfWidth || projectedY - projectedRadius > viewHalfHeight)
+        {
+            return true;
+        }
 
         return projectedRadius / viewHalfHeight < threshold;
     }

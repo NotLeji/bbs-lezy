@@ -1,5 +1,7 @@
 # BBS LOD — AGENT RULES
 
+always use caveman and ponytail skill
+
 Add-on BBS FS: distance culling + tiered model simplification + per-bone occlusion culling untuk
 scene film.
 
