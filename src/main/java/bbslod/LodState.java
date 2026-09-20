@@ -26,6 +26,11 @@ public class LodState
     public static long mixinHits;
     public static long occlusionHits;
 
+    /** The film camera's frustum in tangent units of view space (0 when the projection is not a
+     * perspective matrix, which switches the bone-size rule off for that frame). */
+    public static float viewHalfWidth;
+    public static float viewHalfHeight;
+
     public static void push(int tier, Form form)
     {
         tiers.push(tier);
