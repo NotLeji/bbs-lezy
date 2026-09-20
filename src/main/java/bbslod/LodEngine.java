@@ -19,9 +19,10 @@ import mchorse.bbs_mod.ui.framework.UIBaseMenu;
 import mchorse.bbs_mod.ui.dashboard.UIDashboard;
 import mchorse.bbs_mod.ui.film.UIFilmPanel;
 import org.joml.Matrix4f;
+import mchorse.bbs_mod.camera.controller.RunnerCameraController;
 import org.joml.Vector3f;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -48,6 +49,12 @@ public class LodEngine
     private static long frames;
     private static long tier1;
     private static long tier2;
+
+    /** Scratch: the film camera's pose, filled from the film panel's runner. Render-thread only,
+     * and consumed within {@link #before} the moment it is read. */
+    private static final Camera FILM_CAMERA = new Camera();
+    private static final Matrix4f RENDER_VIEW = new Matrix4f();
+    private static final Vector3f OFFSET = new Vector3f();
     private static boolean warned;
 
     public static void register()
@@ -68,12 +75,12 @@ public class LodEngine
             && !context.ui
             && !context.isPicking()
             && context.camera.position.lengthSquared() != 0;
-
         Camera lodCamera = context.camera;
+        Camera filmCamera = null;
 
         if (LodSettings.filmCameraOnly.get())
         {
-            Camera filmCamera = getBBSFilmCamera();
+            filmCamera = getBBSFilmCamera();
 
             if (filmCamera != null)
             {
@@ -81,46 +88,62 @@ public class LodEngine
             }
         }
 
-        /* The film camera's frustum in tangent units, so the bone-size rule can project a bone's
-         * box into it. ENTITY form renders carry the Minecraft camera, whose BBS-side wrapper
-         * copies position, rotation and fov but never the projection matrix, so the half height
-         * comes from fov and the aspect from the projection when there is one and the main
-         * framebuffer otherwise. A zero half height switches the rule off for this frame. */
         if (active)
         {
             float halfHeight = (float) Math.tan(lodCamera.fov / 2F);
             float aspect;
-            Matrix4f projection = lodCamera.projection;
 
-            if (projection.m22() < 0F)
+            /* The film camera is a pose, not a render: it carries no projection, so its frustum
+             * takes the fov plus the aspect of the film's configured output size. A render camera
+             * that BBS actually draws through carries a real projection matrix, whose tangent
+             * half-extents are exact. */
+            if (filmCamera != null)
             {
-                halfHeight = 1F / projection.m11();
-                aspect = projection.m11() / projection.m00();
+                aspect = (float) BBSRendering.getVideoWidth() / BBSRendering.getVideoHeight();
             }
             else
             {
-                Framebuffer buffer = MinecraftClient.getInstance().getFramebuffer();
+                Matrix4f projection = lodCamera.projection;
 
-                aspect = buffer.textureHeight > 0 ? (float) buffer.textureWidth / buffer.textureHeight : 1F;
+                if (projection.m22() < 0F)
+                {
+                    halfHeight = 1F / projection.m11();
+                    aspect = projection.m11() / projection.m00();
+                }
+                else
+                {
+                    Framebuffer buffer = MinecraftClient.getInstance().getFramebuffer();
+
+                    aspect = buffer.textureHeight > 0 ? (float) buffer.textureWidth / buffer.textureHeight : 1F;
+                }
             }
 
             LodState.viewHalfWidth = halfHeight * aspect;
-            LodState.cameraX = (float) lodCamera.position.x;
-            LodState.cameraY = (float) lodCamera.position.y;
-            LodState.cameraZ = (float) lodCamera.position.z;
+            LodState.viewHalfHeight = halfHeight;
 
-            Vector3f look = lodCamera.getLookDirection();
-            LodState.cameraLookX = look.x;
-            LodState.cameraLookY = look.y;
-            LodState.cameraLookZ = look.z;
-            LodState.formX = (float) context.entity.getX();
-            LodState.formY = (float) context.entity.getY();
-            LodState.formZ = (float) context.entity.getZ();
+            /* The bone mixin's stack is the render camera's view space. Recast it into the film
+             * camera's view space so the size and frustum tests judge bones by the shot's camera
+             * even while the world is drawn through the free camera. Both rotations are
+             * orthonormal, so the transpose is the inverse; with coincident cameras this is the
+             * identity transform and the rule behaves exactly as before. */
+            if (filmCamera != null)
+            {
+                RENDER_VIEW.set(context.camera.view).transpose();
+                LodState.boneToWorld.set(filmCamera.updateView()).mul(RENDER_VIEW);
+                OFFSET.set(context.camera.position).sub((float) filmCamera.position.x, (float) filmCamera.position.y, (float) filmCamera.position.z);
+                filmCamera.updateView().transformPosition(OFFSET);
+                LodState.boneToWorld.setTranslation(OFFSET);
+            }
+            else
+            {
+                LodState.boneToWorld.identity();
+            }
         }
         else
         {
             LodState.viewHalfWidth = 0F;
             LodState.viewHalfHeight = 0F;
+            LodState.boneToWorld.identity();
         }
 
         int tier = active ? computeTier(form, context, lodCamera) : 0;
@@ -263,15 +286,32 @@ public class LodEngine
     {
         UIBaseMenu menu = UIScreen.getCurrentMenu();
 
-        if (menu instanceof UIDashboard dashboard)
+        if (!(menu instanceof UIDashboard dashboard))
         {
-            if (dashboard.getPanels().panel instanceof UIFilmPanel panel)
-            {
-                return panel.getCamera();
-            }
+            return null;
         }
 
-        return null;
+        UIFilmPanel panel = dashboard.getPanels().getPanel(UIFilmPanel.class);
+
+        if (panel == null)
+        {
+            return null;
+        }
+
+        RunnerCameraController runner = panel.getRunner();
+
+        if (runner == null || runner.getContext().clips == null)
+        {
+            return null;
+        }
+
+        /* The runner's pose is where the film's camera sits at the cursor. apply() fills it even
+         * in free mode, where it never reaches the render camera — exactly the case the gate
+         * exists to inspect. */
+        runner.getPosition().apply(FILM_CAMERA);
+        FILM_CAMERA.updateView();
+
+        return FILM_CAMERA;
     }
 
     private static void onShutdown(BaseFilmController controller)
