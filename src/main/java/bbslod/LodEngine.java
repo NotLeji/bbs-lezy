@@ -14,7 +14,12 @@ import mchorse.bbs_mod.settings.values.numeric.ValueFloat;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import mchorse.bbs_mod.ui.framework.UIScreen;
+import mchorse.bbs_mod.ui.framework.UIBaseMenu;
+import mchorse.bbs_mod.ui.dashboard.UIDashboard;
+import mchorse.bbs_mod.ui.film.UIFilmPanel;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,15 +63,23 @@ public class LodEngine
         /* Type filter keeps world-replay forms only — UI model previews come through inUI(),
          * model blocks and items through other types. The picking pass is skipped so editor
          * clicks still select distant actors. A zero camera position means no camera context
-         * this frame, so fail open rather than cull by distance from the origin. film_camera_only
-         * is an opt-in staging switch: it confines the work to BBS's own renders — a film panel or
-         * a video export, both of which run at a custom size — and leaves the ordinary world
-         * alone, so the rules can be observed before they apply to everything. */
+         * this frame, so fail open rather than cull by distance from the origin. */
         boolean active = LodSettings.enabled.get()
-            && (!LodSettings.filmCameraOnly.get() || BBSRendering.isCustomSize())
             && !context.ui
             && !context.isPicking()
             && context.camera.position.lengthSquared() != 0;
+
+        Camera lodCamera = context.camera;
+
+        if (LodSettings.filmCameraOnly.get())
+        {
+            Camera filmCamera = getBBSFilmCamera();
+
+            if (filmCamera != null)
+            {
+                lodCamera = filmCamera;
+            }
+        }
 
         /* The film camera's frustum in tangent units, so the bone-size rule can project a bone's
          * box into it. ENTITY form renders carry the Minecraft camera, whose BBS-side wrapper
@@ -75,9 +88,9 @@ public class LodEngine
          * framebuffer otherwise. A zero half height switches the rule off for this frame. */
         if (active)
         {
-            float halfHeight = (float) Math.tan(context.camera.fov / 2F);
+            float halfHeight = (float) Math.tan(lodCamera.fov / 2F);
             float aspect;
-            Matrix4f projection = context.camera.projection;
+            Matrix4f projection = lodCamera.projection;
 
             if (projection.m22() < 0F)
             {
@@ -92,7 +105,17 @@ public class LodEngine
             }
 
             LodState.viewHalfWidth = halfHeight * aspect;
-            LodState.viewHalfHeight = halfHeight;
+            LodState.cameraX = (float) lodCamera.position.x;
+            LodState.cameraY = (float) lodCamera.position.y;
+            LodState.cameraZ = (float) lodCamera.position.z;
+
+            Vector3f look = lodCamera.getLookDirection();
+            LodState.cameraLookX = look.x;
+            LodState.cameraLookY = look.y;
+            LodState.cameraLookZ = look.z;
+            LodState.formX = (float) context.entity.getX();
+            LodState.formY = (float) context.entity.getY();
+            LodState.formZ = (float) context.entity.getZ();
         }
         else
         {
@@ -100,7 +123,7 @@ public class LodEngine
             LodState.viewHalfHeight = 0F;
         }
 
-        int tier = active ? computeTier(form, context) : 0;
+        int tier = active ? computeTier(form, context, lodCamera) : 0;
 
         applyVisibility(form, tier);
 
@@ -114,7 +137,7 @@ public class LodEngine
             /* The BBS camera's frustum, once per frame, through this form's stack. */
             if (active && LodDebug.cameraPending())
             {
-                LodDebug.drawCamera(context.stack, context.camera);
+                LodDebug.drawCamera(context.stack, lodCamera);
             }
 
             if (frames % 200 == 0)
@@ -169,7 +192,7 @@ public class LodEngine
      * DH-style distance shells with a zoom bias: a narrow fov makes the effective distance
      * <em>smaller</em>, so a telephoto shot keeps detail at the same world distance.
      */
-    private static int computeTier(Form form, FormRenderingContext context)
+    private static int computeTier(Form form, FormRenderingContext context, Camera camera)
     {
         /* Camera-locked forms never distance-cull — BBS's own isCulled bypasses them too. */
         if (form.anchor.get().hasTarget())
@@ -177,7 +200,6 @@ public class LodEngine
             return 0;
         }
 
-        Camera camera = context.camera;
         IEntity entity = context.entity;
 
         double distance = camera.getRelative(entity.getX(), entity.getY(), entity.getZ()).length();
@@ -234,8 +256,22 @@ public class LodEngine
         /* The depth buffer here holds every opaque block and every form drawn this frame, which
          * is exactly the set of things that can hide a bone; next frame's bone tests read it. */
         LodOcclusion.capture();
-
         LodDebug.endFrame();
+    }
+
+    private static Camera getBBSFilmCamera()
+    {
+        UIBaseMenu menu = UIScreen.getCurrentMenu();
+
+        if (menu instanceof UIDashboard dashboard)
+        {
+            if (dashboard.getPanels().panel instanceof UIFilmPanel panel)
+            {
+                return panel.getCamera();
+            }
+        }
+
+        return null;
     }
 
     private static void onShutdown(BaseFilmController controller)
