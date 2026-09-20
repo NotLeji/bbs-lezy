@@ -28,6 +28,7 @@ scene film.
 │   ├── LodState.java           # stack tier + form per-render (dibaca mixin)
 │   ├── LodBoneDepth.java       # cache depth ModelGroup
 │   ├── LodOcclusion.java       # snapshot depth buffer + per-bone occlusion test + hysteresis
+│   ├── LodDebug.java           # debug overlay: box per bone, warna = keputusan cull
 │   └── mixin/client/CubicVAORendererMixin.java  # tier-1 bone cull + occlusion skip, fail-safe
 ├── src/main/resources/
 │   ├── fabric.mod.json         # id bbslod, depends bbs >=2.6.1-1.20.1
@@ -107,6 +108,11 @@ BBS terpublish sebagai `mchorse:bbs:2.6.1-1.20.1` (versi = mod_version + "-" + m
   `mixinHits = 0` padahal `tier1 > 0` → mixin tidak apply (target BBS pindah). `occHits = 0`
   padahal `occlusion: true` → snapshot kagak ke-capture atau semuanya gagal cull; cek log untuk
   warning auto-disable.
+- Debug overlay: `debug: true` juga gambar wireframe box per bone via `LodDebug` dari mixin
+  (`RenderLayer.getLines()` ke entity consumers, vertex di-bake di frame bone jadi pending batch
+  aman). Hijau = bone digambar, merah = depth-cull, biru = occlusion-cull. Hanya pass world-replay
+  (`LodState.currentForm() != null`); UI/picking/shadow inert. Satu box per bone per frame —
+  mahal, tapi itu point-nya (lihat rig). Layer depth-test, jadi bone tertimbun tetap tertimbun.
 - Occlusion: cuman nutupin bone di belakang yg **opaque dan sudah gambar lebih dulu** dalam frame
   (terrain + form sebelumnya). Form translucent (air, glass) kagak nulis depth = kagak occlude.
   Test pakai 9 titik box geometry + bias eye-space (block) + hysteresis anti-flicker.
