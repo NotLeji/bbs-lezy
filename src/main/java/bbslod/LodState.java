@@ -4,6 +4,7 @@ import mchorse.bbs_mod.forms.forms.Form;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.LinkedList;
 
 /**
  * Per-render tier and form stack, read by the bone mixin.
@@ -19,7 +20,7 @@ import java.util.Deque;
 public class LodState
 {
     private static final Deque<Integer> tiers = new ArrayDeque<>();
-    private static final Deque<Form> forms = new ArrayDeque<>();
+    private static final Deque<Form> forms = new LinkedList<>();
 
     /** Bumped by the bone mixin every bone it skips, so silent mixin degradation is visible. */
     public static long mixinHits;
