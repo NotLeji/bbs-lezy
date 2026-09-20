@@ -28,6 +28,17 @@ public class LodState
 
     /** The film camera's frustum in tangent units of view space (0 when the projection is not a
      * perspective matrix, which switches the bone-size rule off for that frame). */
+    public static float cameraX;
+    public static float cameraY;
+    public static float cameraZ;
+
+    public static float cameraLookX;
+    public static float cameraLookY;
+    public static float cameraLookZ;
+
+    public static float formX;
+    public static float formY;
+    public static float formZ;
     public static float viewHalfWidth;
     public static float viewHalfHeight;
 

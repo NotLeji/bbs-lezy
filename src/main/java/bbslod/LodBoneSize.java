@@ -23,16 +23,11 @@ import org.joml.Vector3f;
 public class LodBoneSize
 {
     private static final float PIXEL = 1F / 16F;
-
     private static final Vector3f min = new Vector3f();
     private static final Vector3f max = new Vector3f();
     private static final Vector3f center = new Vector3f();
     private static final Vector3f extents = new Vector3f();
 
-    /**
-     * Whether this bone is invisible enough to skip: behind the camera, clear of its frustum, or
-     * projecting smaller than {@code threshold} of the view's half height.
-     */
     public static boolean culled(MatrixStack stack, ModelGroup group, float threshold, float viewHalfWidth, float viewHalfHeight)
     {
         if (!group.getGeometryBounds(min, max))
@@ -43,28 +38,29 @@ public class LodBoneSize
         center.set(min).add(max).mul(0.5F * PIXEL);
         extents.set(max).sub(min).mul(0.5F * PIXEL);
 
+        float boneWorldX = LodState.formX + center.x;
+        float boneWorldY = LodState.formY + center.y;
+        float boneWorldZ = LodState.formZ + center.z;
+
+        float dx = boneWorldX - LodState.cameraX;
+        float dy = boneWorldY - LodState.cameraY;
+        float dz = boneWorldZ - LodState.cameraZ;
+
+        /* The look vector points forward. The dot product gives the distance along the camera's
+         * view axis (equivalent to -Z in view space). If it's negative, the bone is behind the
+         * camera and we cull it immediately. */
+        float depth = dx * LodState.cameraLookX + dy * LodState.cameraLookY + dz * LodState.cameraLookZ;
+
+        if (depth < 0.001F)
+        {
+            return true;
+        }
+
         Matrix4f matrix = stack.peek().getPositionMatrix();
-
-        matrix.transformPosition(center);
         matrix.transformDirection(extents);
-
-        /* View space looks down negative Z, so anything at or behind the camera never projects. */
-        if (center.z >= 0F)
-        {
-            return true;
-        }
-
-        float depth = -center.z;
         float radius = extents.length();
-        float projectedX = Math.abs(center.x) / depth;
-        float projectedY = Math.abs(center.y) / depth;
-        float projectedRadius = radius / depth;
 
-        /* Clear of the frustum on either axis — the bone's nearest point is already off frame. */
-        if (projectedX - projectedRadius > viewHalfWidth || projectedY - projectedRadius > viewHalfHeight)
-        {
-            return true;
-        }
+        float projectedRadius = radius / depth;
 
         return projectedRadius / viewHalfHeight < threshold;
     }
