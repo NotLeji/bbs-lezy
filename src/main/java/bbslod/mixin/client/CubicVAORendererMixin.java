@@ -41,9 +41,13 @@ public abstract class CubicVAORendererMixin
          * never test a snapshot that does not describe them. */
         boolean occlusionCull = !depthCull && group != null && LodOcclusion.isOccluded(LodState.currentForm(), stack, group);
 
-        if (LodSettings.debug.get() && LodState.currentForm() != null && group != null)
+        /* Debug overlay: the box of every bone this mixin skips, so the culler's decisions stay
+         * visible. Drawn bones ARE the model, and boxing every bone of every form choked the
+         * frame: BBS flushes the lines layer on every layer switch, so each box was its own
+         * draw call. */
+        if (LodSettings.debug.get() && (depthCull || occlusionCull) && group != null)
         {
-            LodDebug.drawBone(stack, group, depthCull ? LodDebug.DEPTH_CULLED : occlusionCull ? LodDebug.OCCLUSION_CULLED : LodDebug.DRAWN);
+            LodDebug.drawBone(stack, group, depthCull ? LodDebug.DEPTH_CULLED : LodDebug.OCCLUSION_CULLED);
         }
 
         if (depthCull)
