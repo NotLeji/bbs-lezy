@@ -1,6 +1,7 @@
 package bbslod;
 
 import mchorse.bbs_mod.api.client.events.FilmEvents;
+import mchorse.bbs_mod.client.BBSRendering;
 import mchorse.bbs_mod.api.client.events.FormRenderEvents;
 import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.film.BaseFilmController;
@@ -57,9 +58,12 @@ public class LodEngine
         /* Type filter keeps world-replay forms only — UI model previews come through inUI(),
          * model blocks and items through other types. The picking pass is skipped so editor
          * clicks still select distant actors. A zero camera position means no camera context
-         * this frame, so fail open rather than cull by distance from the origin. */
+         * this frame, so fail open rather than cull by distance from the origin. film_camera_only
+         * is an opt-in staging switch: it confines the work to BBS's own renders — a film panel or
+         * a video export, both of which run at a custom size — and leaves the ordinary world
+         * alone, so the rules can be observed before they apply to everything. */
         boolean active = LodSettings.enabled.get()
-            && context.type == FormRenderType.ENTITY
+            && (!LodSettings.filmCameraOnly.get() || BBSRendering.isCustomSize())
             && !context.ui
             && !context.isPicking()
             && context.camera.position.lengthSquared() != 0;
