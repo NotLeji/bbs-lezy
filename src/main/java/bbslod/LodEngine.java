@@ -1,7 +1,6 @@
 package bbslod;
 
 import mchorse.bbs_mod.api.client.events.FilmEvents;
-import mchorse.bbs_mod.client.BBSRendering;
 import mchorse.bbs_mod.api.client.events.FormRenderEvents;
 import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.film.BaseFilmController;
@@ -11,6 +10,7 @@ import mchorse.bbs_mod.forms.renderers.FormRenderType;
 import mchorse.bbs_mod.forms.renderers.FormRenderingContext;
 import mchorse.bbs_mod.settings.values.base.BaseValue;
 import mchorse.bbs_mod.settings.values.numeric.ValueFloat;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
@@ -90,37 +90,33 @@ public class LodEngine
 
         if (active)
         {
-            float halfHeight = (float) Math.tan(lodCamera.fov / 2F);
+            /* The frustum the render actually uses this frame: while a BBS editor is open the
+             * world keeps Minecraft's own projection (BBS only replaces the framebuffer once no
+             * editor is on screen), so a film camera's clip fov and the export's video size are
+             * guesses that drift from what the user sees - a 70 clip fov against a 42 option
+             * fov culls nothing the frustum should, and vice versa. The live projection is the
+             * editor preview and the video export alike, so whatever the render uses, the cull
+             * uses too. The film camera still supplies position and rotation through boneToWorld
+             * below; only the shape of its cone comes from here. */
+            Matrix4f projection = RenderSystem.getProjectionMatrix();
+            float halfHeight;
             float aspect;
 
-            /* The film camera is a pose, not a render: it carries no projection, so its frustum
-             * takes the fov plus the aspect of the film's configured output size. A render camera
-             * that BBS actually draws through carries a real projection matrix, whose tangent
-             * half-extents are exact. */
-            if (filmCamera != null)
+            if (projection.m22() < 0F)
             {
-                aspect = (float) BBSRendering.getVideoWidth() / BBSRendering.getVideoHeight();
+                halfHeight = 1F / projection.m11();
+                aspect = projection.m11() / projection.m00();
             }
             else
             {
-                Matrix4f projection = lodCamera.projection;
+                halfHeight = (float) Math.tan(lodCamera.fov / 2F);
+                Framebuffer buffer = MinecraftClient.getInstance().getFramebuffer();
 
-                if (projection.m22() < 0F)
-                {
-                    halfHeight = 1F / projection.m11();
-                    aspect = projection.m11() / projection.m00();
-                }
-                else
-                {
-                    Framebuffer buffer = MinecraftClient.getInstance().getFramebuffer();
-
-                    aspect = buffer.textureHeight > 0 ? (float) buffer.textureWidth / buffer.textureHeight : 1F;
-                }
+                aspect = buffer.textureHeight > 0 ? (float) buffer.textureWidth / buffer.textureHeight : 1F;
             }
 
             LodState.viewHalfWidth = halfHeight * aspect;
             LodState.viewHalfHeight = halfHeight;
-
             /* The bone mixin's stack is the render camera's view space. Recast it into the film
              * camera's view space so the size and frustum tests judge bones by the shot's camera
              * even while the world is drawn through the free camera. Both rotations are
