@@ -104,7 +104,12 @@ BBS terpublish sebagai `mchorse:bbs:2.6.1-1.20.1` (versi = mod_version + "-" + m
 - Dev client jalan TANPA Iris (shader kagak ketest); Sodium sudah include.
 - Settings client ada di `run/config/bbs/settings/bbslod.json` — juga editable via settings
   screen BBS. Default: enabled, cull 128, simplify 64, bone_cull_size 0.02,
-  bone_cull_depth 0 (cap opsional, 0 = off), fov_bias true, occlusion false, occlusion_bias 0.5.
+  bone_cull_depth 0 (cap opsional, 0 = off), film_camera_only false, fov_bias true,
+  occlusion false, occlusion_bias 0.5.
+- `film_camera_only` (default **false**): opt-in staging. Nyalain untuk confine engine cuman ke
+  render BBS — film panel preview + video export (keduanya `BBSRendering.isCustomSize()`),
+  lewat kamera BBS — biara lo observer rule sebelum apply ke semua. Default off = jalan ke
+  semua pass world-replay.
 - Tier 1 bone cull: `LodBoneSize` proyeksikan geometry box bone ke view space kamera BBS
   (frustum + ukuran layar); bone di belakang kamera, di luar frustum, atau lebih kecil dari
   `bone_cull_size` (fraksi dari setengah tinggi viewport) di-skip. Depth (`LodBoneDepth`,

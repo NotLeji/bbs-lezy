@@ -21,6 +21,7 @@ public class LodSettings
     public static ValueBoolean fovBias;
     public static ValueBoolean occlusion;
     public static ValueFloat occlusionBias;
+    public static ValueBoolean filmCameraOnly;
     public static ValueBoolean debug;
 
     public static void register(SettingsBuilder builder)
@@ -35,6 +36,7 @@ public class LodSettings
         fovBias = builder.getBoolean("fov_bias", true);
         occlusion = builder.getBoolean("occlusion", false);
         occlusionBias = builder.getFloat("occlusion_bias", 0.5F, 0F, 8F);
+        filmCameraOnly = builder.getBoolean("film_camera_only", false);
         debug = builder.getBoolean("debug", false);
     }
 }
