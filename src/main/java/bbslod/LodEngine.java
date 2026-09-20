@@ -126,13 +126,16 @@ public class LodEngine
             {
                 RENDER_VIEW.set(context.camera.view).transpose();
                 LodState.boneToWorld.set(filmCamera.updateView()).mul(RENDER_VIEW);
+
                 OFFSET.set(context.camera.position).sub((float) filmCamera.position.x, (float) filmCamera.position.y, (float) filmCamera.position.z);
                 filmCamera.updateView().transformPosition(OFFSET);
                 LodState.boneToWorld.setTranslation(OFFSET);
+                LodState.filmCameraDriven = true;
             }
             else
             {
                 LodState.boneToWorld.identity();
+                LodState.filmCameraDriven = false;
             }
         }
         else
@@ -140,6 +143,7 @@ public class LodEngine
             LodState.viewHalfWidth = 0F;
             LodState.viewHalfHeight = 0F;
             LodState.boneToWorld.identity();
+            LodState.filmCameraDriven = false;
         }
 
         int tier = active ? computeTier(form, context, lodCamera) : 0;

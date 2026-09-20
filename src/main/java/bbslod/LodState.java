@@ -37,6 +37,9 @@ public class LodState
      * camera as though the shot were being filmed. Identity when the two cameras coincide or when
      * no film camera applies, so the bone rules fall back to the render camera. */
     public static final Matrix4f boneToWorld = new Matrix4f();
+    /** Set while a film camera, rather than the render camera, drives this frame's bone rules -
+     * see {@link bbslod.LodEngine}. */
+    public static boolean filmCameraDriven;
 
     public static void push(int tier, Form form)
     {

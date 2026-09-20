@@ -41,8 +41,13 @@ public abstract class CubicVAORendererMixin
         int depth = group == null ? 0 : LodBoneDepth.depth(group);
 
         /* The bone rules only apply while a world-replay form is on the stack: the engine pushes
-         * a null form for every other pass, so previews, picking and shadow renders are inert. */
-        boolean world = LodState.current() >= 1 && group != null;
+         * a null form for every other pass, so previews, picking and shadow renders are inert.
+         * Tier 0 normally means "close enough to draw in full", but when a film camera drives
+         * the rules, close is not the same as in view: a form standing behind the shot's camera
+         * is invisible to the film yet renders at full detail, because the distance tier never
+         * left 0. So the frustum and size rules run at any tier under a film camera, while the
+         * default render-camera mode keeps its old tier gate. */
+        boolean world = group != null && (LodState.current() >= 1 || LodState.filmCameraDriven);
         float threshold = LodSettings.boneCullSize.get();
         float halfWidth = LodState.viewHalfWidth;
         float halfHeight = LodState.viewHalfHeight;
