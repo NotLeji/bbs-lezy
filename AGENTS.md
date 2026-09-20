@@ -26,7 +26,8 @@ scene film.
 │   ├── LodSettings.java        # holder settings client
 │   ├── LodEngine.java          # tier math + bookkeeping visible
 │   ├── LodState.java           # stack tier + form per-render (dibaca mixin)
-│   ├── LodBoneDepth.java       # cache depth ModelGroup
+│   ├── LodBoneDepth.java       # cache depth ModelGroup (cap opsional, default off)
+│   ├── LodBoneSize.java        # cull bone by proyeksi box ke kamera (frustum + ukuran layar)
 │   ├── LodOcclusion.java       # snapshot depth buffer + per-bone occlusion test + hysteresis
 │   ├── LodDebug.java           # debug overlay: box per bone, warna = keputusan cull
 │   └── mixin/client/CubicVAORendererMixin.java  # tier-1 bone cull + occlusion skip, fail-safe
@@ -102,17 +103,24 @@ BBS terpublish sebagai `mchorse:bbs:2.6.1-1.20.1` (versi = mod_version + "-" + m
   build project yang sama. Project ini ada di root `bbs-lod-1.20.1`, dan `bbsrc` adalah symlink di dalamnya — jangan di-commit (sudah di-ignore).
 - Dev client jalan TANPA Iris (shader kagak ketest); Sodium sudah include.
 - Settings client ada di `run/config/bbs/settings/bbslod.json` — juga editable via settings
-  screen BBS. Default: enabled, cull 128, simplify 64, bone_cull_depth 3, fov_bias true,
-  occlusion false, occlusion_bias 0.5.
+  screen BBS. Default: enabled, cull 128, simplify 64, bone_cull_size 0.02,
+  bone_cull_depth 0 (cap opsional, 0 = off), fov_bias true, occlusion false, occlusion_bias 0.5.
+- Tier 1 bone cull: `LodBoneSize` proyeksikan geometry box bone ke view space kamera BBS
+  (frustum + ukuran layar); bone di belakang kamera, di luar frustum, atau lebih kecil dari
+  `bone_cull_size` (fraksi dari setengah tinggi viewport) di-skip. Depth (`LodBoneDepth`,
+  `bone_cull_depth`) sekarang cuma cap opsional — rule lama bongkar actor dari hips keluar,
+  actor jauh sisanya kaki doang. View half-extents di-set `LodEngine` dari `camera.projection`
+  tiap form ke `LodState`; proyeksi non-perspective (m22 >= 0) = 0 = rule mati frame itu.
 - Debug: set `debug: true` → log tiap 200 frame `frames/tier1/tier2/mixinHits/occHits`.
   `mixinHits = 0` padahal `tier1 > 0` → mixin tidak apply (target BBS pindah). `occHits = 0`
   padahal `occlusion: true` → snapshot kagak ke-capture atau semuanya gagal cull; cek log untuk
-  warning auto-disable.
 - Debug overlay: `debug: true` juga gambar box per bone yg **di-skip** mixin (`LodDebug`):
-  merah = depth-cull, biru = occlusion-cull. Bone yg tetap digambar kagak dibox — dia sudah
-  kelihatan sebagai geometri model sendiri, dan box per bone itu satu draw call per bone (BBS
-  flush lines layer tiap ganti layer). Plus frustum kamera BBS (kuning) 1× per frame: posisi +
-  4 ray ke sudut FOV, titik world ditransformasi lewat invers stack form (stack bawa body yaw).
+  oranye = size-cull (frustum/ukuran), merah = depth-cull, biru = occlusion-cull. Bone yg
+  tetap digambar kagak dibox — dia sudah kelihatan sebagai geometri model sendiri, dan box per
+  bone itu satu draw call per bone (BBS flush lines layer tiap ganti layer). Plus frustum
+  kamera BBS (kuning) 1× per frame: posisi + 4 ray ke sudut FOV, titik world ditransformasi
+  lewat invers stack form (stack bawa body yaw).
+
   Layer depth-test, jadi bone/kamera di balik terrain tetap kelihatan tersembunyi.
 - Occlusion: cuman nutupin bone di belakang yg **opaque dan sudah gambar lebih dulu** dalam frame
   (terrain + form sebelumnya). Form translucent (air, glass) kagak nulis depth = kagak occlude.

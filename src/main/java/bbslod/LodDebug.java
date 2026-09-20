@@ -33,7 +33,9 @@ public class LodDebug
     private static final float PIXEL = 1F / 16F;
 
     /** How far the frustum's far rectangle sits from the camera, in blocks. */
-    private static final float FRUSTUM_DISTANCE = 24F;
+    public static final float FRUSTUM_DISTANCE = 24F;
+
+    public static final float[] SIZE_CULLED = {1F, 0.55F, 0.1F, 0.8F};
 
     public static final float[] DEPTH_CULLED = {1F, 0.25F, 0.25F, 0.8F};
     public static final float[] OCCLUSION_CULLED = {0.3F, 0.5F, 1F, 0.8F};
@@ -113,24 +115,10 @@ public class LodDebug
         right.normalize();
         right.cross(look, up).normalize();
 
-        Matrix4f projection = camera.projection;
-        float tanHalfFov;
-        float aspect;
-
-        if (projection.m22() < 0F)
-        {
-            tanHalfFov = 1F / projection.m11();
-            aspect = projection.m11() / projection.m00();
-        }
-        else
-        {
-            tanHalfFov = (float) Math.tan(camera.fov / 2F);
-
-            double width = MinecraftClient.getInstance().getFramebuffer().textureWidth;
-            double height = MinecraftClient.getInstance().getFramebuffer().textureHeight;
-
-            aspect = height > 0D ? (float) (width / height) : 1F;
-        }
+        /* The engine derives the frustum from the camera's fov each frame (the projection matrix
+         * is not populated for ENTITY form renders), so read its result rather than redoing it. */
+        float tanHalfFov = LodState.viewHalfHeight;
+        float aspect = LodState.viewHalfHeight > 0F && LodState.viewHalfWidth > 0F ? LodState.viewHalfWidth / LodState.viewHalfHeight : 1F;
 
         float reach = Math.min(camera.far, FRUSTUM_DISTANCE);
         float halfWidth = reach * tanHalfFov * aspect;

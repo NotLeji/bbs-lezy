@@ -10,7 +10,10 @@ import mchorse.bbs_mod.forms.renderers.FormRenderType;
 import mchorse.bbs_mod.forms.renderers.FormRenderingContext;
 import mchorse.bbs_mod.settings.values.base.BaseValue;
 import mchorse.bbs_mod.settings.values.numeric.ValueFloat;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.Framebuffer;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import org.joml.Matrix4f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +63,38 @@ public class LodEngine
             && !context.ui
             && !context.isPicking()
             && context.camera.position.lengthSquared() != 0;
+
+        /* The film camera's frustum in tangent units, so the bone-size rule can project a bone's
+         * box into it. ENTITY form renders carry the Minecraft camera, whose BBS-side wrapper
+         * copies position, rotation and fov but never the projection matrix, so the half height
+         * comes from fov and the aspect from the projection when there is one and the main
+         * framebuffer otherwise. A zero half height switches the rule off for this frame. */
+        if (active)
+        {
+            float halfHeight = (float) Math.tan(context.camera.fov / 2F);
+            float aspect;
+            Matrix4f projection = context.camera.projection;
+
+            if (projection.m22() < 0F)
+            {
+                halfHeight = 1F / projection.m11();
+                aspect = projection.m11() / projection.m00();
+            }
+            else
+            {
+                Framebuffer buffer = MinecraftClient.getInstance().getFramebuffer();
+
+                aspect = buffer.textureHeight > 0 ? (float) buffer.textureWidth / buffer.textureHeight : 1F;
+            }
+
+            LodState.viewHalfWidth = halfHeight * aspect;
+            LodState.viewHalfHeight = halfHeight;
+        }
+        else
+        {
+            LodState.viewHalfWidth = 0F;
+            LodState.viewHalfHeight = 0F;
+        }
 
         int tier = active ? computeTier(form, context) : 0;
 

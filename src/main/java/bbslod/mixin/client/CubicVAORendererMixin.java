@@ -1,6 +1,7 @@
 package bbslod.mixin.client;
 
 import bbslod.LodBoneDepth;
+import bbslod.LodBoneSize;
 import bbslod.LodOcclusion;
 import bbslod.LodSettings;
 import bbslod.LodDebug;
@@ -16,9 +17,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Tier 1: skip bones deeper than the configured depth, so a distant actor loses its
- * fingers and accessories before it loses anything else — and skip bones whose geometry is
- * behind terrain or another model, whatever the distance.
+ * Tier 1: skip bones the camera cannot make use of — behind it, outside its frustum, or too small
+ * on screen — plus the optional depth cap, and bones whose geometry hides behind terrain or
+ * another model.
+ *
+ * <p>The size rule replaces a fixed depth order, which dismantled an actor hips-first: a distant
+ * figure kept its feet and lost its head. Projected geometry keeps what the shot actually sees.
+ * Depth remains as an optional blunt cap ({@code bone_cull_depth}, 0 = off).</p>
  *
  * <p>Returns {@code false} exactly as the method's own {@code !group.isVisible()} path does, so
  * the caller treats the group as drawn-nowhere and proceeds. Read-only — no {@link ModelGroup} or
@@ -34,23 +39,31 @@ public abstract class CubicVAORendererMixin
     {
         int maxDepth = LodSettings.boneCullDepth.get();
         int depth = group == null ? 0 : LodBoneDepth.depth(group);
-        boolean depthCull = maxDepth > 0 && LodState.current() >= 1 && group != null && depth >= maxDepth;
 
-        /* The occlusion test only runs while a world-replay form is on the stack: the engine
-         * pushes a null form for every other pass, so previews, picking and shadow renders
-         * never test a snapshot that does not describe them. */
-        boolean occlusionCull = !depthCull && group != null && LodOcclusion.isOccluded(LodState.currentForm(), stack, group);
+        /* The bone rules only apply while a world-replay form is on the stack: the engine pushes
+         * a null form for every other pass, so previews, picking and shadow renders are inert. */
+        boolean world = LodState.current() >= 1 && group != null;
+        float threshold = LodSettings.boneCullSize.get();
+        float halfWidth = LodState.viewHalfWidth;
+        float halfHeight = LodState.viewHalfHeight;
+
+        boolean depthCull = maxDepth > 0 && world && depth >= maxDepth;
+        boolean sizeCull = !depthCull && world && threshold > 0F && halfHeight > 0F && LodBoneSize.culled(stack, group, threshold, halfWidth, halfHeight);
+
+        /* Occlusion tests geometry the camera can otherwise see, so it never runs on a bone the
+         * rules above already dropped. */
+        boolean occlusionCull = !depthCull && !sizeCull && group != null && LodOcclusion.isOccluded(LodState.currentForm(), stack, group);
 
         /* Debug overlay: the box of every bone this mixin skips, so the culler's decisions stay
          * visible. Drawn bones ARE the model, and boxing every bone of every form choked the
          * frame: BBS flushes the lines layer on every layer switch, so each box was its own
          * draw call. */
-        if (LodSettings.debug.get() && (depthCull || occlusionCull) && group != null)
+        if (LodSettings.debug.get() && (depthCull || sizeCull || occlusionCull))
         {
-            LodDebug.drawBone(stack, group, depthCull ? LodDebug.DEPTH_CULLED : LodDebug.OCCLUSION_CULLED);
+            LodDebug.drawBone(stack, group, depthCull ? LodDebug.DEPTH_CULLED : sizeCull ? LodDebug.SIZE_CULLED : LodDebug.OCCLUSION_CULLED);
         }
 
-        if (depthCull)
+        if (depthCull || sizeCull)
         {
             LodState.mixinHits++;
             cir.setReturnValue(false);
