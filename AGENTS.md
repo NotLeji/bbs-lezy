@@ -108,11 +108,12 @@ BBS terpublish sebagai `mchorse:bbs:2.6.1-1.20.1` (versi = mod_version + "-" + m
   `mixinHits = 0` padahal `tier1 > 0` → mixin tidak apply (target BBS pindah). `occHits = 0`
   padahal `occlusion: true` → snapshot kagak ke-capture atau semuanya gagal cull; cek log untuk
   warning auto-disable.
-- Debug overlay: `debug: true` juga gambar wireframe box per bone via `LodDebug` dari mixin
-  (`RenderLayer.getLines()` ke entity consumers, vertex di-bake di frame bone jadi pending batch
-  aman). Hijau = bone digambar, merah = depth-cull, biru = occlusion-cull. Hanya pass world-replay
-  (`LodState.currentForm() != null`); UI/picking/shadow inert. Satu box per bone per frame —
-  mahal, tapi itu point-nya (lihat rig). Layer depth-test, jadi bone tertimbun tetap tertimbun.
+- Debug overlay: `debug: true` juga gambar box per bone yg **di-skip** mixin (`LodDebug`):
+  merah = depth-cull, biru = occlusion-cull. Bone yg tetap digambar kagak dibox — dia sudah
+  kelihatan sebagai geometri model sendiri, dan box per bone itu satu draw call per bone (BBS
+  flush lines layer tiap ganti layer). Plus frustum kamera BBS (kuning) 1× per frame: posisi +
+  4 ray ke sudut FOV, titik world ditransformasi lewat invers stack form (stack bawa body yaw).
+  Layer depth-test, jadi bone/kamera di balik terrain tetap kelihatan tersembunyi.
 - Occlusion: cuman nutupin bone di belakang yg **opaque dan sudah gambar lebih dulu** dalam frame
   (terrain + form sebelumnya). Form translucent (air, glass) kagak nulis depth = kagak occlude.
   Test pakai 9 titik box geometry + bias eye-space (block) + hysteresis anti-flicker.

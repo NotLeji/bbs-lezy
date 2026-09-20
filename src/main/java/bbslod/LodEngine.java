@@ -72,6 +72,12 @@ public class LodEngine
             if (tier == 1) tier1++;
             else if (tier == 2) tier2++;
 
+            /* The BBS camera's frustum, once per frame, through this form's stack. */
+            if (active && LodDebug.cameraPending())
+            {
+                LodDebug.drawCamera(context.stack, context.camera);
+            }
+
             if (frames % 200 == 0)
             {
                 LOGGER.info("bbslod: frames={} tier1={} tier2={} mixinHits={} occHits={}", frames, tier1, tier2, LodState.mixinHits, LodState.occlusionHits);
@@ -189,6 +195,8 @@ public class LodEngine
         /* The depth buffer here holds every opaque block and every form drawn this frame, which
          * is exactly the set of things that can hide a bone; next frame's bone tests read it. */
         LodOcclusion.capture();
+
+        LodDebug.endFrame();
     }
 
     private static void onShutdown(BaseFilmController controller)
