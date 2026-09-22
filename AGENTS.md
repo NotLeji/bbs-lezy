@@ -1,41 +1,32 @@
-# BBS LOD — AGENT RULES
+# BBS Lezy — AGENT RULES
 
 always use caveman and ponytail skill
 
-Add-on BBS FS: distance culling + tiered model simplification + per-bone occlusion culling untuk
-scene film.
+Add-on BBS FS: cap jumlah model yg dirender per frame (yg terdekat ke kamera menang),
+biar scene ribuan actor gak membebani GPU selama pengerjaan.
 
 1. **Selalu `git commit` setelah selesai mengerjakan task.** Tak ada pengecualian: setiap
    perubahan yang sampai ke `src/`, `build.gradle`, `*.json`, atau dokumen ini langsung
    di-commit di repo ini setelah task selesai. Jangan menumpuk perubahan tidak ter-commit.
 2. **Jangan sentuh `bbsrc/`.** Repo BBS punya git repo sendiri dan kontraknya sendiri. Bila
    perlu publish ulang BBS, build dari sana tanpa mengubah file-nya (lihat COMMANDS).
-3. **Add-on ini hanya boleh menyentuh kontrak `mchorse.bbs_mod.api` + `mchorse.bbs_mod.api.client`**,
-   plus SATU client mixin (`CubicVAORendererMixin`) yang fail-safe by default.
-4. **Jangan pernah mutate state `ModelGroup`/`Model`** — model di-cache dan dipakai bersama
-   per asset key. Tentukan per-form, jangan ubah shared state.
-5. **Restore override visible hanya di `FilmEvents.RENDER_AFTER` / `SHUTDOWN`**, bukan di
+3. **Add-on ini hanya boleh menyentuh kontrak `mchorse.bbs_mod.api` + `mchorse.bbs_mod.api.client`.**
+   Mixin, raw GL, dan per-bone cull sudah dibuang — add-on ini murni event BBS.
+4. **Restore override visible hanya di `FilmEvents.RENDER_AFTER` / `SHUTDOWN`**, bukan di
    `FormRenderEvents.AFTER` — shadow dan name tag digambar setelahnya.
-6. **Sebelum yield, build harus jalan**: `sh ./gradlew build` dari sini.
+5. **Sebelum yield, build harus jalan**: `sh ./gradlew build` dari sini.
 
 ## STRUCTURE
 
 ```
 ./
 ├── src/main/java/bbslod/
-│   ├── BBSLod.java             # common entrypoint (bbs-addon)
+│   ├── BBSLod.java             # common entrypoint (bbs-addon), MOD_ID = "bbslezy"
 │   ├── BBSLodClient.java       # client entrypoint (bbs-client-addon), wiring Fabric events
-│   ├── LodSettings.java        # holder settings client
-│   ├── LodEngine.java          # tier math + bookkeeping visible
-│   ├── LodState.java           # stack tier + form per-render (dibaca mixin)
-│   ├── LodBoneDepth.java       # cache depth ModelGroup (cap opsional, default off)
-│   ├── LodBoneSize.java        # cull bone by proyeksi box ke kamera (frustum + ukuran layar)
-│   ├── LodOcclusion.java       # snapshot depth buffer + per-bone occlusion test + hysteresis
-│   ├── LodDebug.java           # debug overlay: box per bone, warna = keputusan cull
-│   └── mixin/client/CubicVAORendererMixin.java  # tier-1 bone cull + occlusion skip, fail-safe
+│   ├── LodSettings.java        # settings: enabled + render_limit
+│   └── LodEngine.java          # ranking jarak + budget + override visible
 ├── src/main/resources/
-│   ├── fabric.mod.json         # id bbslod, depends bbs >=2.6.1-1.20.1
-│   └── bbslod.mixins.json      # required:false, defaultRequire:0
+│   └── fabric.mod.json         # id bbslezy, depends bbs >=2.6.0-1.20.1
 ├── build.gradle                # dari docs/addon-template + repo Modrinth + sodium
 ├── settings.gradle, gradle.properties   # dari template, versi dikunci ke BBS
 ├── bbs-publish-init.gradle     # work-around Gradle 9 publish BBS (lihat COMMANDS)
@@ -47,33 +38,27 @@ scene film.
 - Package `bbslod`, lowercase. Class PascalCase, field/method camelCase.
 - Add-on bus (`EventBus`) hanya menemukan `@Subscribe` di **class entrypoint**. Handler di
   class lain (mis. `LodEngine`) kagak ketemu — register Fabric events dari `BBSLodClient`.
-- Value per-form pakai ID namespaced (`bbslod:cull_distance`) biar selamat saat add-on
-  tidak terpasang. `-1F` = warisi setting global.
 - `visible.setRuntimeValue(...)` adalah satu-satunya cara hide form tanpa clobber keyframe
   BBS sendiri (yang juga lewat runtimeValue).
-- Mixin config `required: false` + `defaultRequire: 0`: BBS berubah → mixin no-op, add-on
-  tetap jalan cull-only. Itu sengaja, jangan diubah jadi `required: true`.
 - Build file `build.gradle` selain blok repositories/dependencies sodium adalah verbatim
   dari `docs/addon-template/build.gradle`. Jangan tambah konfigurasi tanpa alasan.
-- **Occlusion culling (`occlusion`, default off) experimental dan sengaja opt-in**: satu-satunya
-  raw GL di add-on ini di luar BBS. Depth di-capture di `FilmEvents.RENDER_AFTER`, di-blit ke FBO
-  window/4 + satu readback per frame, dipakai frame depan — jadi keputusan telat 1-2 frame dan
-  butuh hysteresis 2-frame. Setiap kegagalan GL (snapshot uniform, FBO incomplete, exception)
-  mematikan fitur untuk session itu, bukan cull salah. Ukur biaya readback di scene target
-  sebelum default diubah jadi true.
-- **`LodOcclusion` wajib restore binding read+draw framebuffer di `finally`**: GlStateManager MC
-  cache binding yang dia anggap aktif; FBO kecil kita ditinggal terikat = sisa frame rusak.
-- State occlusion di-key per (Form, ModelGroup) karena ModelGroup dipakai bersama antar form;
-  `LodState.push(tier, form)` hanya bawa form saat engine aktif, sehingga pass UI/picking/shadow
-  tidak pernah nyoba snapshot yang bukan deskripsi mereka.
+- Ranking dihitung di `FilmEvents.RENDER_AFTER` (sudah tau semua jarak form) lalu dipakai
+  frame depan — jadi budget selalu telat 1 frame. Itu sengaja: full sort lebih murah daripada
+  partial-select manual, dan 1 frame lag gak kelihatan.
+- Budget disimpan sebagai **squared distance** (`double`) — gak ada sqrt, gak ada alloc
+  `Vec3d` per form. `before()` bandingin squared, `onRenderAfter` hitung squared manual.
+- `touched` (IdentityHashMap) melacak form yg di-override engine; restore via
+  `clearOverrides` tiap RENDER_AFTER + SHUTDOWN.
 
 ## ANTI-PATTERNS
 
-- Jangan simpan state per-frame di static field tanpa stack — `FormUtilsClient.render`
-  reentrant (body parts), field datar akan ditimpa nesting.
+- Jangan simpan state per-form di static field tanpa reset per controller —
+  `clearOverrides` wajib jalan tiap RENDER_AFTER, kagak boleh bocor ke film lain.
 - Jangan restore di `FormRenderEvents.AFTER` (terlalu cepat, shadow/nametag belum gambar).
 - Jangan cull form yang `form.anchor.get().hasTarget()` (camera-locked) — sama dengan
   precedent `BaseFilmController.isCulled`.
+- Jangan skip pass picking: editor click harus tetap bisa select actor yg lagi di-cap.
+  Guard `context.isPicking()` di `before()` buat itu.
 - Jangan ubah `gradle.properties` versi selain dari `bbsrc/gradle.properties`.
 - Jangan commit `run/`, `build/`, `.gradle/`, atau `*.log` (sudah di .gitignore).
 
@@ -98,39 +83,19 @@ sh ./gradlew dependencies --configuration runtimeClasspath --no-daemon
 Versi (kunci dari `bbsrc/gradle.properties`): minecraft 1.20.1, yarn 1.20.1+build.10,
 loader 0.16.14, fabric-api 0.92.1+1.20.1, sodium mc1.20.1-0.5.8.
 BBS terpublish sebagai `mchorse:bbs:2.6.1-1.20.1` (versi = mod_version + "-" + mc_version).
+Dependensi mod `bbs >=2.6.0-1.20.1` — add-on jalan di 2.6+ sampe BBS ada breaking change
+API. `BBSApi.requireVersion(MOD_ID, 1)` di `onSourcePacks` jadi guard: mismatch baca
+"add-on gak cocok build ini", bukan crash saat dipakai.
 
 ## NOTES
 
 - `bbsrc/` adalah symlink ke `App/bbs-fs-F6-Fix`; wrapper resolve ke path fisik tapi
   build project yang sama. Project ini ada di root `bbs-lod-1.20.1`, dan `bbsrc` adalah symlink di dalamnya — jangan di-commit (sudah di-ignore).
 - Dev client jalan TANPA Iris (shader kagak ketest); Sodium sudah include.
-- Settings client ada di `run/config/bbs/settings/bbslod.json` — juga editable via settings
-  screen BBS. Default: enabled, cull 128, simplify 64, bone_cull_size 0.02,
-  bone_cull_depth 0 (cap opsional, 0 = off), film_camera_only false, fov_bias true,
-  occlusion false, occlusion_bias 0.5.
-- `film_camera_only` (default **false**): opt-in staging. Nyalain untuk confine engine cuman ke
-  render BBS — film panel preview + video export (keduanya `BBSRendering.isCustomSize()`),
-  lewat kamera BBS — biara lo observer rule sebelum apply ke semua. Default off = jalan ke
-  semua pass world-replay.
-- Tier 1 bone cull: `LodBoneSize` proyeksikan geometry box bone ke view space kamera BBS
-  (frustum + ukuran layar); bone di belakang kamera, di luar frustum, atau lebih kecil dari
-  `bone_cull_size` (fraksi dari setengah tinggi viewport) di-skip. Depth (`LodBoneDepth`,
-  `bone_cull_depth`) sekarang cuma cap opsional — rule lama bongkar actor dari hips keluar,
-  actor jauh sisanya kaki doang. View half-extents di-set `LodEngine` dari `camera.projection`
-  tiap form ke `LodState`; proyeksi non-perspective (m22 >= 0) = 0 = rule mati frame itu.
-- Debug: set `debug: true` → log tiap 200 frame `frames/tier1/tier2/mixinHits/occHits`.
-  `mixinHits = 0` padahal `tier1 > 0` → mixin tidak apply (target BBS pindah). `occHits = 0`
-  padahal `occlusion: true` → snapshot kagak ke-capture atau semuanya gagal cull; cek log untuk
-- Debug overlay: `debug: true` juga gambar box per bone yg **di-skip** mixin (`LodDebug`):
-  oranye = size-cull (frustum/ukuran), merah = depth-cull, biru = occlusion-cull. Bone yg
-  tetap digambar kagak dibox — dia sudah kelihatan sebagai geometri model sendiri, dan box per
-  bone itu satu draw call per bone (BBS flush lines layer tiap ganti layer). Plus frustum
-  kamera BBS (kuning) 1× per frame: posisi + 4 ray ke sudut FOV, titik world ditransformasi
-  lewat invers stack form (stack bawa body yaw).
-
-  Layer depth-test, jadi bone/kamera di balik terrain tetap kelihatan tersembunyi.
-- Occlusion: cuman nutupin bone di belakang yg **opaque dan sudah gambar lebih dulu** dalam frame
-  (terrain + form sebelumnya). Form translucent (air, glass) kagak nulis depth = kagak occlude.
-  Test pakai 9 titik box geometry + bias eye-space (block) + hysteresis anti-flicker.
-- Verifikasi behavioral (cull, simplify, shadow, picking, FOV bias, occlusion, persistensi) hanya
-  bisa manual di scene film asli — lihat plan `local://bbs-lod-addon-plan.md`.
+- Settings client ada di `run/config/bbs/settings/bbslezy.json` — juga editable via settings
+  screen BBS. Default: enabled true, render_limit 100. `render_limit` 0 = mati (semua render).
+- Matiin `enabled` pas mau render/record — fitur ini buat pengerjaan, bukan hasil akhir.
+- Yang di-cull: root form milik controller (lewat `controller.getEntities()`). Body parts
+  ikut parent karena kagak punya entri sendiri di map itu.
+- Verifikasi behavioral hanya bisa manual di scene film asli: spawn ribuan actor, atur
+  `render_limit`, liat yg jauh menghilang + yg dekat tetap.
