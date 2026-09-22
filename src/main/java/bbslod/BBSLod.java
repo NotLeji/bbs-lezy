@@ -22,7 +22,7 @@ public class BBSLod implements BBSAddonMod
     {
         /* Before anything else: a mismatch here reads as "this addon does not fit this BBS build"
          * rather than as a crash on the first thing the user does. */
-        BBSApi.requireVersion(MOD_ID, 1);
+        BBSApi.requireVersion(MOD_ID, 2);
 
         /* Makes this addon's own assets addressable as bbslezy:... links. */
         event.registerAddon(MOD_ID, BBSLod.class);
