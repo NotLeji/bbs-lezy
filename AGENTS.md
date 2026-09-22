@@ -121,3 +121,7 @@ sh ./gradlew dependencies --configuration runtimeClasspath --no-daemon
 - Verifikasi panel replay hanya manual: buka film editor → replay panel → klik kanan, cek 3
   menu entry + tombol scroll. Mixin fail-safe: `required:false` + `defaultRequire:0` berarti
   BBS internal ganti → mixin skip, add-on tetap jalan (fitur no.2 aja yg ilang, no.1 aman).
+- **`getSelectedReplays()` return fresh copy tiap call.** Jangan mutate list itu buat ganti
+  selection — gak ada yg berubah di layar. Set lewat `selection.setAll(entries)` (entry =
+  `ReplayListEntry` dari `getList()`), lalu `refreshReplayList()`. Ini bug yg peran kejadian:
+  "select same model" kelihatan gak melakukan apa2 padahal selection copy doang yg berubah.
