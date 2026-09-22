@@ -93,29 +93,48 @@ public class LezyReplayActions
 
     /**
      * The number asked for is a target for the whole selection, not a per-replay count: asking for
-     * 150 with three replays picked makes 150 copies, not 450, because what the user is counting
-     * is the crowd, not the actors in it.
+     * 150 with three replays picked gives each one 50, not 150 each, because what the user is
+     * counting is the crowd, not the actors in it.
      *
-     * <p>One copy of each picked replay is added per round, so the distribution across the
-     * selection stays even — the first copy of each precedes the second of any, and a request
-     * that does not divide evenly leaves the remainder spread over the first picks rather than
-     * piled on one. An empty selection adds nothing.</p>
+     * <p>Each picked replay gets its own new category, and the original moves into it and counts
+     * as the first of its share — so a share of 50 means 49 copies, not 50. A remainder that does
+     * not divide evenly goes to the earlier picks, one each, so 150 over four is 38,38,37,37
+     * rather than a pile on the last one.</p>
      *
-     * @param category the folder the copies land in, or null to inherit each source's own
+     * @param prefix the category name each replay's share is filed under, numbered per replay
      * @return the last copy made, for the caller to scroll to
      */
-    public static Replay duplicateToTotal(Film film, List<Replay> selected, int total, String category)
+    public static Replay duplicateToTotal(Film film, List<Replay> selected, int total)
     {
         if (selected.isEmpty() || total <= 0)
         {
             return null;
         }
 
+        int count = selected.size();
+        int base = total / count;
+        int remainder = total % count;
+
+        Set<String> used = new HashSet<>();
+
+        for (Replay replay : film.replays.getList())
+        {
+            used.add(replay.category.get());
+        }
+
         Replay last = null;
 
-        for (int round = 0; round < total; round++)
+        for (int i = 0; i < count; i++)
         {
-            for (Replay source : selected)
+            /* The original takes one of the share, so it is one fewer copy to make. */
+            int share = base + (i < remainder ? 1 : 0);
+            Replay source = selected.get(i);
+            String category = uniqueCategory(used, source.getName() + " D #");
+
+            source.category.set(category);
+            used.add(category);
+
+            for (int copy = 1; copy < share; copy++)
             {
                 last = copyReplay(film, source, category);
             }
@@ -129,32 +148,16 @@ public class LezyReplayActions
         Replay copy = film.replays.addReplay();
 
         copy.copy(source);
-
-        if (category != null)
-        {
-            copy.category.set(category);
-        }
+        copy.category.set(category);
 
         return copy;
     }
 
-    /**
-     * A name for the category the copies of one duplicate operation share, so a second run lands
-     * in its own rather than merging with the first: the count makes it unique within the film
-     * without the user having to type it.
-     */
-    public static String nextDuplicateCategory(Film film, String prefix)
+    private static String uniqueCategory(Set<String> used, String prefix)
     {
-        Set<String> used = new HashSet<>();
-
-        for (Replay replay : film.replays.getList())
-        {
-            used.add(replay.category.get());
-        }
-
         for (int i = 1; i < 10000; i++)
         {
-            String candidate = prefix + " " + i;
+            String candidate = prefix + i;
 
             if (!used.contains(candidate))
             {
@@ -162,6 +165,6 @@ public class LezyReplayActions
             }
         }
 
-        return prefix;
+        return prefix + System.nanoTime();
     }
 }

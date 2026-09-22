@@ -88,8 +88,7 @@ public class ReplayListMixin
             (n) ->
             {
                 List<Replay> selected = new ArrayList<>(self.getSelectedReplays());
-                String category = LezyReplayActions.nextDuplicateCategory(film, "Duplicates");
-                Replay last = LezyReplayActions.duplicateToTotal(film, selected, (int) (double) n, category);
+                Replay last = LezyReplayActions.duplicateToTotal(film, selected, (int) (double) n);
 
                 self.refreshReplayList();
 
