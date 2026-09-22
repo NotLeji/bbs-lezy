@@ -57,30 +57,28 @@ public class ReplayListMixin
 
     private void bbslezy$selectionItems(ContextMenuManager menu, UIReplayList self, Film film)
     {
-        List<Replay> selected = new ArrayList<>(self.getSelectedReplays());
-
         menu.action(Icons.ALL_DIRECTIONS, L10n.lang("bbslezy.ui.replays.select_all"), () ->
         {
-            LezyReplayActions.selectAll(film.replays, selected, self::refreshReplayList);
+            LezyReplayActions.selectAll(self);
         });
 
-        if (selected.isEmpty())
+        if (self.getSelectedReplayFirst() == null)
         {
             return;
         }
 
         menu.action(Icons.MATERIAL, L10n.lang("bbslezy.ui.replays.select_same_model"), () ->
         {
-            LezyReplayActions.selectSameModel(film, selected, self::refreshReplayList);
+            LezyReplayActions.selectSameModel(self, film);
         });
 
         menu.action(Icons.DUPE, L10n.lang("bbslezy.ui.replays.duplicate_total"), () ->
         {
-            this.bbslezy$openDuplicateTotal(self, film, selected);
+            this.bbslezy$openDuplicateTotal(self, film);
         });
     }
 
-    private void bbslezy$openDuplicateTotal(UIReplayList self, Film film, List<Replay> selected)
+    private void bbslezy$openDuplicateTotal(UIReplayList self, Film film)
     {
         UIContext context = self.getContext();
 
@@ -89,9 +87,16 @@ public class ReplayListMixin
             L10n.lang("bbslezy.ui.replays.duplicate_total_description"),
             (n) ->
             {
+                List<Replay> selected = new ArrayList<>(self.getSelectedReplays());
                 String category = LezyReplayActions.nextDuplicateCategory(film, "Duplicates");
+                Replay last = LezyReplayActions.duplicateToTotal(film, selected, (int) (double) n, category);
 
-                LezyReplayActions.duplicateToTotal(film, selected, (int) (double) n, category, self::refreshReplayList);
+                self.refreshReplayList();
+
+                if (last != null)
+                {
+                    self.scrollToReplay(last);
+                }
             });
 
         numberPanel.value.limit(1).integer();

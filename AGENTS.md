@@ -80,18 +80,18 @@ biar scene ribuan actor gak membebani GPU selama pengerjaan.
 
 ```bash
 # Publish BBS ke maven local (jalankan DARI bbsrc/, TANPA ubah file bbsrc):
-sh ./gradlew publishToMavenLocal --init-script ../bbs-publish-init.gradle --no-daemon
+sh ./gradlew publishToMavenLocal --init-script "C:/Users/Administrator/App/bbs-lod-1.20.1/bbs-publish-init.gradle" --no-daemon
 # ^ work-around: Gradle 9 fail kalau duplicate jar entry; api/AGENTS.md ada di dua source
 #   set BBS. Init script set duplicatesStrategy=EXCLUDE di semua task Jar.
 
 # Build add-on (dari root project ini):
 sh ./gradlew build --no-daemon
 
-Versi (kunci dari `bbsrc/gradle.properties`): minecraft 1.20.1, yarn 1.20.1+build.10,
-loader 0.16.14, fabric-api 0.92.1+1.20.1, sodium mc1.20.1-0.5.8.
-BBS terpublish sebagai `mchorse:bbs:2.7-1.20.1` (versi = mod_version + "-" + mc_version).
-Dependensi mod `bbs >=2.7-1.20.1`. `BBSApi.requireVersion(MOD_ID, 2)` — API v2 punya
-`RegisterL10nEvent` + `FilmEditEvents` + hooks editor lain; `BBSApi.VERSION = 2` di 2.7.
+# Versi (kunci dari `bbsrc/gradle.properties`): minecraft 1.20.1, yarn 1.20.1+build.10,
+# loader 0.16.14, fabric-api 0.92.1+1.20.1, sodium mc1.20.1-0.5.8.
+# BBS terpublish sebagai `mchorse:bbs:2.7-1.20.1` (versi = mod_version + "-" + mc_version).
+# Dependensi mod `bbs >=2.7-1.20.1`. `BBSApi.requireVersion(MOD_ID, 2)` — API v2 punya
+# `RegisterL10nEvent` + `FilmEditEvents` + hooks editor lain; `BBSApi.VERSION = 2` di 2.7.
 
 # Dependencies report:
 sh ./gradlew dependencies --configuration runtimeClasspath --no-daemon
@@ -103,7 +103,6 @@ sh ./gradlew dependencies --configuration runtimeClasspath --no-daemon
 - Dev client jalan TANPA Iris (shader kagak ketest); Sodium sudah include.
 - Settings client ada di `run/config/bbs/settings/bbslezy.json` — juga editable via settings
   screen BBS. Default: enabled true, render_limit 100. `render_limit` 0 = mati (semua render).
-- Matiin `enabled` pas mau render/record — fitur ini buat pengerjaan, bukan hasil akhir.
 - Yang di-cull: root form milik controller (lewat `controller.getEntities()`). Body parts
   ikut parent karena kagak punya entri sendiri di map itu.
 - Verifikasi behavioral hanya bisa manual di scene film asli: spawn ribuan actor, atur
