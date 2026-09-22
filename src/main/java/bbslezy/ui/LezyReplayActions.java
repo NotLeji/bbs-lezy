@@ -27,26 +27,15 @@ import java.util.Set;
  */
 public class LezyReplayActions
 {
-    /* ---------------------------- selection ---------------------------- */
-
     /**
-     * Every replay row in the list, including the ones inside folders the user has not opened:
-     * the list's own rows are only the visible ones, and a collapsed category full of duplicates
-     * is exactly the case where those miss the entries the user means.
+     * Every row in the list, the folders with the replays in them: the rows BBS draws are the
+     * entries themselves, and a category the duplicates came in is one of them, so picking
+     * everything means the category rows come along for whatever the user does to the selection
+     * next — removing them, moving them, not only the replays inside.
      */
     public static void selectAll(UIReplayList list)
     {
-        List<ReplayListEntry> entries = new ArrayList<>();
-
-        for (ReplayListEntry entry : list.getList())
-        {
-            if (entry.isReplay())
-            {
-                entries.add(entry);
-            }
-        }
-
-        list.selection.setAll(entries);
+        list.selection.setAll(list.getList());
         list.refreshReplayList();
     }
 
