@@ -5,6 +5,5 @@
 	"bbslezy.config.general.render_limit-comment": "The number of models the cap keeps visible per frame; everything farther away than the last one inside the budget is held back. 0 disables the limit.",
 	"bbslezy.ui.replays.select_all": "Select all replays",
 	"bbslezy.ui.replays.select_same_model": "Select same model",
-	"bbslezy.ui.replays.duplicate_total": "Duplicate to total",
-	"bbslezy.ui.replays.duplicate_total_description": "Total number of duplicates across the selection, not per replay. The copies go into their own category."
+	"bbslezy.ui.replays.duplicate_total_description": "Total number of replays across the selection, split evenly between the ones picked. Each picked replay gets its own category and counts as the first of its share."
 }
