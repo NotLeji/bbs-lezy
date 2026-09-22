@@ -1,0 +1,10 @@
+{
+	"bbslezy.config.general.enabled": "Render limit",
+	"bbslezy.config.general.enabled-comment": "Caps how many of the film scene's models render at once, keeping the ones closest to the camera. Turn this off when rendering or recording, so every model is drawn.",
+	"bbslezy.config.general.render_limit": "Max rendered models",
+	"bbslezy.config.general.render_limit-comment": "The number of models the cap keeps visible per frame; everything farther away than the last one inside the budget is held back. 0 disables the limit.",
+	"bbslezy.ui.replays.select_all": "Select all replays",
+	"bbslezy.ui.replays.select_same_model": "Select same model",
+	"bbslezy.ui.replays.duplicate_total": "Duplicate to total",
+	"bbslezy.ui.replays.duplicate_total_description": "Total number of duplicates across the selection, not per replay. The copies go into their own category."
+}

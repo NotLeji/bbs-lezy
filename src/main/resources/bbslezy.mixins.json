@@ -1,0 +1,12 @@
+{
+    "required": false,
+    "package": "bbslezy.mixin.client",
+    "compatibilityLevel": "JAVA_17",
+    "client": [
+        "ReplaysListPanelMixin",
+        "ReplayListMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 0
+    }
+}

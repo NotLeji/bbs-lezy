@@ -3,10 +3,13 @@
 	"id": "bbslezy",
 	"version": "${version}",
 	"name": "BBS Lezy",
-	"description": "Caps how many of a BBS film scene's models render at once, keeping the closest ones.",
+	"description": "Caps how many of a BBS film scene's models render at once, and adds mass-select and instant-scroll controls to the replay list.",
 	"license": "MIT",
 	"environment": "*",
 	"icon": "assets/bbslezy/icon.png",
+	"mixins": [
+		"bbslezy.mixins.json"
+	],
 	"entrypoints": {
 		"bbs-addon": ["bbslod.BBSLod"],
 		"bbs-client-addon": ["bbslod.BBSLodClient"]
