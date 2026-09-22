@@ -2,11 +2,10 @@ package bbslezy.ui;
 
 import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.film.replays.Replay;
-import mchorse.bbs_mod.film.replays.Replays;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.forms.ModelForm;
-import mchorse.bbs_mod.settings.values.core.ValueForm;
 import mchorse.bbs_mod.ui.film.replays.ReplayListEntry;
+import mchorse.bbs_mod.ui.film.replays.UIReplayList;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -17,30 +16,38 @@ import java.util.Set;
  * The replay panel features that BBS's UI has no hook for: instant scroll to either end of the
  * list, and the three selections and duplicate modes a mass-produced scene needs.
  *
- * <p>None of the methods here hold state: they take the list, do the work against the film, and
- * hand the list back its own selection to redraw. The list's own rebuild is what makes the new
- * rows appear, so every caller ends in {@code refreshReplayList}.</p>
+ * <p>None of the methods here hold state: they read the list, do the work against the film, and
+ * hand the list back its own new selection. The list's own {@link UIReplayList#refreshReplayList()}
+ * is what rebuilds the rows, so every caller ends in it — the selection is what that method
+ * carries over the rebuild, so setting it before the refresh is what keeps the new pick.</p>
  *
- * <p>Reaching into the UI classes is outside the {@code api} contract: these methods are the
- * whole reason the addon mixes into BBS, and they would break in the game rather than at the
- * build if the classes moved. Every reference is kept to public fields and methods, so a rename
- * is what would break it, and the mixin's target list is what surfaces the break.</p>
+ * <p>Selections are set through {@code selection.setAll}, not by mutating the list the caller
+ * passed in: {@link UIReplayList#getSelectedReplays()} returns a fresh list every call, and
+ * editing that copy moves nothing on screen.</p>
  */
 public class LezyReplayActions
 {
     /* ---------------------------- selection ---------------------------- */
 
     /**
-     * Every replay in the film, whether its folder is open or not — the list's own select-all
-     * walks only visible rows, and a collapsed category full of duplicates is exactly the case
-     * where that misses the ones the user means.
+     * Every replay row in the list, including the ones inside folders the user has not opened:
+     * the list's own rows are only the visible ones, and a collapsed category full of duplicates
+     * is exactly the case where those miss the entries the user means.
      */
-    public static void selectAll(Replays replays, List<Replay> selected, Runnable refresh)
+    public static void selectAll(UIReplayList list)
     {
-        selected.clear();
-        selected.addAll(replays.getList());
+        List<ReplayListEntry> entries = new ArrayList<>();
 
-        refresh.run();
+        for (ReplayListEntry entry : list.getList())
+        {
+            if (entry.isReplay())
+            {
+                entries.add(entry);
+            }
+        }
+
+        list.selection.setAll(entries);
+        list.refreshReplayList();
     }
 
     /**
@@ -48,16 +55,11 @@ public class LezyReplayActions
      * where the copies are the ones the user wants as a set. Non-model forms fall back to the
      * whole form data, so two replays of the same billboard count as the same thing.
      */
-    public static void selectSameModel(Film film, List<Replay> selected, Runnable refresh)
+    public static void selectSameModel(UIReplayList list, Film film)
     {
-        if (selected.isEmpty())
-        {
-            return;
-        }
-
         Set<String> wanted = new HashSet<>();
 
-        for (Replay replay : selected)
+        for (Replay replay : list.getSelectedReplays())
         {
             String identity = identityOf(replay.form.get());
 
@@ -67,20 +69,23 @@ public class LezyReplayActions
             }
         }
 
-        List<Replay> same = new ArrayList<>();
-
-        for (Replay replay : film.replays.getList())
+        if (wanted.isEmpty())
         {
-            if (wanted.contains(identityOf(replay.form.get())))
+            return;
+        }
+
+        List<ReplayListEntry> entries = new ArrayList<>();
+
+        for (ReplayListEntry entry : list.getList())
+        {
+            if (entry.isReplay() && wanted.contains(identityOf(entry.replay.form.get())))
             {
-                same.add(replay);
+                entries.add(entry);
             }
         }
 
-        selected.clear();
-        selected.addAll(same);
-
-        refresh.run();
+        list.selection.setAll(entries);
+        list.refreshReplayList();
     }
 
     private static String identityOf(Form form)
@@ -107,39 +112,38 @@ public class LezyReplayActions
      * that does not divide evenly leaves the remainder spread over the first picks rather than
      * piled on one. An empty selection adds nothing.</p>
      *
-     * @param duplicates the category the copies land in, or null to inherit each source's own
+     * @param category the folder the copies land in, or null to inherit each source's own
+     * @return the last copy made, for the caller to scroll to
      */
-    public static Replay duplicateToTotal(Film film, List<Replay> selected, int total, String duplicates, Runnable refresh)
+    public static Replay duplicateToTotal(Film film, List<Replay> selected, int total, String category)
     {
         if (selected.isEmpty() || total <= 0)
         {
             return null;
         }
 
-        List<Replay> copies = new ArrayList<>();
+        Replay last = null;
 
         for (int round = 0; round < total; round++)
         {
             for (Replay source : selected)
             {
-                copies.add(copyReplay(film, source, duplicates));
+                last = copyReplay(film, source, category);
             }
         }
 
-        refresh.run();
-
-        return copies.isEmpty() ? null : copies.get(copies.size() - 1);
+        return last;
     }
 
-    private static Replay copyReplay(Film film, Replay source, String duplicates)
+    private static Replay copyReplay(Film film, Replay source, String category)
     {
         Replay copy = film.replays.addReplay();
 
         copy.copy(source);
 
-        if (duplicates != null)
+        if (category != null)
         {
-            copy.category.set(duplicates);
+            copy.category.set(category);
         }
 
         return copy;
@@ -170,22 +174,5 @@ public class LezyReplayActions
         }
 
         return prefix;
-    }
-
-    /* ---------------------------- scroll ---------------------------- */
-
-    public static int scrollEnd(List<ReplayListEntry> list, int itemSize)
-    {
-        int replays = 0;
-
-        for (ReplayListEntry entry : list)
-        {
-            if (entry.isReplay())
-            {
-                replays++;
-            }
-        }
-
-        return Math.max(0, replays - 1) * itemSize;
     }
 }
