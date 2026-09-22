@@ -1,23 +1,21 @@
 {
 	"schemaVersion": 1,
-	"id": "bbslod",
+	"id": "bbslezy",
 	"version": "${version}",
-	"name": "BBS LOD",
-	"description": "Distance culling and tiered model simplification for BBS film scenes.",
+	"name": "BBS Lezy",
+	"description": "Caps how many of a BBS film scene's models render at once, keeping the closest ones.",
 	"license": "MIT",
 	"environment": "*",
+	"icon": "assets/bbslezy/icon.png",
 	"entrypoints": {
 		"bbs-addon": ["bbslod.BBSLod"],
 		"bbs-client-addon": ["bbslod.BBSLodClient"]
 	},
-	"mixins": [
-		"bbslod.mixins.json"
-	],
 	"depends": {
 		"fabricloader": ">=0.16.14",
 		"minecraft": "~1.20.1",
 		"java": ">=17",
 		"fabric-api": ">=0.92.1+1.20.1",
-		"bbs": ">=2.6.1-1.20.1"
+		"bbs": ">=2.6.0-1.20.1"
 	}
 }

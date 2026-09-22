@@ -4,12 +4,10 @@ import mchorse.bbs_mod.api.BBSAddonMod;
 import mchorse.bbs_mod.api.Subscribe;
 import mchorse.bbs_mod.api.client.events.BBSClientReadyEvent;
 import mchorse.bbs_mod.api.client.events.RegisterClientSettingsEvent;
-import mchorse.bbs_mod.api.client.events.RegisterTrackStylesEvent;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
-import mchorse.bbs_mod.utils.colors.Colors;
 
 /**
- * The client half of the LOD addon, registered under {@code bbs-client-addon}.
+ * The client half of the BBS Lezy addon, registered under {@code bbs-client-addon}.
  */
 public class BBSLodClient implements BBSAddonMod
 {
@@ -17,14 +15,6 @@ public class BBSLodClient implements BBSAddonMod
     public void onClientSettings(RegisterClientSettingsEvent event)
     {
         event.register(Icons.GEAR, BBSLod.MOD_ID, LodSettings::register);
-    }
-
-    /** Gives this addon's two values their own colour and icon on the timeline. */
-    @Subscribe
-    public void onTrackStyles(RegisterTrackStylesEvent event)
-    {
-        event.register(BBSLod.CULL, Icons.CURVES, Colors.CYAN);
-        event.register(BBSLod.SIMPLIFY, Icons.CURVES, Colors.CYAN);
     }
 
     /**
