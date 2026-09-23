@@ -1,13 +1,15 @@
 package bbslod;
 
 import mchorse.bbs_mod.api.client.events.FilmEvents;
-import mchorse.bbs_mod.api.client.events.FormRenderEvents;
+import mchorse.bbs_mod.api.client.events.FilmGizmoEvents;
 import mchorse.bbs_mod.film.BaseFilmController;
+import mchorse.bbs_mod.film.FilmControllerContext;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.forms.forms.Form;
-import mchorse.bbs_mod.forms.renderers.FormRenderingContext;
+import mchorse.bbs_mod.ui.framework.elements.utils.StencilMap;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.render.Camera;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayList;
@@ -21,7 +23,8 @@ import java.util.Set;
  *
  * <p>Uses camera look-direction (frustum weighting) so that actors in the camera's field of view
  * are prioritized over actors behind the camera, eliminating ghost renders and missing replays.
- * Tracks both position and rotation with a sensitive deadband for smooth, responsive movement.</p>
+ * Tracks both position and rotation with a sensitive deadband for smooth, responsive movement.
+ * Selected replays obey the exact same LOD and focus rules without exception.</p>
  */
 public class LodEngine
 {
@@ -50,30 +53,27 @@ public class LodEngine
 
     public static void register()
     {
-        FormRenderEvents.BEFORE.register(LodEngine::before);
-        FormRenderEvents.AFTER.register(LodEngine::after);
+        FilmGizmoEvents.DRAW.register(LodEngine::onDrawGizmo);
         FilmEvents.RENDER_AFTER.register(LodEngine::onRenderAfter);
         FilmEvents.SHUTDOWN.register(LodEngine::onShutdown);
     }
 
     /**
-     * Stencil picking pass needs to click culled actors: temporarily unhide on picking BEFORE,
-     * then restore in AFTER. During normal world rendering, does nothing.
+     * Suppress the transform gizmo on actors currently culled by the LOD engine.
      */
-    private static void before(Form form, FormRenderingContext context)
+    private static boolean onDrawGizmo(FilmControllerContext context, StencilMap stencil, MatrixStack stack)
     {
-        if (context.isPicking() && touched.contains(form))
+        if (context.entity != null)
         {
-            form.visible.setRuntimeValue(null);
-        }
-    }
+            Form form = context.entity.getForm();
 
-    private static void after(Form form, FormRenderingContext context)
-    {
-        if (context.isPicking() && touched.contains(form))
-        {
-            form.visible.setRuntimeValue(Boolean.FALSE);
+            if (form != null && touched.contains(form))
+            {
+                return true;
+            }
         }
+
+        return false;
     }
 
     /**
