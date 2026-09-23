@@ -7,6 +7,7 @@ import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.renderers.FormRenderingContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.minecraft.client.render.Camera;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayList;
@@ -18,9 +19,9 @@ import java.util.Set;
 /**
  * Caps how many of a scene's forms get drawn per frame with focus-distance support.
  *
- * <p>Uses spatial deadband (only re-ranks when the camera moves significantly or settings change)
- * and hysteresis buffering so forms on the distance boundary do not flicker or thrash ("refresh")
- * during camera movement.</p>
+ * <p>Uses camera look-direction (frustum weighting) so that actors in the camera's field of view
+ * are prioritized over actors behind the camera, eliminating ghost renders and missing replays.
+ * Tracks both position and rotation with a sensitive deadband for smooth, responsive movement.</p>
  */
 public class LodEngine
 {
@@ -29,27 +30,23 @@ public class LodEngine
 
     private static final List<Candidate> candidates = new ArrayList<>();
 
+    private static BaseFilmController lastController;
     private static double lastCamX = Double.NaN;
     private static double lastCamY = Double.NaN;
     private static double lastCamZ = Double.NaN;
+    private static float lastYaw = Float.NaN;
+    private static float lastPitch = Float.NaN;
     private static double lastFocus = -1D;
     private static int lastLimit = -1;
     private static boolean lastEnabled = false;
     private static int lastEntityCount = -1;
-    private static int framesSinceUpdate = 0;
     private static boolean active = false;
 
-    /** Deadband distance squared: ~0.6 blocks. Tiny camera jitters do not trigger re-ranking. */
-    private static final double MOVE_THRESHOLD_SQ = 0.36D;
+    /** Movement deadband: ~0.1 blocks. */
+    private static final double MOVE_THRESHOLD_SQ = 0.01D;
 
-    /** Hysteresis buffer in blocks. Forms currently visible stay visible unless overtaken by this margin. */
-    private static final double HYSTERESIS_MARGIN = 2.0D;
-
-    /** Minimum frames between camera-motion re-rankings to maintain steady frame pacing. */
-    private static final int MIN_INTERVAL_FRAMES = 3;
-
-    /** Maximum stale frames before refreshing when moving actors might cross the focus window. */
-    private static final int MAX_STALE_FRAMES = 15;
+    /** Rotation deadband: 0.5 degrees. */
+    private static final float ROTATION_THRESHOLD = 0.5F;
 
     public static void register()
     {
@@ -80,12 +77,19 @@ public class LodEngine
     }
 
     /**
-     * Ranks this controller's forms by distance/focus to the camera with deadband and hysteresis.
+     * Ranks this controller's forms by distance/focus to the camera with view-direction weighting.
      */
     private static void onRenderAfter(BaseFilmController controller, WorldRenderContext context)
     {
         boolean enabled = LodSettings.enabled.get();
         int limit = LodSettings.renderLimit.get();
+
+        if (controller != lastController)
+        {
+            clearOverrides(lastController);
+            lastController = controller;
+            reset();
+        }
 
         if (!enabled || limit <= 0)
         {
@@ -99,42 +103,48 @@ public class LodEngine
 
         active = true;
 
-        Vec3d camera = context.camera().getPos();
+        Camera camera = context.camera();
+        Vec3d camPos = camera.getPos();
+        float yaw = camera.getYaw();
+        float pitch = camera.getPitch();
         double focus = LodSettings.focusDistance.get();
         int entityCount = controller.getEntities().size();
 
-        double dx = camera.x - lastCamX;
-        double dy = camera.y - lastCamY;
-        double dz = camera.z - lastCamZ;
+        double dx = camPos.x - lastCamX;
+        double dy = camPos.y - lastCamY;
+        double dz = camPos.z - lastCamZ;
         double distSq = dx * dx + dy * dy + dz * dz;
 
+        float dYaw = Math.abs(yaw - lastYaw);
+        float dPitch = Math.abs(pitch - lastPitch);
+
         boolean settingsChanged = enabled != lastEnabled || limit != lastLimit || focus != lastFocus || entityCount != lastEntityCount;
-        boolean moved = distSq >= MOVE_THRESHOLD_SQ;
-        boolean stale = framesSinceUpdate >= MAX_STALE_FRAMES;
+        boolean camMoved = distSq >= MOVE_THRESHOLD_SQ;
+        boolean camRotated = dYaw >= ROTATION_THRESHOLD || dPitch >= ROTATION_THRESHOLD;
 
-        framesSinceUpdate++;
-
-        /* Skip re-ranking if camera hasn't moved beyond deadband and settings haven't changed */
-        if (!settingsChanged)
+        /* Skip re-ranking only when camera is completely stationary and settings are unchanged */
+        if (!settingsChanged && !camMoved && !camRotated && !candidates.isEmpty())
         {
-            if (!moved && !stale)
-            {
-                return;
-            }
-            if (framesSinceUpdate < MIN_INTERVAL_FRAMES)
-            {
-                return;
-            }
+            return;
         }
 
-        framesSinceUpdate = 0;
-        lastCamX = camera.x;
-        lastCamY = camera.y;
-        lastCamZ = camera.z;
+        lastCamX = camPos.x;
+        lastCamY = camPos.y;
+        lastCamZ = camPos.z;
+        lastYaw = yaw;
+        lastPitch = pitch;
         lastFocus = focus;
         lastLimit = limit;
         lastEnabled = enabled;
         lastEntityCount = entityCount;
+
+        /* Compute forward gaze direction from camera yaw and pitch */
+        float yawRad = (float) Math.toRadians(yaw);
+        float pitchRad = (float) Math.toRadians(pitch);
+        double cosPitch = Math.cos(pitchRad);
+        double lookX = -Math.sin(yawRad) * cosPitch;
+        double lookY = -Math.sin(pitchRad);
+        double lookZ = Math.cos(yawRad) * cosPitch;
 
         int count = 0;
         for (IEntity entity : controller.getEntities().values())
@@ -146,22 +156,36 @@ public class LodEngine
                 continue;
             }
 
-            double ex = entity.getX() - camera.x;
-            double ey = entity.getY() - camera.y;
-            double ez = entity.getZ() - camera.z;
-            double dist = Math.sqrt(ex * ex + ey * ey + ez * ez);
-            double score = focus > 0D ? Math.abs(dist - focus) : dist;
+            double fx = entity.getX() - camPos.x;
+            double fy = entity.getY() - camPos.y;
+            double fz = entity.getZ() - camPos.z;
+            double dist = Math.sqrt(fx * fx + fy * fy + fz * fz);
+            double invDist = dist > 0.0001D ? 1.0D / dist : 0.0D;
+            double dot = (fx * lookX + fy * lookY + fz * lookZ) * invDist;
 
-            /* Hysteresis: forms already visible get a margin bonus to prevent edge flickering */
-            double sortScore = touched.contains(form) ? score : score - HYSTERESIS_MARGIN;
+            double err = focus > 0D ? Math.abs(dist - focus) : dist;
+            double score;
 
-            if (count < candidates.size())
+            /* Frustum weighting:
+             * dot < 0.1 means the actor is behind or outside the camera's view — heavy penalty so it
+             * never steals quota from actors the user is looking at.
+             * dot >= 0.1 slightly favors actors toward screen center. */
+            if (dot < 0.1D)
             {
-                candidates.get(count).set(form, sortScore);
+                score = err + 1000.0D * (0.1D - dot);
             }
             else
             {
-                candidates.add(new Candidate(form, sortScore));
+                score = err + (1.0D - dot) * 0.5D;
+            }
+
+            if (count < candidates.size())
+            {
+                candidates.get(count).set(form, score);
+            }
+            else
+            {
+                candidates.add(new Candidate(form, score));
             }
             count++;
         }
@@ -174,12 +198,13 @@ public class LodEngine
         candidates.sort(null);
 
         /* Apply visibility state diff: only change runtime value when visibility changes */
+        int effectiveLimit = Math.min(limit, count);
         for (int i = 0; i < count; i++)
         {
             Candidate c = candidates.get(i);
             Form form = c.form;
 
-            if (i < limit)
+            if (i < effectiveLimit)
             {
                 if (touched.remove(form))
                 {
@@ -210,6 +235,7 @@ public class LodEngine
     private static void onShutdown(BaseFilmController controller)
     {
         clearOverrides(controller);
+        lastController = null;
         reset();
     }
 
@@ -218,11 +244,12 @@ public class LodEngine
         lastCamX = Double.NaN;
         lastCamY = Double.NaN;
         lastCamZ = Double.NaN;
+        lastYaw = Float.NaN;
+        lastPitch = Float.NaN;
         lastFocus = -1D;
         lastLimit = -1;
         lastEntityCount = -1;
         lastEnabled = false;
-        framesSinceUpdate = 0;
         active = false;
     }
 
@@ -243,12 +270,9 @@ public class LodEngine
                 }
             }
         }
-        else
+        for (Form form : touched)
         {
-            for (Form form : touched)
-            {
-                form.visible.setRuntimeValue(null);
-            }
+            form.visible.setRuntimeValue(null);
         }
 
         touched.clear();
