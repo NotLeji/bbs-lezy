@@ -1,9 +1,11 @@
 package bbslod;
 
 import mchorse.bbs_mod.api.client.events.FilmEvents;
+import mchorse.bbs_mod.api.client.events.FormRenderEvents;
 import mchorse.bbs_mod.film.BaseFilmController;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.forms.forms.Form;
+import mchorse.bbs_mod.forms.renderers.FormRenderingContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.render.Camera;
 import net.minecraft.util.math.Vec3d;
@@ -20,12 +22,16 @@ import java.util.Set;
  * <p>Uses camera look-direction (frustum weighting) so that actors in the camera's field of view
  * are prioritized over actors behind the camera, eliminating ghost renders and missing replays.
  * Tracks both position and rotation with a sensitive deadband for smooth, responsive movement.
- * Selected replays obey the exact same LOD and focus rules without exception.</p>
+ * The model of a selected replay obeys LOD and focus culling rules, while its transform gizmo
+ * remains visible in the editor.</p>
  */
 public class LodEngine
 {
-    /** Forms currently culled via {@code visible.setRuntimeValue(Boolean.FALSE)}. */
+    /** Forms whose visible runtimeValue was set to false this frame, restored on RENDER_AFTER. */
     private static final Set<Form> touched = Collections.newSetFromMap(new IdentityHashMap<>());
+
+    /** Forms determined by the latest ranking to be outside the render limit / focus window. */
+    private static final Set<Form> culled = Collections.newSetFromMap(new IdentityHashMap<>());
 
     private static final List<Candidate> candidates = new ArrayList<>();
 
@@ -39,7 +45,7 @@ public class LodEngine
     private static int lastLimit = -1;
     private static boolean lastEnabled = false;
     private static int lastEntityCount = -1;
-    private static boolean active = false;
+    private static boolean budgetValid = false;
 
     /** Movement deadband: ~0.1 blocks. */
     private static final double MOVE_THRESHOLD_SQ = 0.01D;
@@ -49,37 +55,54 @@ public class LodEngine
 
     public static void register()
     {
+        FormRenderEvents.BEFORE.register(LodEngine::before);
         FilmEvents.RENDER_AFTER.register(LodEngine::onRenderAfter);
         FilmEvents.SHUTDOWN.register(LodEngine::onShutdown);
     }
 
+    /**
+     * Intercepts form rendering: if this form was ranked as culled for the current frame,
+     * set its visible runtime value to false so its model, shadow and nametag are skipped.
+     * The editor gizmo does not check form.visible, so the transform gizmo remains visible
+     * on selected replays even when the model is culled.
+     */
+    private static void before(Form form, FormRenderingContext context)
+    {
+        if (context.ui || !budgetValid || !LodSettings.enabled.get() || !form.visible.get())
+        {
+            return;
+        }
+
+        if (culled.contains(form))
+        {
+            form.visible.setRuntimeValue(Boolean.FALSE);
+            touched.add(form);
+        }
+    }
 
     /**
      * Ranks this controller's forms by distance/focus to the camera with view-direction weighting.
      */
     private static void onRenderAfter(BaseFilmController controller, WorldRenderContext context)
     {
+        clearOverrides(controller);
+
         boolean enabled = LodSettings.enabled.get();
         int limit = LodSettings.renderLimit.get();
 
         if (controller != lastController)
         {
-            clearOverrides(lastController);
             lastController = controller;
             reset();
         }
 
-        if (!enabled || limit <= 0)
+        budgetValid = enabled && limit > 0;
+
+        if (!budgetValid)
         {
-            if (active)
-            {
-                clearOverrides(controller);
-                reset();
-            }
+            culled.clear();
             return;
         }
-
-        active = true;
 
         Camera camera = context.camera();
         Vec3d camPos = camera.getPos();
@@ -175,38 +198,12 @@ public class LodEngine
 
         candidates.sort(null);
 
-        /* Apply visibility state diff: only change runtime value when visibility changes */
+        /* Update culled set for the next frame's BEFORE pass */
+        culled.clear();
         int effectiveLimit = Math.min(limit, count);
-        for (int i = 0; i < count; i++)
+        for (int i = effectiveLimit; i < count; i++)
         {
-            Candidate c = candidates.get(i);
-            Form form = c.form;
-
-            if (i < effectiveLimit)
-            {
-                if (touched.remove(form))
-                {
-                    form.visible.setRuntimeValue(null);
-                }
-            }
-            else
-            {
-                if (touched.add(form))
-                {
-                    form.visible.setRuntimeValue(Boolean.FALSE);
-                }
-            }
-        }
-
-        /* Clean up any forms in touched that are no longer in candidates */
-        if (touched.size() > count)
-        {
-            Set<Form> valid = Collections.newSetFromMap(new IdentityHashMap<>());
-            for (int i = 0; i < count; i++)
-            {
-                valid.add(candidates.get(i).form);
-            }
-            touched.retainAll(valid);
+            culled.add(candidates.get(i).form);
         }
     }
 
@@ -228,7 +225,8 @@ public class LodEngine
         lastLimit = -1;
         lastEntityCount = -1;
         lastEnabled = false;
-        active = false;
+        budgetValid = false;
+        culled.clear();
     }
 
     /**
@@ -236,18 +234,6 @@ public class LodEngine
      */
     private static void clearOverrides(BaseFilmController controller)
     {
-        if (controller != null)
-        {
-            for (IEntity entity : controller.getEntities().values())
-            {
-                Form form = entity.getForm();
-
-                if (form != null)
-                {
-                    form.visible.setRuntimeValue(null);
-                }
-            }
-        }
         for (Form form : touched)
         {
             form.visible.setRuntimeValue(null);
