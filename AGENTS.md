@@ -11,9 +11,9 @@ biar scene ribuan actor gak membebani GPU selama pengerjaan.
 2. **Jangan sentuh `bbsrc/`.** Repo BBS punya git repo sendiri dan kontraknya sendiri. Bila
    perlu publish ulang BBS, build dari sana tanpa mengubah file-nya (lihat COMMANDS).
 3. **Add-on hanya boleh menyentuh kontrak `mchorse.bbs_mod.api` + `mchorse.bbs_mod.api.client`.**
-   Satu pengecualian: **dua client mixin UI** (`bbslezy.mixins.json`, `required: false`,
+   Satu pengecualian: **tiga client mixin UI** (`bbslezy.mixins.json`, `required: false`,
    `defaultRequire: 0`) karena BBS 2.7 gak punya event hook untuk context menu / toolbar panel
-   replay. Pengecualian ini dicatat eksplisit di `bbssrc/ADDONS.md` baris 8-12: reach ke luar
+   replay dan top bar film editor. Pengecualian ini dicatat eksplisit di `bbssrc/ADDONS.md` baris 8-12: reach ke luar
    `api/` = pecah **silent di game**, bukan build error. Setiap update BBS, mixin ini adalah
    hal pertama yg harus di-test manual.
 4. **Restore override visible hanya di `FilmEvents.RENDER_AFTER` / `SHUTDOWN`**, bukan di
@@ -25,13 +25,16 @@ biar scene ribuan actor gak membebani GPU selama pengerjaan.
 │   ├── bbslod/                # engine package (history: id lama, jangan rename)
 │   │   ├── BBSLod.java        # common entrypoint (bbs-addon), MOD_ID = "bbslezy"
 │   │   ├── BBSLodClient.java  # client entrypoint: lang + settings + engine wiring
-│   │   ├── LodSettings.java   # settings: enabled + render_limit
-│   │   └── LodEngine.java     # ranking jarak + budget + override visible
+│   │   ├── LodSettings.java   # settings: enabled + render_limit + focus_distance
+│   │   └── LodEngine.java     # ranking jarak/focus + budget + override visible
 │   └── bbslezy/
-│       └── ui/LezyReplayActions.java  # aksi panel replay: select + duplicate math (stateless)
-│           └── mixin/client/
-│               ├── ReplayListMixin.java       # context menu: select-all / same-model / dupe-total
-│               └── ReplaysListPanelMixin.java # toolbar: tombol scroll top/bottom instant
+│       ├── ui/
+│       │   ├── LezyReplayActions.java # aksi panel replay: select + duplicate math (stateless)
+│       │   └── UILodContextMenu.java  # popup slider limit & focus distance di film editor
+│       └── mixin/client/
+│           ├── ReplayListMixin.java       # context menu: select-all / same-model / dupe-total
+│           ├── ReplaysListPanelMixin.java # toolbar: tombol scroll top/bottom instant
+│           └── FilmPanelMixin.java        # top bar film editor: tombol popup LOD (Icons.VISIBLE)
 ├── src/main/resources/
 │   ├── fabric.mod.json              # id bbslezy, depends bbs >=2.7-1.20.1, mixins ref
 │   ├── bbslezy.mixins.json          # required:false, defaultRequire:0 — fail-safe
@@ -125,3 +128,8 @@ sh ./gradlew dependencies --configuration runtimeClasspath --no-daemon
   selection — gak ada yg berubah di layar. Set lewat `selection.setAll(entries)` (entry =
   `ReplayListEntry` dari `getList()`), lalu `refreshReplayList()`. Ini bug yg peran kejadian:
   "select same model" kelihatan gak melakukan apa2 padahal selection copy doang yg berubah.
+- **Focus distance window & Top Bar Popup**: Focus distance dihitung sebagai $|d - D|$ dari kamera.
+  Jika focus_distance = 0, model terdekat yang menang (perilaku standar). Jika > 0, model di sekitar
+  jarak fokus tersebut yang menang (memungkinkan melihat replay jauh tanpa menaikkan render limit).
+  Tombol top bar film editor (`Icons.VISIBLE`) membuka popup `UILodContextMenu` berisi toggle On/Off,
+  slider Render Limit, dan slider Focus Distance (0-256m). Perubahan otomatis tersimpan ke `bbslezy.json`.

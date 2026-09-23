@@ -3,7 +3,13 @@
 	"bbslezy.config.general.enabled-comment": "Caps how many of the film scene's models render at once, keeping the ones closest to the camera. Turn this off when rendering or recording, so every model is drawn.",
 	"bbslezy.config.general.render_limit": "Max rendered models",
 	"bbslezy.config.general.render_limit-comment": "The number of models the cap keeps visible per frame; everything farther away than the last one inside the budget is held back. 0 disables the limit.",
+	"bbslezy.config.general.focus_distance": "Focus distance",
+	"bbslezy.config.general.focus_distance-comment": "Distance window from camera to prioritize rendering models. Set to 0 for closest models.",
 	"bbslezy.ui.replays.select_all": "Select all replays",
 	"bbslezy.ui.replays.select_same_model": "Select same model",
-	"bbslezy.ui.replays.duplicate_total_description": "Total number of replays across the selection, split evenly between the ones picked. Each picked replay gets its own category and counts as the first of its share."
+	"bbslezy.ui.replays.duplicate_total_description": "Total number of replays across the selection, split evenly between the ones picked. Each picked replay gets its own category and counts as the first of its share.",
+	"bbslezy.ui.lod.tooltip": "BBS Lezy (LOD settings)",
+	"bbslezy.ui.lod.enabled": "LOD enabled",
+	"bbslezy.ui.lod.render_limit": "Render limit",
+	"bbslezy.ui.lod.focus_distance": "Focus distance"
 }
