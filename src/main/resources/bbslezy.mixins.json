@@ -6,7 +6,11 @@
         "ReplaysListPanelMixin",
         "ReplayListMixin",
         "FilmPanelMixin",
-        "FilmPreviewMixin"
+        "FilmPreviewMixin",
+        "UIDashboardMixin",
+        "VideoExportSessionMixin",
+        "WorldVideoExportSessionMixin",
+        "MultiLinkThreadMixin"
     ],
     "injectors": {
         "defaultRequire": 0

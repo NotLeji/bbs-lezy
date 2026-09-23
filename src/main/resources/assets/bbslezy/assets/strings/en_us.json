@@ -11,5 +11,6 @@
 	"bbslezy.ui.lod.tooltip": "BBS Lezy (LOD settings)",
 	"bbslezy.ui.lod.enabled": "LOD enabled",
 	"bbslezy.ui.lod.render_limit": "Render limit",
-	"bbslezy.ui.lod.focus_distance": "Focus distance"
+	"bbslezy.ui.lod.focus_distance": "Focus distance",
+	"bbslezy.ui.dashboard.keys.toggle_shaders": "Toggle Iris shaders"
 }
