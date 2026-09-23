@@ -42,3 +42,7 @@ replay_*.log
 # bbsrc is its own git repo (symlink to App/bbs-fs-F6-Fix) — never commit it
 /bbsrc
 run-client.log
+
+# agent scratch — screenshots and request notes fed to the AI assistant, never part of the mod
+/ss/
+request-tambahan.txt
