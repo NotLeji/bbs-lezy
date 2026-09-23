@@ -34,8 +34,7 @@ biar scene ribuan actor gak membebani GPU selama pengerjaan.
 │       └── mixin/client/
 │           ├── ReplayListMixin.java       # context menu: select-all / same-model / dupe-total
 │           ├── ReplaysListPanelMixin.java # toolbar: tombol scroll top/bottom instant
-│           ├── FilmPanelMixin.java        # top bar film editor: tombol popup LOD (Icons.VISIBLE)
-│           └── FilmPreviewMixin.java      # preview toolbar: tombol popup LOD samping motion path
+│           └── FilmPanelMixin.java        # top bar film editor: tombol popup LOD (Icons.VISIBLE)
 ├── src/main/resources/
 │   ├── fabric.mod.json              # id bbslezy, depends bbs >=2.7-1.20.1, mixins ref
 │   ├── bbslezy.mixins.json          # required:false, defaultRequire:0 — fail-safe
