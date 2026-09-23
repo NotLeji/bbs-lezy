@@ -6,6 +6,7 @@
         "ReplaysListPanelMixin",
         "ReplayListMixin",
         "FilmPanelMixin",
+        "FilmPreviewMixin",
         "UIDashboardMixin",
         "VideoExportSessionMixin",
         "WorldVideoExportSessionMixin",
