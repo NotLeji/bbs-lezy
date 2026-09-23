@@ -34,7 +34,6 @@ biar scene ribuan actor gak membebani GPU selama pengerjaan.
 │       └── mixin/client/
 │           ├── ReplayListMixin.java       # context menu: select-all / same-model / dupe-total
 │           ├── ReplaysListPanelMixin.java # toolbar: tombol scroll top/bottom instant
-│           ├── FilmPanelMixin.java        # top bar film editor: tombol popup LOD (Icons.VISIBLE)
 │           └── FilmPreviewMixin.java      # preview toolbar: tombol popup LOD samping motion path
 ├── src/main/resources/
 │   ├── fabric.mod.json              # id bbslezy, depends bbs >=2.7-1.20.1, mixins ref
@@ -132,5 +131,5 @@ sh ./gradlew dependencies --configuration runtimeClasspath --no-daemon
 - **Focus distance window & Top Bar Popup**: Focus distance dihitung sebagai $|d - D|$ dari kamera.
   Jika focus_distance = 0, model terdekat yang menang (perilaku standar). Jika > 0, model di sekitar
   jarak fokus tersebut yang menang (memungkinkan melihat replay jauh tanpa menaikkan render limit).
-  Tombol top bar film editor (`Icons.VISIBLE`) membuka popup `UILodContextMenu` berisi toggle On/Off,
+  Tombol toolbar preview film editor (`Icons.VISIBLE` samping motion path) membuka popup `UILodContextMenu` berisi toggle On/Off,
   slider Render Limit, dan slider Focus Distance (0-256m). Perubahan otomatis tersimpan ke `bbslezy.json`.
