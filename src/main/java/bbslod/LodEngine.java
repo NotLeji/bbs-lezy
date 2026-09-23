@@ -16,95 +16,127 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Caps how many of a scene's forms get drawn per frame: the closest ones to the camera win, the
- * rest are held back, so a scene with thousands of actors costs a bounded amount of GPU while the
- * scene is being built.
+ * Caps how many of a scene's forms get drawn per frame with focus-distance support.
  *
- * <p>The ranking is rebuilt once per frame in {@link FilmEvents#RENDER_AFTER} — after the frame
- * drew, when every form's distance is known — and consumed by the next frame's {@code BEFORE}.
- * That is one frame behind the camera, which is a fine price for a full sort: a form walking into
- * range appears a frame late rather than the whole budget being spent on whichever forms the
- * iteration happened to reach first.</p>
- *
- * <p>Hiding goes through {@code visible}'s runtime value for the same reason BBS's own keyframes
- * do — it never clobbers a track the user wrote. Picking passes are skipped, so editor clicks
- * still select an actor the cap is currently holding back.</p>
+ * <p>Uses spatial deadband (only re-ranks when the camera moves significantly or settings change)
+ * and hysteresis buffering so forms on the distance boundary do not flicker or thrash ("refresh")
+ * during camera movement.</p>
  */
 public class LodEngine
 {
-    /** Forms whose {@code visible} runtime value this engine set, so it can put them back. */
+    /** Forms currently culled via {@code visible.setRuntimeValue(Boolean.FALSE)}. */
     private static final Set<Form> touched = Collections.newSetFromMap(new IdentityHashMap<>());
 
     private static final List<Candidate> candidates = new ArrayList<>();
-    private static double budget;
-    private static boolean budgetValid;
+
+    private static double lastCamX = Double.NaN;
+    private static double lastCamY = Double.NaN;
+    private static double lastCamZ = Double.NaN;
+    private static double lastFocus = -1D;
+    private static int lastLimit = -1;
+    private static boolean lastEnabled = false;
+    private static int lastEntityCount = -1;
+    private static int framesSinceUpdate = 0;
+    private static boolean active = false;
+
+    /** Deadband distance squared: ~0.6 blocks. Tiny camera jitters do not trigger re-ranking. */
+    private static final double MOVE_THRESHOLD_SQ = 0.36D;
+
+    /** Hysteresis buffer in blocks. Forms currently visible stay visible unless overtaken by this margin. */
+    private static final double HYSTERESIS_MARGIN = 2.0D;
+
+    /** Minimum frames between camera-motion re-rankings to maintain steady frame pacing. */
+    private static final int MIN_INTERVAL_FRAMES = 3;
+
+    /** Maximum stale frames before refreshing when moving actors might cross the focus window. */
+    private static final int MAX_STALE_FRAMES = 15;
 
     public static void register()
     {
         FormRenderEvents.BEFORE.register(LodEngine::before);
+        FormRenderEvents.AFTER.register(LodEngine::after);
         FilmEvents.RENDER_AFTER.register(LodEngine::onRenderAfter);
         FilmEvents.SHUTDOWN.register(LodEngine::onShutdown);
     }
 
+    /**
+     * Stencil picking pass needs to click culled actors: temporarily unhide on picking BEFORE,
+     * then restore in AFTER. During normal world rendering, does nothing.
+     */
     private static void before(Form form, FormRenderingContext context)
     {
-        if (!budgetValid || !LodSettings.enabled.get() || !form.visible.get())
-        {
-            return;
-        }
-
-        /* UI previews and the picking pass are not the world replay, and a camera that has not
-         * been positioned this frame is no basis for a distance ranking. */
-        if (context.ui || context.isPicking() || context.camera.position.lengthSquared() == 0)
-        {
-            return;
-        }
-
-        /* A form pinned to the camera is the shot's own rig — it is always in frame, and
-         * measuring its distance only ever wins it a slot it did not need. */
-        if (form.anchor.get().hasTarget())
-        {
-            return;
-        }
-
-        double dx = context.entity.getX() - context.camera.position.x;
-        double dy = context.entity.getY() - context.camera.position.y;
-        double dz = context.entity.getZ() - context.camera.position.z;
-        double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        double focus = LodSettings.focusDistance.get();
-        double score = focus > 0D ? Math.abs(dist - focus) : dist;
-
-        if (score > budget && touched.add(form))
-        {
-            form.visible.setRuntimeValue(Boolean.FALSE);
-        }
-        else if (score <= budget && touched.remove(form))
+        if (context.isPicking() && touched.contains(form))
         {
             form.visible.setRuntimeValue(null);
         }
     }
 
+    private static void after(Form form, FormRenderingContext context)
+    {
+        if (context.isPicking() && touched.contains(form))
+        {
+            form.visible.setRuntimeValue(Boolean.FALSE);
+        }
+    }
+
     /**
-     * Ranks this controller's forms by distance to the camera the world was just drawn through,
-     * and keeps the closest {@link LodSettings#renderLimit} of them.
+     * Ranks this controller's forms by distance/focus to the camera with deadband and hysteresis.
      */
     private static void onRenderAfter(BaseFilmController controller, WorldRenderContext context)
     {
-        clearOverrides(controller);
-
+        boolean enabled = LodSettings.enabled.get();
         int limit = LodSettings.renderLimit.get();
 
-        budgetValid = LodSettings.enabled.get() && limit > 0;
-
-        if (!budgetValid)
+        if (!enabled || limit <= 0)
         {
+            if (active)
+            {
+                clearOverrides(controller);
+                reset();
+            }
             return;
         }
 
-        candidates.clear();
+        active = true;
+
         Vec3d camera = context.camera().getPos();
         double focus = LodSettings.focusDistance.get();
+        int entityCount = controller.getEntities().size();
 
+        double dx = camera.x - lastCamX;
+        double dy = camera.y - lastCamY;
+        double dz = camera.z - lastCamZ;
+        double distSq = dx * dx + dy * dy + dz * dz;
+
+        boolean settingsChanged = enabled != lastEnabled || limit != lastLimit || focus != lastFocus || entityCount != lastEntityCount;
+        boolean moved = distSq >= MOVE_THRESHOLD_SQ;
+        boolean stale = framesSinceUpdate >= MAX_STALE_FRAMES;
+
+        framesSinceUpdate++;
+
+        /* Skip re-ranking if camera hasn't moved beyond deadband and settings haven't changed */
+        if (!settingsChanged)
+        {
+            if (!moved && !stale)
+            {
+                return;
+            }
+            if (framesSinceUpdate < MIN_INTERVAL_FRAMES)
+            {
+                return;
+            }
+        }
+
+        framesSinceUpdate = 0;
+        lastCamX = camera.x;
+        lastCamY = camera.y;
+        lastCamZ = camera.z;
+        lastFocus = focus;
+        lastLimit = limit;
+        lastEnabled = enabled;
+        lastEntityCount = entityCount;
+
+        int count = 0;
         for (IEntity entity : controller.getEntities().values())
         {
             Form form = entity.getForm();
@@ -114,45 +146,106 @@ public class LodEngine
                 continue;
             }
 
-            double dx = entity.getX() - camera.x;
-            double dy = entity.getY() - camera.y;
-            double dz = entity.getZ() - camera.z;
-            double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            double ex = entity.getX() - camera.x;
+            double ey = entity.getY() - camera.y;
+            double ez = entity.getZ() - camera.z;
+            double dist = Math.sqrt(ex * ex + ey * ey + ez * ez);
             double score = focus > 0D ? Math.abs(dist - focus) : dist;
 
-            candidates.add(new Candidate(form, score));
+            /* Hysteresis: forms already visible get a margin bonus to prevent edge flickering */
+            double sortScore = touched.contains(form) ? score : score - HYSTERESIS_MARGIN;
+
+            if (count < candidates.size())
+            {
+                candidates.get(count).set(form, sortScore);
+            }
+            else
+            {
+                candidates.add(new Candidate(form, sortScore));
+            }
+            count++;
+        }
+
+        while (candidates.size() > count)
+        {
+            candidates.remove(candidates.size() - 1);
         }
 
         candidates.sort(null);
 
-        /* The budget is the distance of the first form past the limit: everyone at or inside it
-         * renders, everyone beyond it waits. Ties at the boundary keep both sides stable —
-         * strict inequality in {@link #before} means a form exactly at the budget stays visible,
-         * so the cap holds at its setting instead of flickering by one. */
-        budget = candidates.size() > limit ? candidates.get(limit).distance : Double.POSITIVE_INFINITY;
+        /* Apply visibility state diff: only change runtime value when visibility changes */
+        for (int i = 0; i < count; i++)
+        {
+            Candidate c = candidates.get(i);
+            Form form = c.form;
+
+            if (i < limit)
+            {
+                if (touched.remove(form))
+                {
+                    form.visible.setRuntimeValue(null);
+                }
+            }
+            else
+            {
+                if (touched.add(form))
+                {
+                    form.visible.setRuntimeValue(Boolean.FALSE);
+                }
+            }
+        }
+
+        /* Clean up any forms in touched that are no longer in candidates */
+        if (touched.size() > count)
+        {
+            Set<Form> valid = Collections.newSetFromMap(new IdentityHashMap<>());
+            for (int i = 0; i < count; i++)
+            {
+                valid.add(candidates.get(i).form);
+            }
+            touched.retainAll(valid);
+        }
     }
 
     private static void onShutdown(BaseFilmController controller)
     {
         clearOverrides(controller);
+        reset();
+    }
 
-        budgetValid = false;
+    private static void reset()
+    {
+        lastCamX = Double.NaN;
+        lastCamY = Double.NaN;
+        lastCamZ = Double.NaN;
+        lastFocus = -1D;
+        lastLimit = -1;
+        lastEntityCount = -1;
+        lastEnabled = false;
+        framesSinceUpdate = 0;
+        active = false;
     }
 
     /**
      * Clears every runtime override the controller's root forms carry.
-     *
-     * <p>The shadow and name tag checks in {@code FilmEntityRenderer} run after
-     * {@code FormUtilsClient.render} within the same entity render, so they see {@code visible ==
-     * false} for a capped form too; and nothing leaks into the next frame's track application.</p>
      */
     private static void clearOverrides(BaseFilmController controller)
     {
-        for (IEntity entity : controller.getEntities().values())
+        if (controller != null)
         {
-            Form form = entity.getForm();
+            for (IEntity entity : controller.getEntities().values())
+            {
+                Form form = entity.getForm();
 
-            if (form != null)
+                if (form != null)
+                {
+                    form.visible.setRuntimeValue(null);
+                }
+            }
+        }
+        else
+        {
+            for (Form form : touched)
             {
                 form.visible.setRuntimeValue(null);
             }
@@ -163,19 +256,25 @@ public class LodEngine
 
     private static class Candidate implements Comparable<Candidate>
     {
-        public final Form form;
-        public final double distance;
+        public Form form;
+        public double score;
 
-        public Candidate(Form form, double distance)
+        public Candidate(Form form, double score)
         {
             this.form = form;
-            this.distance = distance;
+            this.score = score;
+        }
+
+        public void set(Form form, double score)
+        {
+            this.form = form;
+            this.score = score;
         }
 
         @Override
         public int compareTo(Candidate other)
         {
-            return Double.compare(this.distance, other.distance);
+            return Double.compare(this.score, other.score);
         }
     }
 }
