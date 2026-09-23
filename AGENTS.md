@@ -11,9 +11,9 @@ biar scene ribuan actor gak membebani GPU selama pengerjaan.
 2. **Jangan sentuh `bbsrc/`.** Repo BBS punya git repo sendiri dan kontraknya sendiri. Bila
    perlu publish ulang BBS, build dari sana tanpa mengubah file-nya (lihat COMMANDS).
 3. **Add-on hanya boleh menyentuh kontrak `mchorse.bbs_mod.api` + `mchorse.bbs_mod.api.client`.**
-   Satu pengecualian: **tiga client mixin UI** (`bbslezy.mixins.json`, `required: false`,
+   Satu pengecualian: **empat client mixin UI** (`bbslezy.mixins.json`, `required: false`,
    `defaultRequire: 0`) karena BBS 2.7 gak punya event hook untuk context menu / toolbar panel
-   replay dan top bar film editor. Pengecualian ini dicatat eksplisit di `bbssrc/ADDONS.md` baris 8-12: reach ke luar
+   replay, top bar film editor, dan preview toolbar. Pengecualian ini dicatat eksplisit di `bbssrc/ADDONS.md` baris 8-12: reach ke luar
    `api/` = pecah **silent di game**, bukan build error. Setiap update BBS, mixin ini adalah
    hal pertama yg harus di-test manual.
 4. **Restore override visible hanya di `FilmEvents.RENDER_AFTER` / `SHUTDOWN`**, bukan di
@@ -34,7 +34,8 @@ biar scene ribuan actor gak membebani GPU selama pengerjaan.
 │       └── mixin/client/
 │           ├── ReplayListMixin.java       # context menu: select-all / same-model / dupe-total
 │           ├── ReplaysListPanelMixin.java # toolbar: tombol scroll top/bottom instant
-│           └── FilmPanelMixin.java        # top bar film editor: tombol popup LOD (Icons.VISIBLE)
+│           ├── FilmPanelMixin.java        # top bar film editor: tombol popup LOD (Icons.VISIBLE)
+│           └── FilmPreviewMixin.java      # preview toolbar: tombol popup LOD samping motion path
 ├── src/main/resources/
 │   ├── fabric.mod.json              # id bbslezy, depends bbs >=2.7-1.20.1, mixins ref
 │   ├── bbslezy.mixins.json          # required:false, defaultRequire:0 — fail-safe

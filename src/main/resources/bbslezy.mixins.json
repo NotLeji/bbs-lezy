@@ -5,7 +5,8 @@
     "client": [
         "ReplaysListPanelMixin",
         "ReplayListMixin",
-        "FilmPanelMixin"
+        "FilmPanelMixin",
+        "FilmPreviewMixin"
     ],
     "injectors": {
         "defaultRequire": 0
