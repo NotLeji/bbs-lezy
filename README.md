@@ -1,5 +1,7 @@
 # BBS Lezy
 
+<p align="center"><img src="bbs-lezy.webp" alt="BBS Lezy" width="500"></p>
+
 ---
 
 BBS Lezy adalah addon untuk membantu proses pembuatan konten Minecraft Leji dengan target video seperti Grox, Reff, Remanrhn, dll
@@ -29,13 +31,13 @@ Nggak semua model replay dirender setiap frame — hanya yang terdekat dengan ka
 
 ### Requirement
 
-| Item      | Versi                |
-| --------- | -------------------- |
-| Minecraft | 1.20.1               |
-| Java      | 17+                  |
-| Fabric    | Loader 0.16.14, Fabric API 0.92.1+1.20.1 |
-| BBS FS    | 2.7-1.20.1           |
-| Sodium    | 0.5.8 (sudah include) |
+| Item      | Versi                                        |
+| --------- | -------------------------------------------- |
+| Minecraft | 1.20.1                                       |
+| Java      | 17+                                          |
+| Fabric    | Loader 0.16.14, Fabric API 0.92.1+1.20.1     |
+| BBS FS    | 2.7-1.20.1                                   |
+| Sodium    | 0.5.8 (sudah include)                        |
 | Iris      | Opsional (shader belum ditest di dev client) |
 
 ### Install
@@ -49,11 +51,11 @@ Ada tiga setting, bisa diubah dari dua tempat:
 
 **Lewat settings screen BBS** (ikon gerigi → kategori BBS Lezy):
 
-| Setting           | Range      | Keterangan                                                                 |
-| ----------------- | ---------- | -------------------------------------------------------------------------- |
-| Render limit      | on/off     | Nyalain/matemin seluruh fitur batas render.                                |
-| Max rendered models | 0–2000   | Jumlah model yang tetap dirender per frame. Sisanya di-hide. **0 = mati** (semua dirender). |
-| Focus distance    | 0–256m     | Prioritas model di sekitar jarak ini dari kamera. **0 = model terdekat** yang menang. Bisa dipakai untuk ngeliat replay jauh tanpa naikin render limit. |
+| Setting             | Range  | Keterangan                                                                                                                                              |
+| ------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Render limit        | on/off | Nyalain/matemin seluruh fitur batas render.                                                                                                             |
+| Max rendered models | 0–2000 | Jumlah model yang tetap dirender per frame. Sisanya di-hide. **0 = mati** (semua dirender).                                                             |
+| Focus distance      | 0–256m | Prioritas model di sekitar jarak ini dari kamera. **0 = model terdekat** yang menang. Bisa dipakai untuk ngeliat replay jauh tanpa naikin render limit. |
 
 **Lewat toolbar preview film editor** — klik ikon mata (👁, sebelah tombol motion path) untuk buka popup: toggle On/Off, slider Render Limit, slider Focus Distance. Perubahan otomatis kesimpan ke `bbslezy.json`.
 
