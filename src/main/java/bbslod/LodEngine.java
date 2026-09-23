@@ -1,15 +1,11 @@
 package bbslod;
 
 import mchorse.bbs_mod.api.client.events.FilmEvents;
-import mchorse.bbs_mod.api.client.events.FilmGizmoEvents;
 import mchorse.bbs_mod.film.BaseFilmController;
-import mchorse.bbs_mod.film.FilmControllerContext;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.forms.forms.Form;
-import mchorse.bbs_mod.ui.framework.elements.utils.StencilMap;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.render.Camera;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayList;
@@ -53,28 +49,10 @@ public class LodEngine
 
     public static void register()
     {
-        FilmGizmoEvents.DRAW.register(LodEngine::onDrawGizmo);
         FilmEvents.RENDER_AFTER.register(LodEngine::onRenderAfter);
         FilmEvents.SHUTDOWN.register(LodEngine::onShutdown);
     }
 
-    /**
-     * Suppress the transform gizmo on actors currently culled by the LOD engine.
-     */
-    private static boolean onDrawGizmo(FilmControllerContext context, StencilMap stencil, MatrixStack stack)
-    {
-        if (context.entity != null)
-        {
-            Form form = context.entity.getForm();
-
-            if (form != null && touched.contains(form))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     /**
      * Ranks this controller's forms by distance/focus to the camera with view-direction weighting.
