@@ -70,13 +70,15 @@ public class LodEngine
         double dx = context.entity.getX() - context.camera.position.x;
         double dy = context.entity.getY() - context.camera.position.y;
         double dz = context.entity.getZ() - context.camera.position.z;
-        double distance = dx * dx + dy * dy + dz * dz;
+        double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        double focus = LodSettings.focusDistance.get();
+        double score = focus > 0D ? Math.abs(dist - focus) : dist;
 
-        if (distance > budget && touched.add(form))
+        if (score > budget && touched.add(form))
         {
             form.visible.setRuntimeValue(Boolean.FALSE);
         }
-        else if (distance <= budget && touched.remove(form))
+        else if (score <= budget && touched.remove(form))
         {
             form.visible.setRuntimeValue(null);
         }
@@ -101,6 +103,7 @@ public class LodEngine
 
         candidates.clear();
         Vec3d camera = context.camera().getPos();
+        double focus = LodSettings.focusDistance.get();
 
         for (IEntity entity : controller.getEntities().values())
         {
@@ -114,8 +117,10 @@ public class LodEngine
             double dx = entity.getX() - camera.x;
             double dy = entity.getY() - camera.y;
             double dz = entity.getZ() - camera.z;
+            double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            double score = focus > 0D ? Math.abs(dist - focus) : dist;
 
-            candidates.add(new Candidate(form, dx * dx + dy * dy + dz * dz));
+            candidates.add(new Candidate(form, score));
         }
 
         candidates.sort(null);

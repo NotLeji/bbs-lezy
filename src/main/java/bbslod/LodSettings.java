@@ -2,6 +2,7 @@ package bbslod;
 
 import mchorse.bbs_mod.settings.SettingsBuilder;
 import mchorse.bbs_mod.settings.values.numeric.ValueBoolean;
+import mchorse.bbs_mod.settings.values.numeric.ValueDouble;
 import mchorse.bbs_mod.settings.values.numeric.ValueInt;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 
@@ -14,6 +15,7 @@ public class LodSettings
 {
     public static ValueBoolean enabled;
     public static ValueInt renderLimit;
+    public static ValueDouble focusDistance;
 
     public static void register(SettingsBuilder builder)
     {
@@ -21,5 +23,6 @@ public class LodSettings
 
         enabled = builder.getBoolean("enabled", true);
         renderLimit = builder.getInt("render_limit", 100, 0, 2000);
+        focusDistance = builder.getDouble("focus_distance", 0D, 0D, 256D);
     }
 }
