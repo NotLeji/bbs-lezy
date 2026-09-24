@@ -5,6 +5,7 @@
     "client": [
         "ReplaysListPanelMixin",
         "ReplayListMixin",
+        "UIProcessReplaysPanelMixin",
         "FilmPreviewMixin",
         "UIDashboardMixin",
         "VideoExportSessionMixin",
