@@ -4,9 +4,9 @@
 
 ---
 
-BBS Lezy adalah addon untuk membantu proses pembuatan konten Minecraft Leji dengan target video seperti Grox, Reff, Remanrhn, dll
+BBS Lezy adalah addon untuk membantu proses pembuatan konten Minecraft Leji dengan target video seperti Grox, Reff, Remanrhn, dll.
 
-Addon ini berisi perbaikan-perbaan kecil yang dirancang untuk scene berskala besar: ribuan actor di film BBS, daftar replay yang panjang, dan export video yang sering gagal di tengah jalan. Semua fitur bisa dipakai langsung dari editor BBS, tanpa perlu ngoprek config.
+Addon ini dirancang untuk scene berskala besar dan kemudahan editing: batas render model (LOD) untuk ribuan actor, manajemen panel replay massal, **export video 2 track audio terpisah** (klip BBS + suara Minecraft), **pembacaan langsung berbagai format audio** (.mp3, .m4a, .opus, .flac, dll) tanpa konversi, serta perbaikan workflow lainnya. Semua fitur dapat dikonfigurasi langsung dari editor BBS tanpa perlu ngoprek file config secara manual.
 
 ## Fitur
 
@@ -23,9 +23,10 @@ Nggak semua model replay dirender setiap frame — hanya yang terdekat dengan ka
 
 **3. Audio export & codec**
 
-- **Separate audio tracks** — pas export dengan opsi BBS **audio** + **minecraft sounds** dua-duanya nyala, hasil videonya bawa **dua track audio terpisah** (track 1: audio klip BBS, track 2: suara Minecraft) bukan satu track campuran. Gampang diedit di NLE. Butuh ffmpeg; output selalu `.mp4` AAC 192k — template `videoArgumentsMux` custom nggak berlaku buat path ini.
-- **Format audio dibaca langsung & dikenali di pick audio** — `.mp3`, `.m4a`, `.aac`, `.opus`, `.wma`, `.alac`, `.ape`, `.flac`, `.aif/.aiff`, `.ac3` bisa langsung muncul dan dipilih di menu "Pick audio...", dipreview, diedit (offset/durasi/volume), dicut, dan dirender kayak WAV. Decode on-demand lewat ffmpeg, jadi file aslinya nggak pernah dikonversi. Format compressed butuh ffmpeg terkonfigurasi di setting BBS.
-- **Import tanpa konversi** — file audio yang didrag ke folder audio dikopi **apa adanya** (byte-identical), nggak lagi dire-encode jadi WAV mono. Drop `.mp4` tetap diekstrak audionya ke WAV kayak dulu (khusus video).
+- **Separate audio tracks (2 track audio terpisah)** — saat export video dengan opsi bawaan BBS **audio** dan **minecraft sounds** dua-duanya aktif, hasil video membawa **dua track audio terpisah** (Track 1: audio klip film BBS, Track 2: efek suara/SFX Minecraft) bukan satu track campuran. Setiap track dipaksa stereo 2-channel standar (AAC 192k) sehingga langsung rapi saat diimpor ke software editing (Premiere Pro, DaVinci Resolve, CapCut, Vegas Pro, dll). File WAV sementara otomatis dibersihkan setelah mux selesai.
+- **Multi-codec audio langsung & dikenali di Pick Audio** — BBS kini bisa langsung membaca `.mp3`, `.m4a`, `.aac`, `.opus`, `.wma`, `.alac`, `.ape`, `.flac`, `.aif/.aiff`, dan `.ac3`. File-file ini langsung terdeteksi di menu "Pick audio...", bisa dipreview waveform-nya, diedit (offset, durasi, volume), dicut/split di timeline, dan dirender layaknya WAV bawaan. Decode berjalan on-demand via ffmpeg, sehingga file asli di disk tidak pernah diubah atau dikonversi.
+- **Import file audio tanpa konversi** — file audio yang di-drag & drop ke dalam BBS langsung disalin **apa adanya** (byte-identical), tidak lagi dire-encode paksa menjadi WAV mono. Khusus file video (`.mp4`), audionya tetap diekstrak otomatis seperti biasa.
+- **Opsi auto-open folder saat import** — toggle di pengaturan untuk mematikan perilaku bawaan BBS yang selalu membuka File Explorer setiap kali file di-drop ke game (default: mati).
 
 **4. Perbaikan dari fork BBS**
 
