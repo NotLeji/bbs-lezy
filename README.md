@@ -24,7 +24,7 @@ Nggak semua model replay dirender setiap frame — hanya yang terdekat dengan ka
 **3. Audio export & codec**
 
 - **Separate audio tracks** — pas export dengan opsi BBS **audio** + **minecraft sounds** dua-duanya nyala, hasil videonya bawa **dua track audio terpisah** (track 1: audio klip BBS, track 2: suara Minecraft) bukan satu track campuran. Gampang diedit di NLE. Butuh ffmpeg; output selalu `.mp4` AAC 192k — template `videoArgumentsMux` custom nggak berlaku buat path ini.
-- **Format audio dibaca langsung** — `.mp3`, `.m4a`, `.aac`, `.opus`, `.wma`, `.alac`, `.ape`, `.flac`, `.aif/.aiff`, `.ac3` bisa dipreview, diedit (offset/durasi/volume), dicut, dan dirender kayak WAV. Decode on-demand lewat ffmpeg, jadi file aslinya nggak pernah dikonversi. Format compressed butuh ffmpeg terkonfigurasi di setting BBS.
+- **Format audio dibaca langsung & dikenali di pick audio** — `.mp3`, `.m4a`, `.aac`, `.opus`, `.wma`, `.alac`, `.ape`, `.flac`, `.aif/.aiff`, `.ac3` bisa langsung muncul dan dipilih di menu "Pick audio...", dipreview, diedit (offset/durasi/volume), dicut, dan dirender kayak WAV. Decode on-demand lewat ffmpeg, jadi file aslinya nggak pernah dikonversi. Format compressed butuh ffmpeg terkonfigurasi di setting BBS.
 - **Import tanpa konversi** — file audio yang didrag ke folder audio dikopi **apa adanya** (byte-identical), nggak lagi dire-encode jadi WAV mono. Drop `.mp4` tetap diekstrak audionya ke WAV kayak dulu (khusus video).
 
 **4. Perbaikan dari fork BBS**
@@ -76,7 +76,7 @@ Hasilnya ada di `build/libs/bbs-lezy-<versi>.jar`.
 
 ### Catatan teknis
 
-- **Mixin UI bersifat fail-safe**: `bbslezy.mixins.json` pake `required: false` + `defaultRequire: 0`. Kalau BBS internal berubah dan mixin gagal, addon tetap jalan — cuma fitur panel replay dan audio yang ilang, fitur LOD tetap aman karena lewat API resmi. Target mixin baru: `VideoExportSession` (two-track export), `AudioReader` (codec), `ToWAVImporter`/`WAVImporter` (no-conversion import).
+- **Mixin UI bersifat fail-safe**: `bbslezy.mixins.json` pake `required: false` + `defaultRequire: 0`. Kalau BBS internal berubah dan mixin gagal, addon tetap jalan — cuma fitur panel replay dan audio yang ilang, fitur LOD tetap aman karena lewat API resmi. Target mixin baru: `VideoExportSession` (two-track export), `AudioReader` (codec), `ToWAVImporter`/`WAVImporter` (no-conversion import), `UISoundOverlayPanel` (pick audio).
 - **Restore override hanya dilakukan di `RENDER_AFTER` dan `SHUTDOWN`**, bukan di render pass biasa, karena shadow dan name tag digambar setelahnya.
 - **Budget dihitung sebagai squared distance** — nggak ada `sqrt` dan nggak ada alokasi `Vec3d` per form, biar murah pas ribuan actor.
 - Form yang terkunci ke kamera (`anchor` punya target) nggak ikut di-cull, sama seperti behavior bawaan BBS.
