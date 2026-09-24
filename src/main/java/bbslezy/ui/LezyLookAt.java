@@ -1,5 +1,6 @@
 package bbslezy.ui;
 
+import bbslod.LodSettings;
 import mchorse.bbs_mod.ui.film.controller.UIFilmController;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import java.util.Map;
@@ -161,8 +162,10 @@ public class LezyLookAt
         }
 
         int total = selected.size();
-        int batchSize = Math.max(1, Math.min(25, (int) Math.ceil(total / 20.0)));
-        long delayMs = Math.max(12L, Math.min(25L, 450L / Math.max(1, total / batchSize)));
+        int percent = LodSettings.bakingBatchPercent != null ? LodSettings.bakingBatchPercent.get() : 5;
+        percent = Math.max(1, Math.min(100, percent));
+        int batchSize = Math.max(1, (int) Math.ceil(total * (percent / 100.0)));
+        long delayMs = Math.max(10L, Math.min(30L, 450L / Math.max(1, (int) Math.ceil((double) total / batchSize))));
 
         if (progressPanel != null)
         {
