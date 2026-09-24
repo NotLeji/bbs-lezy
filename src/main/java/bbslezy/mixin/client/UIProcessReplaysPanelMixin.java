@@ -87,7 +87,7 @@ public abstract class UIProcessReplaysPanelMixin
 
         int tick = this.filmPanel != null ? this.filmPanel.getCursor() : this.bbslezy$cursorTick;
 
-        if (selected.size() > 10)
+        if (selected.size() > 5)
         {
             this.bbslezy$ranAsync = true;
             UIContext context = ((UIProcessReplaysPanel) (Object) this).getContext();
@@ -100,6 +100,7 @@ public abstract class UIProcessReplaysPanelMixin
 
             LezyLookAt.lookAtAsync(selected, params.lookAtTarget, tick, properties, progressPanel, () ->
             {
+                progressPanel.markFinished();
                 progressPanel.close();
 
                 if (this.filmPanel != null)

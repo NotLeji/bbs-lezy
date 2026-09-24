@@ -11,6 +11,7 @@ public class UIBakingProgressOverlayPanel extends UIOverlayPanel
 {
     private volatile float progress;
     private volatile String status = "";
+    private volatile boolean finished;
 
     public UIBakingProgressOverlayPanel()
     {
@@ -55,5 +56,19 @@ public class UIBakingProgressOverlayPanel extends UIOverlayPanel
     {
         this.progress = progress;
         this.status = status;
+    }
+
+    public void markFinished()
+    {
+        this.finished = true;
+    }
+
+    @Override
+    public void close()
+    {
+        if (this.finished)
+        {
+            super.close();
+        }
     }
 }
