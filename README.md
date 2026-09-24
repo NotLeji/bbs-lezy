@@ -20,6 +20,7 @@ Nggak semua model replay dirender setiap frame — hanya yang terdekat dengan ka
 - **Select same model** — pilih semua replay yang model-nya sama dengan seleksi sekarang. Cocok untuk ambil semua hasil duplicate farm dalam satu kali klik.
 - **Duplicate to total** — angka yang dimasukkan adalah **total** copy di seluruh seleksi, bukan per-replay. Misal: pilih 3 replay, input 150, hasilnya 150 copy (50 per replay), bukan 450. Tiap replay dapat kategori sendiri (`Duplicates N`) biar gampang dikontrol atau dihapus.
 - **Tombol scroll ▲▼** — lompat instant ke atas atau ke bawah daftar replay, tanpa animasi. Berguna pas daudarnya udah ribuan baris.
+- **Look at per-tick (Process replays)** — proses batch "Look at" kini menyisipkan keyframe rotasi langsung tepat pada garis timeline / playhead tick yang sedang diposisikan, bukan menimpa seluruh keyframe channel. Memungkinkan chaining banyak Look at (misal di tick 10 menoleh ke A, di tick 40 menoleh ke B). Mendukung multi-select replay serentak dan mematuhi filter channel yang dipilih (pitch, yaw, headYaw, bodyYaw).
 
 **3. Audio export & codec**
 
@@ -78,7 +79,7 @@ Hasilnya ada di `build/libs/bbs-lezy-<versi>.jar`.
 
 ### Catatan teknis
 
-- **Mixin UI bersifat fail-safe**: `bbslezy.mixins.json` pake `required: false` + `defaultRequire: 0`. Kalau BBS internal berubah dan mixin gagal, addon tetap jalan — cuma fitur panel replay dan audio yang ilang, fitur LOD tetap aman karena lewat API resmi. Target mixin baru: `VideoExportSession` (two-track export), `AudioReader` (codec), `ToWAVImporter`/`WAVImporter` (no-conversion import), `UISoundOverlayPanel` (pick audio), `UIScreen` (drag-import auto open folder toggle).
+- **Mixin UI bersifat fail-safe**: `bbslezy.mixins.json` pake `required: false` + `defaultRequire: 0`. Kalau BBS internal berubah dan mixin gagal, addon tetap jalan — cuma fitur panel replay dan audio yang ilang, fitur LOD tetap aman karena lewat API resmi. Target mixin baru: `VideoExportSession` (two-track export), `AudioReader` (codec), `ToWAVImporter`/`WAVImporter` (no-conversion import), `UISoundOverlayPanel` (pick audio), `UIScreen` (drag-import auto open folder toggle), `UIProcessReplaysPanel` (Look at per-tick).
 - **Restore override hanya dilakukan di `RENDER_AFTER` dan `SHUTDOWN`**, bukan di render pass biasa, karena shadow dan name tag digambar setelahnya.
 - **Budget dihitung sebagai squared distance** — nggak ada `sqrt` dan nggak ada alokasi `Vec3d` per form, biar murah pas ribuan actor.
 - Form yang terkunci ke kamera (`anchor` punya target) nggak ikut di-cull, sama seperti behavior bawaan BBS.
