@@ -43,6 +43,13 @@ dependencies {
 	/* transitive = false keeps BBS's own Iris and glsl-transformer out of this build; Sodium is
 	 * declared above instead so the dev client runs with it. */
 	modImplementation("mchorse:bbs:${project.bbs_version}") { transitive = false }
+
+	testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"
+	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+}
+
+test {
+	useJUnitPlatform()
 }
 
 /* Windows Java can fail to connect its selector's Unix-domain socket in the user temp

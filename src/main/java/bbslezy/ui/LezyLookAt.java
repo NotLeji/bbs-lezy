@@ -1,5 +1,8 @@
 package bbslezy.ui;
 
+import mchorse.bbs_mod.ui.film.controller.UIFilmController;
+import mchorse.bbs_mod.forms.entities.IEntity;
+import java.util.Map;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.film.replays.ReplayKeyframes;
 import mchorse.bbs_mod.ui.film.UIFilmPanel;
@@ -26,8 +29,7 @@ import java.util.stream.Collectors;
 public class LezyLookAt
 {
     private static final String[] ROTATION_CHANNELS = {"yaw", "pitch", "headYaw", "bodyYaw"};
-    private static final int BATCH_SIZE = 25;
-    private static final long BATCH_DELAY_MS = 15L;
+
 
     public static class BakedChannel
     {
@@ -117,6 +119,8 @@ public class LezyLookAt
             if (filmPanel != null && filmPanel.getUndoHandler() != null)
             {
                 filmPanel.getUndoHandler().submitUndo(true);
+                updateEntitiesAfterBaking(filmPanel, selected);
+                filmPanel.replayEditor.updateChannelsList();
                 filmPanel.getUndoHandler().getUndoManager().markLastUndoNoMerging();
             }
         }
@@ -156,8 +160,15 @@ public class LezyLookAt
             LezyUndoHelper.setBatchLock(true);
         }
 
+        int total = selected.size();
+        int batchSize = Math.max(1, Math.min(25, (int) Math.ceil(total / 20.0)));
+        long delayMs = Math.max(12L, Math.min(25L, 450L / Math.max(1, total / batchSize)));
 
-        /* Step 1: Multithreaded read-only calculation of all look-at angles across all CPU cores */
+        if (progressPanel != null)
+        {
+            progressPanel.updateProgress(0.05F, "Calculating orientation vectors...");
+        }
+
         ForkJoinPool.commonPool().execute(() ->
         {
             List<BakedReplay> bakedList = selected.parallelStream()
@@ -165,18 +176,19 @@ public class LezyLookAt
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-            /* Step 2: Post to Minecraft main thread to apply keyframes safely in batches with render yields */
             MinecraftClient.getInstance().execute(() ->
             {
-                applyNextBatch(bakedList, 0, BATCH_SIZE, progressPanel, filmPanel);
+                applyNextBatch(bakedList, selected, 0, batchSize, delayMs, progressPanel, filmPanel);
             });
         });
     }
 
     private static void applyNextBatch(
         List<BakedReplay> baked,
+        List<ReplayBatchProcessor.VisibleReplay> selected,
         int index,
         int batchSize,
+        long delayMs,
         UIBakingProgressOverlayPanel progressPanel,
         UIFilmPanel filmPanel)
     {
@@ -188,9 +200,10 @@ public class LezyLookAt
             baked.get(i).apply();
         }
 
-        float p = total == 0 ? 1F : (float) end / total;
+        float bakeFraction = total == 0 ? 1F : (float) end / total;
+        float p = bakeFraction * 0.80F;
         int pct = Math.round(p * 100F);
-        String status = pct + "% (" + end + " / " + total + ")";
+        String status = "Baking keyframes: " + pct + "% (" + end + " / " + total + ")";
 
         if (progressPanel != null)
         {
@@ -199,19 +212,18 @@ public class LezyLookAt
 
         if (end < total)
         {
-            /* Yield on background worker thread to give the Minecraft render thread time to draw */
             ForkJoinPool.commonPool().execute(() ->
             {
                 try
                 {
-                    Thread.sleep(BATCH_DELAY_MS);
+                    Thread.sleep(delayMs);
                 }
                 catch (InterruptedException ignored)
                 {}
 
                 MinecraftClient.getInstance().execute(() ->
                 {
-                    applyNextBatch(baked, end, batchSize, progressPanel, filmPanel);
+                    applyNextBatch(baked, selected, end, batchSize, delayMs, progressPanel, filmPanel);
                 });
             });
         }
@@ -219,22 +231,109 @@ public class LezyLookAt
         {
             if (progressPanel != null)
             {
-                progressPanel.markFinished();
-                progressPanel.close();
+                progressPanel.updateProgress(0.85F, "Updating actor rotations (" + total + " actors)...");
             }
 
-            LezyUndoHelper.setBatchLock(false);
-
-            if (filmPanel != null)
+            ForkJoinPool.commonPool().execute(() ->
             {
-                if (filmPanel.getUndoHandler() != null)
+                try
                 {
-                    filmPanel.getUndoHandler().submitUndo(true);
-                    filmPanel.getUndoHandler().getUndoManager().markLastUndoNoMerging();
+                    Thread.sleep(delayMs);
                 }
+                catch (InterruptedException ignored)
+                {}
 
-                filmPanel.getController().createEntities();
-                filmPanel.replayEditor.updateChannelsList();
+                MinecraftClient.getInstance().execute(() ->
+                {
+                    if (filmPanel != null)
+                    {
+                        updateEntitiesAfterBaking(filmPanel, selected);
+                        filmPanel.replayEditor.updateChannelsList();
+                    }
+                    if (progressPanel != null)
+                    {
+                        progressPanel.updateProgress(0.95F, "Finalizing undo history...");
+                    }
+
+                    ForkJoinPool.commonPool().execute(() ->
+                    {
+                        try
+                        {
+                            Thread.sleep(delayMs);
+                        }
+                        catch (InterruptedException ignored)
+                        {}
+
+                        MinecraftClient.getInstance().execute(() ->
+                        {
+                            LezyUndoHelper.setBatchLock(false);
+
+                            if (filmPanel != null && filmPanel.getUndoHandler() != null)
+                            {
+                                filmPanel.getUndoHandler().submitUndo(true);
+                                filmPanel.getUndoHandler().getUndoManager().markLastUndoNoMerging();
+                            }
+
+                            if (progressPanel != null)
+                            {
+                                progressPanel.updateProgress(1.0F, "Done! 100% (" + total + " / " + total + ")");
+                            }
+
+                            ForkJoinPool.commonPool().execute(() ->
+                            {
+                                try
+                                {
+                                    Thread.sleep(60L);
+                                }
+                                catch (InterruptedException ignored)
+                                {}
+
+                                MinecraftClient.getInstance().execute(() ->
+                                {
+                                    if (progressPanel != null)
+                                    {
+                                        progressPanel.markFinished();
+                                        progressPanel.close();
+                                    }
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        }
+    }
+    public static void updateEntitiesAfterBaking(UIFilmPanel filmPanel, List<ReplayBatchProcessor.VisibleReplay> selected)
+    {
+        if (filmPanel == null || filmPanel.getData() == null || filmPanel.getController() == null)
+        {
+            return;
+        }
+
+        UIFilmController controller = filmPanel.getController();
+        Map<String, IEntity> entities = controller.getEntities();
+
+        if (entities == null || entities.isEmpty())
+        {
+            controller.createEntities();
+            return;
+        }
+
+        int filmTick = filmPanel.getCursor();
+
+        for (ReplayBatchProcessor.VisibleReplay vr : selected)
+        {
+            Replay replay = vr.replay;
+            IEntity entity = entities.get(replay.getId());
+
+            if (entity != null)
+            {
+                int ticks = replay.getTick(filmTick);
+                replay.keyframes.apply(ticks, entity);
+                entity.setPrevYaw(entity.getYaw());
+                entity.setPrevHeadYaw(entity.getHeadYaw());
+                entity.setPrevPitch(entity.getPitch());
+                entity.setPrevBodyYaw(entity.getBodyYaw());
             }
         }
     }
@@ -290,7 +389,7 @@ public class LezyLookAt
         };
     }
 
-    private static double compute(float tick, ReplayKeyframes src, ReplayKeyframes target, boolean pitch)
+    public static double compute(float tick, ReplayKeyframes src, ReplayKeyframes target, boolean pitch)
     {
         double sx = src.x.interpolate(tick), sy = src.y.interpolate(tick), sz = src.z.interpolate(tick);
         double tx = target.x.interpolate(tick), ty = target.y.interpolate(tick), tz = target.z.interpolate(tick);
@@ -310,7 +409,7 @@ public class LezyLookAt
      * Prevent angle wrapping from taking the long way around (e.g. 350° to 10° swinging through 180°).
      * Smooths relative to the keyframe immediately preceding the target tick.
      */
-    private static double unwrap(KeyframeChannel<Double> channel, float tick, double angle, boolean isPitch)
+    public static double unwrap(KeyframeChannel<Double> channel, float tick, double angle, boolean isPitch)
     {
         if (isPitch)
         {
