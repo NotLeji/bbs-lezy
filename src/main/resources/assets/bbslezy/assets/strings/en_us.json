@@ -10,6 +10,8 @@
 	"bbslezy.config.general.focus_distance-comment": "Distance window from camera to prioritize rendering models. Set to 0 for closest models.",
 	"bbslezy.config.general.separate_audio_tracks": "Separate audio tracks",
 	"bbslezy.config.general.separate_audio_tracks-comment": "Keep BBS clip audio and Minecraft sounds as two separate tracks in recorded video (track 1 film, track 2 sounds) instead of one mixed track. Only applies when both BBS export options audio and minecraft sounds are on. Requires ffmpeg.",
+	"bbslezy.config.general.open_folder_on_import": "Open folder on import",
+	"bbslezy.config.general.open_folder_on_import-comment": "Automatically open the destination folder in File Explorer when dragging and dropping files into BBS.",
 	"bbslezy.importer.copy_audio": "Audio (copy as-is)",
 	"bbslezy.ui.replays.select_same_model": "Select same model",
 	"bbslezy.ui.replays.duplicate_total_description": "Total number of replays across the selection, split evenly between the ones picked. Each picked replay gets its own category and counts as the first of its share.",
