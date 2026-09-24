@@ -1,9 +1,12 @@
 package bbslod;
 
+import bbslezy.audio.LezyCopyAudioImporter;
+
 import mchorse.bbs_mod.api.BBSAddonMod;
 import mchorse.bbs_mod.api.Subscribe;
 import mchorse.bbs_mod.api.client.events.BBSClientReadyEvent;
 import mchorse.bbs_mod.api.client.events.RegisterClientSettingsEvent;
+import mchorse.bbs_mod.api.client.events.RegisterImportersEvent;
 import mchorse.bbs_mod.api.client.events.RegisterL10nEvent;
 import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
@@ -29,6 +32,12 @@ public class BBSLodClient implements BBSAddonMod
     public void onClientSettings(RegisterClientSettingsEvent event)
     {
         event.register(Icons.GEAR, BBSLod.MOD_ID, LodSettings::register);
+    }
+
+    @Subscribe
+    public void onImporters(RegisterImportersEvent event)
+    {
+        event.register(new LezyCopyAudioImporter());
     }
 
     /**
