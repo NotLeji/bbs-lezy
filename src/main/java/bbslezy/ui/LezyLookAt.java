@@ -1,6 +1,5 @@
 package bbslezy.ui;
 
-import bbslezy.mixin.client.UIFormUndoHandlerMixin;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.film.replays.ReplayKeyframes;
 import mchorse.bbs_mod.ui.film.UIFilmPanel;
@@ -77,7 +76,7 @@ public class LezyLookAt
         if (filmPanel != null && filmPanel.getUndoHandler() != null)
         {
             filmPanel.getUndoHandler().submitUndo(true);
-            UIFormUndoHandlerMixin.bbslezy$setBatchLock(true);
+            LezyUndoHelper.setBatchLock(true);
         }
 
         try
@@ -113,7 +112,7 @@ public class LezyLookAt
         }
         finally
         {
-            UIFormUndoHandlerMixin.bbslezy$setBatchLock(false);
+            LezyUndoHelper.setBatchLock(false);
 
             if (filmPanel != null && filmPanel.getUndoHandler() != null)
             {
@@ -154,7 +153,7 @@ public class LezyLookAt
         if (filmPanel != null && filmPanel.getUndoHandler() != null)
         {
             filmPanel.getUndoHandler().submitUndo(true);
-            UIFormUndoHandlerMixin.bbslezy$setBatchLock(true);
+            LezyUndoHelper.setBatchLock(true);
         }
 
 
@@ -224,7 +223,7 @@ public class LezyLookAt
                 progressPanel.close();
             }
 
-            UIFormUndoHandlerMixin.bbslezy$setBatchLock(false);
+            LezyUndoHelper.setBatchLock(false);
 
             if (filmPanel != null)
             {
