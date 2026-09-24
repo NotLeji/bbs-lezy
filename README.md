@@ -20,8 +20,7 @@ Nggak semua model replay dirender setiap frame — hanya yang terdekat dengan ka
 - **Select same model** — pilih semua replay yang model-nya sama dengan seleksi sekarang. Cocok untuk ambil semua hasil duplicate farm dalam satu kali klik.
 - **Duplicate to total** — angka yang dimasukkan adalah **total** copy di seluruh seleksi, bukan per-replay. Misal: pilih 3 replay, input 150, hasilnya 150 copy (50 per replay), bukan 450. Tiap replay dapat kategori sendiri (`Duplicates N`) biar gampang dikontrol atau dihapus.
 - **Tombol scroll ▲▼** — lompat instant ke atas atau ke bawah daftar replay, tanpa animasi. Berguna pas daudarnya udah ribuan baris.
-- **Look at per-tick (Process replays)** — proses batch "Look at" kini menyisipkan keyframe rotasi langsung tepat pada garis timeline / playhead tick yang sedang diposisikan, bukan menimpa seluruh keyframe channel. Memungkinkan chaining banyak Look at (misal di tick 10 menoleh ke A, di tick 40 menoleh ke B). Mendukung multi-select replay serentak dan mematuhi filter channel yang dipilih (pitch, yaw, headYaw, bodyYaw).
-
+- **Look at per-tick & Batch Keyframe Baking (Process replays)** — proses batch "Look at" kini menyisipkan keyframe rotasi langsung tepat pada garis timeline / playhead tick yang sedang diposisikan, bukan menimpa seluruh keyframe channel. Memungkinkan chaining banyak Look at (misal di tick 10 menoleh ke A, di tick 40 menoleh ke B). Dilengkapi sistem multithreading non-blocking: kalkulasi rotasi dihitung paralel di background thread, sementara penanaman keyframe dilakukan berkelompok di render thread dengan frame yields dan popup progress bar (*Waiting for baking keyframe...*). Tidak ada freeze/lag bahkan pada ribuan model, dan seluruh hasil baking terbungkus rapi ke dalam **satu langkah Undo tunggal (Ctrl+Z)**.
 **3. Audio export & codec**
 
 - **Separate audio tracks (2 track audio terpisah)** — saat export video dengan opsi bawaan BBS **audio** dan **minecraft sounds** dua-duanya aktif, hasil video membawa **dua track audio terpisah** (Track 1: audio klip film BBS, Track 2: efek suara/SFX Minecraft) bukan satu track campuran. Setiap track dipaksa stereo 2-channel standar (AAC 192k) sehingga langsung rapi saat diimpor ke software editing (Premiere Pro, DaVinci Resolve, CapCut, Vegas Pro, dll). File WAV sementara otomatis dibersihkan setelah mux selesai.
@@ -61,8 +60,8 @@ Ada tiga setting, bisa diubah dari dua tempat:
 | Max rendered models   | 0–2000 | Jumlah model yang tetap dirender per frame. Sisanya di-hide. **0 = mati** (semua dirender).                                                                                                           |
 | Focus distance        | 0–256m | Prioritas model di sekitar jarak ini dari kamera. **0 = model terdekat** yang menang. Bisa dipakai untuk ngeliat replay jauh tanpa naikin render limit.                                               |
 | Separate audio tracks | on/off | Hasil export bawa dua track audio terpisah (klip BBS + suara Minecraft). Cuma ngaruh pas opsi export BBS **audio** dan **minecraft sounds** dua-duanya nyala. Mati = satu track campuran kayak biasa. |
-| Open folder on import | on/off | Otomatis buka File Explorer ke folder tujuan saat drag & drop file ke BBS. Default: **mati** (tidak otomatis buka folder).                                                                            |
-
+| Open folder on import   | on/off | Otomatis buka File Explorer ke folder tujuan saat drag & drop file ke BBS. Default: **mati** (tidak otomatis buka folder).                                                                            |
+| Baking batch percentage | 1–100% | Mengatur seberapa agresif / persentase total replay yang diproses per kelompok frame saat Look At baking. Nilai tinggi = lebih cepat selesai, nilai rendah = progress bar lebih halus & stabil (default: **5%**). |
 **Lewat toolbar preview film editor** — klik ikon mata (👁, sebelah tombol motion path) untuk buka popup: toggle On/Off, slider Render Limit, slider Focus Distance. Perubahan otomatis kesimpan ke `bbslezy.json`.
 
 File setting-nya ada di `<folder config BBS>/bbs/settings/bbslezy.json`.
@@ -79,7 +78,7 @@ Hasilnya ada di `build/libs/bbs-lezy-<versi>.jar`.
 
 ### Catatan teknis
 
-- **Mixin UI bersifat fail-safe**: `bbslezy.mixins.json` pake `required: false` + `defaultRequire: 0`. Kalau BBS internal berubah dan mixin gagal, addon tetap jalan — cuma fitur panel replay dan audio yang ilang, fitur LOD tetap aman karena lewat API resmi. Target mixin baru: `VideoExportSession` (two-track export), `AudioReader` (codec), `ToWAVImporter`/`WAVImporter` (no-conversion import), `UISoundOverlayPanel` (pick audio), `UIScreen` (drag-import auto open folder toggle), `UIProcessReplaysPanel` (Look at per-tick).
+- **Mixin UI bersifat fail-safe**: `bbslezy.mixins.json` pake `required: false` + `defaultRequire: 0`. Kalau BBS internal berubah dan mixin gagal, addon tetap jalan — cuma fitur panel replay dan audio yang ilang, fitur LOD tetap aman karena lewat API resmi. Target mixin baru: `VideoExportSession` (two-track export), `AudioReader` (codec), `ToWAVImporter`/`WAVImporter` (no-conversion import), `UISoundOverlayPanel` (pick audio), `UIScreen` (drag-import auto open folder toggle), `UIProcessReplaysPanel` (Look at per-tick & async baking), `UIFormUndoHandler` (single compound undo).
 - **Restore override hanya dilakukan di `RENDER_AFTER` dan `SHUTDOWN`**, bukan di render pass biasa, karena shadow dan name tag digambar setelahnya.
 - **Budget dihitung sebagai squared distance** — nggak ada `sqrt` dan nggak ada alokasi `Vec3d` per form, biar murah pas ribuan actor.
 - Form yang terkunci ke kamera (`anchor` punya target) nggak ikut di-cull, sama seperti behavior bawaan BBS.
