@@ -66,10 +66,14 @@ public class LezyAudioMuxer
             args.add("aac");
             args.add("-b:a:0");
             args.add("192k");
+            args.add("-ac:a:0");
+            args.add("2");
             args.add("-c:a:1");
             args.add("aac");
             args.add("-b:a:1");
             args.add("192k");
+            args.add("-ac:a:1");
+            args.add("2");
             args.add("-metadata:s:a:0");
             args.add("title=BBS film audio");
             args.add("-metadata:s:a:1");

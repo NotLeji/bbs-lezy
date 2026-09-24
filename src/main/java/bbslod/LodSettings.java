@@ -17,6 +17,7 @@ public class LodSettings
     public static ValueInt renderLimit;
     public static ValueDouble focusDistance;
     public static ValueBoolean separateAudioTracks;
+    public static ValueBoolean openFolderOnImport;
 
     public static void register(SettingsBuilder builder)
     {
@@ -26,5 +27,6 @@ public class LodSettings
         renderLimit = builder.getInt("render_limit", 100, 0, 2000);
         focusDistance = builder.getDouble("focus_distance", 0D, 0D, 256D);
         separateAudioTracks = builder.getBoolean("separate_audio_tracks", false);
+        openFolderOnImport = builder.getBoolean("open_folder_on_import", false);
     }
 }

@@ -12,6 +12,7 @@
         "ToWAVImporterMixin",
         "WAVImporterMixin",
         "UISoundOverlayPanelMixin",
+        "UIScreenMixin",
         "WorldVideoExportSessionMixin",
         "MultiLinkThreadMixin"
     ],
