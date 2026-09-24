@@ -1,5 +1,6 @@
 package bbslezy.ui;
 
+import bbslezy.mixin.client.UIFormUndoHandlerMixin;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.film.replays.ReplayKeyframes;
 import mchorse.bbs_mod.ui.film.UIFilmPanel;
@@ -63,37 +64,61 @@ public class LezyLookAt
 
     public static ReplayBatchProcessor.Error lookAt(List<ReplayBatchProcessor.VisibleReplay> selected, Replay target, float tick, List<String> channels)
     {
+        return lookAt(selected, target, tick, channels, null);
+    }
+
+    public static ReplayBatchProcessor.Error lookAt(List<ReplayBatchProcessor.VisibleReplay> selected, Replay target, float tick, List<String> channels, UIFilmPanel filmPanel)
+    {
         if (target == null)
         {
             return ReplayBatchProcessor.Error.NEED_TARGET;
         }
 
-        boolean hasAnyRotation = false;
-
-        if (channels != null)
+        if (filmPanel != null && filmPanel.getUndoHandler() != null)
         {
-            for (String ch : channels)
+            filmPanel.getUndoHandler().submitUndo(true);
+            UIFormUndoHandlerMixin.bbslezy$setBatchLock(true);
+        }
+
+        try
+        {
+            boolean hasAnyRotation = false;
+
+            if (channels != null)
             {
-                for (String rot : ROTATION_CHANNELS)
+                for (String ch : channels)
                 {
-                    if (rot.equals(ch))
+                    for (String rot : ROTATION_CHANNELS)
                     {
-                        hasAnyRotation = true;
-                        break;
+                        if (rot.equals(ch))
+                        {
+                            hasAnyRotation = true;
+                            break;
+                        }
                     }
                 }
             }
-        }
 
-        boolean allChannels = !hasAnyRotation;
+            boolean allChannels = !hasAnyRotation;
 
-        for (ReplayBatchProcessor.VisibleReplay replay : selected)
-        {
-            BakedReplay baked = computeForReplay(replay.replay, target, tick, allChannels, channels);
-
-            if (baked != null)
+            for (ReplayBatchProcessor.VisibleReplay replay : selected)
             {
-                baked.apply();
+                BakedReplay baked = computeForReplay(replay.replay, target, tick, allChannels, channels);
+
+                if (baked != null)
+                {
+                    baked.apply();
+                }
+            }
+        }
+        finally
+        {
+            UIFormUndoHandlerMixin.bbslezy$setBatchLock(false);
+
+            if (filmPanel != null && filmPanel.getUndoHandler() != null)
+            {
+                filmPanel.getUndoHandler().submitUndo(true);
+                filmPanel.getUndoHandler().getUndoManager().markLastUndoNoMerging();
             }
         }
 
@@ -126,6 +151,12 @@ public class LezyLookAt
         }
 
         boolean allChannels = !hasAnyRotation;
+        if (filmPanel != null && filmPanel.getUndoHandler() != null)
+        {
+            filmPanel.getUndoHandler().submitUndo(true);
+            UIFormUndoHandlerMixin.bbslezy$setBatchLock(true);
+        }
+
 
         /* Step 1: Multithreaded read-only calculation of all look-at angles across all CPU cores */
         ForkJoinPool.commonPool().execute(() ->
@@ -193,8 +224,16 @@ public class LezyLookAt
                 progressPanel.close();
             }
 
+            UIFormUndoHandlerMixin.bbslezy$setBatchLock(false);
+
             if (filmPanel != null)
             {
+                if (filmPanel.getUndoHandler() != null)
+                {
+                    filmPanel.getUndoHandler().submitUndo(true);
+                    filmPanel.getUndoHandler().getUndoManager().markLastUndoNoMerging();
+                }
+
                 filmPanel.getController().createEntities();
                 filmPanel.replayEditor.updateChannelsList();
             }

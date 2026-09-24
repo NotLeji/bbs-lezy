@@ -104,7 +104,7 @@ public abstract class UIProcessReplaysPanelMixin
         }
 
         this.bbslezy$ranAsync = false;
-        return LezyLookAt.lookAt(selected, params.lookAtTarget, tick, properties);
+        return LezyLookAt.lookAt(selected, params.lookAtTarget, tick, properties, this.filmPanel);
     }
 
     @Redirect(

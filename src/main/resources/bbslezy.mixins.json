@@ -15,7 +15,8 @@
         "UISoundOverlayPanelMixin",
         "UIScreenMixin",
         "WorldVideoExportSessionMixin",
-        "MultiLinkThreadMixin"
+        "MultiLinkThreadMixin",
+        "UIFormUndoHandlerMixin"
     ],
     "injectors": {
         "defaultRequire": 0
