@@ -98,17 +98,7 @@ public abstract class UIProcessReplaysPanelMixin
                 UIOverlay.addOverlay(context, progressPanel, 260, 80);
             }
 
-            LezyLookAt.lookAtAsync(selected, params.lookAtTarget, tick, properties, progressPanel, () ->
-            {
-                progressPanel.markFinished();
-                progressPanel.close();
-
-                if (this.filmPanel != null)
-                {
-                    this.filmPanel.getController().createEntities();
-                    this.filmPanel.replayEditor.updateChannelsList();
-                }
-            });
+            LezyLookAt.lookAtAsync(selected, params.lookAtTarget, tick, properties, progressPanel, this.filmPanel);
 
             return null;
         }
