@@ -5,6 +5,7 @@ import mchorse.bbs_mod.film.replays.ReplayKeyframes;
 import mchorse.bbs_mod.ui.film.replays.ReplayBatchProcessor;
 import mchorse.bbs_mod.utils.keyframes.Keyframe;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
+import net.minecraft.client.MinecraftClient;
 
 import java.util.List;
 
@@ -24,8 +25,6 @@ public class LezyLookAt
             return ReplayBatchProcessor.Error.NEED_TARGET;
         }
 
-        /* If no rotation channels are selected (e.g. default "x" is selected in the properties list),
-         * default to all rotation channels (yaw, pitch, headYaw, bodyYaw). */
         boolean hasAnyRotation = false;
 
         if (channels != null)
@@ -47,35 +46,94 @@ public class LezyLookAt
 
         for (ReplayBatchProcessor.VisibleReplay replay : selected)
         {
-            if (replay.replay == target)
+            applyOne(replay.replay, target, tick, allChannels, channels);
+        }
+
+        return null;
+    }
+
+    public static void lookAtAsync(
+        List<ReplayBatchProcessor.VisibleReplay> selected,
+        Replay target,
+        float tick,
+        List<String> channels,
+        UIBakingProgressOverlayPanel progressPanel,
+        Runnable onComplete)
+    {
+        boolean hasAnyRotation = false;
+
+        if (channels != null)
+        {
+            for (String ch : channels)
+            {
+                for (String rot : ROTATION_CHANNELS)
+                {
+                    if (rot.equals(ch))
+                    {
+                        hasAnyRotation = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        boolean allChannels = !hasAnyRotation;
+
+        new Thread(() ->
+        {
+            int total = selected.size();
+
+            for (int i = 0; i < total; i++)
+            {
+                ReplayBatchProcessor.VisibleReplay replay = selected.get(i);
+
+                applyOne(replay.replay, target, tick, allChannels, channels);
+
+                float p = (float) (i + 1) / total;
+                int pct = Math.round(p * 100F);
+                String status = pct + "% (" + (i + 1) + " / " + total + ")";
+
+                if (progressPanel != null)
+                {
+                    progressPanel.updateProgress(p, status);
+                }
+            }
+
+            if (onComplete != null)
+            {
+                MinecraftClient.getInstance().execute(onComplete);
+            }
+        }, "BBS-Lezy-LookAt-Baker").start();
+    }
+
+    public static void applyOne(Replay replay, Replay target, float tick, boolean allChannels, List<String> channels)
+    {
+        if (replay == target)
+        {
+            return;
+        }
+
+        ReplayKeyframes src = replay.keyframes;
+
+        for (String id : ROTATION_CHANNELS)
+        {
+            if (!allChannels && !channels.contains(id))
             {
                 continue;
             }
 
-            ReplayKeyframes src = replay.replay.keyframes;
+            KeyframeChannel<Double> channel = channel(src, id);
 
-            for (String id : ROTATION_CHANNELS)
+            if (channel == null)
             {
-                if (!allChannels && !channels.contains(id))
-                {
-                    continue;
-                }
-
-                KeyframeChannel<Double> channel = channel(src, id);
-
-                if (channel == null)
-                {
-                    continue;
-                }
-
-                boolean isPitch = id.equals("pitch");
-                double angle = compute(tick, src, target.keyframes, isPitch);
-
-                channel.insertInheriting(tick, unwrap(channel, tick, angle, isPitch));
+                continue;
             }
-        }
 
-        return null;
+            boolean isPitch = id.equals("pitch");
+            double angle = compute(tick, src, target.keyframes, isPitch);
+
+            channel.insertInheriting(tick, unwrap(channel, tick, angle, isPitch));
+        }
     }
 
     private static KeyframeChannel<Double> channel(ReplayKeyframes keyframes, String id)

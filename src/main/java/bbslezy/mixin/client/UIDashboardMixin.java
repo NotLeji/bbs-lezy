@@ -21,13 +21,7 @@ public abstract class UIDashboardMixin
     {
         UIElement overlay = ((UIDashboard) (Object) this).overlay;
 
-        for (Keybind k : overlay.keys().keybinds)
-        {
-            if ("K".equalsIgnoreCase(k.getKeyCombo()))
-            {
-                return;
-            }
-        }
+        overlay.keys().keybinds.removeIf(k -> "K".equalsIgnoreCase(k.getKeyCombo()));
 
         KeyCombo toggleShaders = new KeyCombo(
             "toggle_shaders",
