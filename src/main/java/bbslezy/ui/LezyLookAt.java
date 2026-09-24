@@ -13,10 +13,15 @@ import java.util.List;
  * Inserts look-at rotation keyframes at the current timeline playhead tick
  * instead of rewriting the entire channel. Allows stacking multiple look-at
  * keyframes at different ticks across multiple replays.
+ *
+ * <p>Processes in multi-threaded batches with frame delays between batches to
+ * prevent UI freezes when baking thousands of replays.</p>
  */
 public class LezyLookAt
 {
     private static final String[] ROTATION_CHANNELS = {"yaw", "pitch", "headYaw", "bodyYaw"};
+    private static final int BATCH_SIZE = 25;
+    private static final long BATCH_DELAY_MS = 15L;
 
     public static ReplayBatchProcessor.Error lookAt(List<ReplayBatchProcessor.VisibleReplay> selected, Replay target, float tick, List<String> channels)
     {
@@ -79,31 +84,47 @@ public class LezyLookAt
 
         boolean allChannels = !hasAnyRotation;
 
-        new Thread(() ->
+        Thread bakerThread = new Thread(() ->
         {
             int total = selected.size();
 
-            for (int i = 0; i < total; i++)
+            for (int start = 0; start < total; start += BATCH_SIZE)
             {
-                ReplayBatchProcessor.VisibleReplay replay = selected.get(i);
+                int end = Math.min(start + BATCH_SIZE, total);
+                List<ReplayBatchProcessor.VisibleReplay> batch = selected.subList(start, end);
 
-                applyOne(replay.replay, target, tick, allChannels, channels);
+                /* Process this batch across CPU cores in parallel */
+                batch.parallelStream().forEach(replay ->
+                {
+                    applyOne(replay.replay, target, tick, allChannels, channels);
+                });
 
-                float p = (float) (i + 1) / total;
+                float p = (float) end / total;
                 int pct = Math.round(p * 100F);
-                String status = pct + "% (" + (i + 1) + " / " + total + ")";
+                String status = pct + "% (" + end + " / " + total + ")";
 
                 if (progressPanel != null)
                 {
                     progressPanel.updateProgress(p, status);
                 }
+
+                /* Yield between batches to give render thread time to draw ("gap ruang") */
+                try
+                {
+                    Thread.sleep(BATCH_DELAY_MS);
+                }
+                catch (InterruptedException ignored)
+                {}
             }
 
             if (onComplete != null)
             {
                 MinecraftClient.getInstance().execute(onComplete);
             }
-        }, "BBS-Lezy-LookAt-Baker").start();
+        }, "BBS-Lezy-LookAt-Baker");
+
+        bakerThread.setDaemon(true);
+        bakerThread.start();
     }
 
     public static void applyOne(Replay replay, Replay target, float tick, boolean allChannels, List<String> channels)
