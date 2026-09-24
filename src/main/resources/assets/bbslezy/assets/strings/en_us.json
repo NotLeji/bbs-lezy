@@ -12,6 +12,8 @@
 	"bbslezy.config.general.separate_audio_tracks-comment": "Keep BBS clip audio and Minecraft sounds as two separate tracks in recorded video (track 1 film, track 2 sounds) instead of one mixed track. Only applies when both BBS export options audio and minecraft sounds are on. Requires ffmpeg.",
 	"bbslezy.config.general.open_folder_on_import": "Open folder on import",
 	"bbslezy.config.general.open_folder_on_import-comment": "Automatically open the destination folder in File Explorer when dragging and dropping files into BBS.",
+	"bbslezy.config.general.baking_batch_percent": "Baking batch percentage",
+	"bbslezy.config.general.baking_batch_percent-comment": "Controls aggressiveness / percentage of total replays processed per frame batch during Look At baking. Higher = faster but heavier, lower = smoother progress bar and gentler on frame pacing.",
 	"bbslezy.importer.copy_audio": "Audio (copy as-is)",
 	"bbslezy.ui.replays.select_all": "Select all replays",
 	"bbslezy.ui.replays.select_same_model": "Select same model",

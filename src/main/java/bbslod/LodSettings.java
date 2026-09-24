@@ -18,6 +18,7 @@ public class LodSettings
     public static ValueDouble focusDistance;
     public static ValueBoolean separateAudioTracks;
     public static ValueBoolean openFolderOnImport;
+    public static ValueInt bakingBatchPercent;
 
     public static void register(SettingsBuilder builder)
     {
@@ -28,5 +29,6 @@ public class LodSettings
         focusDistance = builder.getDouble("focus_distance", 0D, 0D, 256D);
         separateAudioTracks = builder.getBoolean("separate_audio_tracks", false);
         openFolderOnImport = builder.getBoolean("open_folder_on_import", false);
+        bakingBatchPercent = builder.getInt("baking_batch_percent", 5, 1, 100);
     }
 }
