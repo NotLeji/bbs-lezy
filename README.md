@@ -21,11 +21,13 @@ Nggak semua model replay dirender setiap frame — hanya yang terdekat dengan ka
 - **Duplicate to total** — angka yang dimasukkan adalah **total** copy di seluruh seleksi, bukan per-replay. Misal: pilih 3 replay, input 150, hasilnya 150 copy (50 per replay), bukan 450. Tiap replay dapat kategori sendiri (`Duplicates N`) biar gampang dikontrol atau dihapus.
 - **Tombol scroll ▲▼** — lompat instant ke atas atau ke bawah daftar replay, tanpa animasi. Berguna pas daudarnya udah ribuan baris.
 
-**3. Perbaikan dari fork BBS**
+**3. Audio export & codec**
 
-- **F6 warmup fix** — export video (Record & Replay) nggak lagi abort prematur saat warmup, terutama kalau filmnya dilakukan secara asynchronous.
-- **Keybind K: toggle shader** — tekan **K** di dashboard untuk nyalain/matemin Iris shader langsung, tanpa keluar dari editor. Dikerjakan lewat refleksi, jadi nggak butuh dependency compile Iris; kalo Iris nggak terinstall, keybind-nya diam.
-- **Async texture loading** — proses MultiLink (texture) dipindah ke thread pool terpisah, jadi main thread nggak tersendat pas banyak textur dimuat sekaligus.
+- **Separate audio tracks** — pas export dengan opsi BBS **audio** + **minecraft sounds** dua-duanya nyala, hasil videonya bawa **dua track audio terpisah** (track 1: audio klip BBS, track 2: suara Minecraft) bukan satu track campuran. Gampang diedit di NLE. Butuh ffmpeg; output selalu `.mp4` AAC 192k — template `videoArgumentsMux` custom nggak berlaku buat path ini.
+- **Format audio dibaca langsung** — `.mp3`, `.m4a`, `.aac`, `.opus`, `.wma`, `.alac`, `.ape`, `.flac`, `.aif/.aiff`, `.ac3` bisa dipreview, diedit (offset/durasi/volume), dicut, dan dirender kayak WAV. Decode on-demand lewat ffmpeg, jadi file aslinya nggak pernah dikonversi. Format compressed butuh ffmpeg terkonfigurasi di setting BBS.
+- **Import tanpa konversi** — file audio yang didrag ke folder audio dikopi **apa adanya** (byte-identical), nggak lagi dire-encode jadi WAV mono. Drop `.mp4` tetap diekstrak audionya ke WAV kayak dulu (khusus video).
+
+**4. Perbaikan dari fork BBS**
 
 ## Dokumentasi
 
@@ -53,9 +55,10 @@ Ada tiga setting, bisa diubah dari dua tempat:
 
 | Setting             | Range  | Keterangan                                                                                                                                              |
 | ------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Render limit        | on/off | Nyalain/matemin seluruh fitur batas render.                                                                                                             |
-| Max rendered models | 0–2000 | Jumlah model yang tetap dirender per frame. Sisanya di-hide. **0 = mati** (semua dirender).                                                             |
-| Focus distance      | 0–256m | Prioritas model di sekitar jarak ini dari kamera. **0 = model terdekat** yang menang. Bisa dipakai untuk ngeliat replay jauh tanpa naikin render limit. |
+| Enable render limit   | on/off | Nyalain/matemin seluruh fitur batas render.                                                                                                             |
+| Max rendered models   | 0–2000 | Jumlah model yang tetap dirender per frame. Sisanya di-hide. **0 = mati** (semua dirender).                                                             |
+| Focus distance        | 0–256m | Prioritas model di sekitar jarak ini dari kamera. **0 = model terdekat** yang menang. Bisa dipakai untuk ngeliat replay jauh tanpa naikin render limit. |
+| Separate audio tracks | on/off | Hasil export bawa dua track audio terpisah (klip BBS + suara Minecraft). Cuma ngaruh pas opsi export BBS **audio** dan **minecraft sounds** dua-duanya nyala. Mati = satu track campuran kayak biasa. |
 
 **Lewat toolbar preview film editor** — klik ikon mata (👁, sebelah tombol motion path) untuk buka popup: toggle On/Off, slider Render Limit, slider Focus Distance. Perubahan otomatis kesimpan ke `bbslezy.json`.
 
@@ -73,7 +76,7 @@ Hasilnya ada di `build/libs/bbs-lezy-<versi>.jar`.
 
 ### Catatan teknis
 
-- **Mixin UI bersifat fail-safe**: `bbslezy.mixins.json` pake `required: false` + `defaultRequire: 0`. Kalau BBS internal berubah dan mixin gagal, addon tetap jalan — cuma fitur no. 2 dan 3 yang ilang, fitur LOD (no. 1) tetap aman karena lewat API resmi.
+- **Mixin UI bersifat fail-safe**: `bbslezy.mixins.json` pake `required: false` + `defaultRequire: 0`. Kalau BBS internal berubah dan mixin gagal, addon tetap jalan — cuma fitur panel replay dan audio yang ilang, fitur LOD tetap aman karena lewat API resmi. Target mixin baru: `VideoExportSession` (two-track export), `AudioReader` (codec), `ToWAVImporter`/`WAVImporter` (no-conversion import).
 - **Restore override hanya dilakukan di `RENDER_AFTER` dan `SHUTDOWN`**, bukan di render pass biasa, karena shadow dan name tag digambar setelahnya.
 - **Budget dihitung sebagai squared distance** — nggak ada `sqrt` dan nggak ada alokasi `Vec3d` per form, biar murah pas ribuan actor.
 - Form yang terkunci ke kamera (`anchor` punya target) nggak ikut di-cull, sama seperti behavior bawaan BBS.

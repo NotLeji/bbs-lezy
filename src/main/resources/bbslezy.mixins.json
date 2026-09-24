@@ -8,6 +8,9 @@
         "FilmPreviewMixin",
         "UIDashboardMixin",
         "VideoExportSessionMixin",
+        "AudioReaderMixin",
+        "ToWAVImporterMixin",
+        "WAVImporterMixin",
         "WorldVideoExportSessionMixin",
         "MultiLinkThreadMixin"
     ],
