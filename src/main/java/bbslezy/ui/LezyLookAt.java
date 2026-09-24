@@ -2,26 +2,64 @@ package bbslezy.ui;
 
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.film.replays.ReplayKeyframes;
+import mchorse.bbs_mod.ui.film.UIFilmPanel;
 import mchorse.bbs_mod.ui.film.replays.ReplayBatchProcessor;
 import mchorse.bbs_mod.utils.keyframes.Keyframe;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
 import net.minecraft.client.MinecraftClient;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ForkJoinPool;
+import java.util.stream.Collectors;
 
 /**
  * Inserts look-at rotation keyframes at the current timeline playhead tick
  * instead of rewriting the entire channel. Allows stacking multiple look-at
  * keyframes at different ticks across multiple replays.
  *
- * <p>Processes in multi-threaded batches with frame delays between batches to
- * prevent UI freezes when baking thousands of replays.</p>
+ * <p>Uses multithreaded calculation across CPU cores for heavy math, and applies
+ * keyframe mutations in small batches on the Minecraft main thread with frame yields
+ * to prevent UI freezes and eliminate ConcurrentModificationException.</p>
  */
 public class LezyLookAt
 {
     private static final String[] ROTATION_CHANNELS = {"yaw", "pitch", "headYaw", "bodyYaw"};
     private static final int BATCH_SIZE = 25;
     private static final long BATCH_DELAY_MS = 15L;
+
+    public static class BakedChannel
+    {
+        public final KeyframeChannel<Double> channel;
+        public final float tick;
+        public final double angle;
+
+        public BakedChannel(KeyframeChannel<Double> channel, float tick, double angle)
+        {
+            this.channel = channel;
+            this.tick = tick;
+            this.angle = angle;
+        }
+
+        public void apply()
+        {
+            this.channel.insertInheriting(this.tick, this.angle);
+        }
+    }
+
+    public static class BakedReplay
+    {
+        public final List<BakedChannel> channels = new ArrayList<>();
+
+        public void apply()
+        {
+            for (BakedChannel bc : this.channels)
+            {
+                bc.apply();
+            }
+        }
+    }
 
     public static ReplayBatchProcessor.Error lookAt(List<ReplayBatchProcessor.VisibleReplay> selected, Replay target, float tick, List<String> channels)
     {
@@ -51,7 +89,12 @@ public class LezyLookAt
 
         for (ReplayBatchProcessor.VisibleReplay replay : selected)
         {
-            applyOne(replay.replay, target, tick, allChannels, channels);
+            BakedReplay baked = computeForReplay(replay.replay, target, tick, allChannels, channels);
+
+            if (baked != null)
+            {
+                baked.apply();
+            }
         }
 
         return null;
@@ -63,7 +106,7 @@ public class LezyLookAt
         float tick,
         List<String> channels,
         UIBakingProgressOverlayPanel progressPanel,
-        Runnable onComplete)
+        UIFilmPanel filmPanel)
     {
         boolean hasAnyRotation = false;
 
@@ -84,57 +127,94 @@ public class LezyLookAt
 
         boolean allChannels = !hasAnyRotation;
 
-        Thread bakerThread = new Thread(() ->
+        /* Step 1: Multithreaded read-only calculation of all look-at angles across all CPU cores */
+        ForkJoinPool.commonPool().execute(() ->
         {
-            int total = selected.size();
+            List<BakedReplay> bakedList = selected.parallelStream()
+                .map(vr -> computeForReplay(vr.replay, target, tick, allChannels, channels))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
-            for (int start = 0; start < total; start += BATCH_SIZE)
+            /* Step 2: Post to Minecraft main thread to apply keyframes safely in batches with render yields */
+            MinecraftClient.getInstance().execute(() ->
             {
-                int end = Math.min(start + BATCH_SIZE, total);
-                List<ReplayBatchProcessor.VisibleReplay> batch = selected.subList(start, end);
+                applyNextBatch(bakedList, 0, BATCH_SIZE, progressPanel, filmPanel);
+            });
+        });
+    }
 
-                /* Process this batch across CPU cores in parallel */
-                batch.parallelStream().forEach(replay ->
-                {
-                    applyOne(replay.replay, target, tick, allChannels, channels);
-                });
+    private static void applyNextBatch(
+        List<BakedReplay> baked,
+        int index,
+        int batchSize,
+        UIBakingProgressOverlayPanel progressPanel,
+        UIFilmPanel filmPanel)
+    {
+        int total = baked.size();
+        int end = Math.min(index + batchSize, total);
 
-                float p = (float) end / total;
-                int pct = Math.round(p * 100F);
-                String status = pct + "% (" + end + " / " + total + ")";
+        for (int i = index; i < end; i++)
+        {
+            baked.get(i).apply();
+        }
 
-                if (progressPanel != null)
-                {
-                    progressPanel.updateProgress(p, status);
-                }
+        float p = total == 0 ? 1F : (float) end / total;
+        int pct = Math.round(p * 100F);
+        String status = pct + "% (" + end + " / " + total + ")";
 
-                /* Yield between batches to give render thread time to draw ("gap ruang") */
+        if (progressPanel != null)
+        {
+            progressPanel.updateProgress(p, status);
+        }
+
+        if (end < total)
+        {
+            /* Yield on background worker thread to give the Minecraft render thread time to draw */
+            ForkJoinPool.commonPool().execute(() ->
+            {
                 try
                 {
                     Thread.sleep(BATCH_DELAY_MS);
                 }
                 catch (InterruptedException ignored)
                 {}
-            }
 
-            if (onComplete != null)
+                MinecraftClient.getInstance().execute(() ->
+                {
+                    applyNextBatch(baked, end, batchSize, progressPanel, filmPanel);
+                });
+            });
+        }
+        else
+        {
+            if (progressPanel != null)
             {
-                MinecraftClient.getInstance().execute(onComplete);
+                progressPanel.markFinished();
+                progressPanel.close();
             }
-        }, "BBS-Lezy-LookAt-Baker");
 
-        bakerThread.setDaemon(true);
-        bakerThread.start();
+            if (filmPanel != null)
+            {
+                filmPanel.getController().createEntities();
+                filmPanel.replayEditor.updateChannelsList();
+            }
+        }
     }
 
-    public static void applyOne(Replay replay, Replay target, float tick, boolean allChannels, List<String> channels)
+    public static BakedReplay computeForReplay(
+        Replay replay,
+        Replay target,
+        float tick,
+        boolean allChannels,
+        List<String> channels)
     {
         if (replay == target)
         {
-            return;
+            return null;
         }
 
         ReplayKeyframes src = replay.keyframes;
+        BakedReplay baked = new BakedReplay();
 
         for (String id : ROTATION_CHANNELS)
         {
@@ -152,9 +232,12 @@ public class LezyLookAt
 
             boolean isPitch = id.equals("pitch");
             double angle = compute(tick, src, target.keyframes, isPitch);
+            double unwrapped = unwrap(channel, tick, angle, isPitch);
 
-            channel.insertInheriting(tick, unwrap(channel, tick, angle, isPitch));
+            baked.channels.add(new BakedChannel(channel, tick, unwrapped));
         }
+
+        return baked.channels.isEmpty() ? null : baked;
     }
 
     private static KeyframeChannel<Double> channel(ReplayKeyframes keyframes, String id)
