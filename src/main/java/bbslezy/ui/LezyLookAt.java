@@ -24,7 +24,26 @@ public class LezyLookAt
             return ReplayBatchProcessor.Error.NEED_TARGET;
         }
 
-        boolean allChannels = channels == null || channels.isEmpty();
+        /* If no rotation channels are selected (e.g. default "x" is selected in the properties list),
+         * default to all rotation channels (yaw, pitch, headYaw, bodyYaw). */
+        boolean hasAnyRotation = false;
+
+        if (channels != null)
+        {
+            for (String ch : channels)
+            {
+                for (String rot : ROTATION_CHANNELS)
+                {
+                    if (rot.equals(ch))
+                    {
+                        hasAnyRotation = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        boolean allChannels = !hasAnyRotation;
 
         for (ReplayBatchProcessor.VisibleReplay replay : selected)
         {
@@ -49,9 +68,10 @@ public class LezyLookAt
                     continue;
                 }
 
-                double angle = compute(tick, src, target.keyframes, id.equals("pitch"));
+                boolean isPitch = id.equals("pitch");
+                double angle = compute(tick, src, target.keyframes, isPitch);
 
-                channel.insertInheriting(tick, unwrap(channel, tick, angle));
+                channel.insertInheriting(tick, unwrap(channel, tick, angle, isPitch));
             }
         }
 
@@ -90,8 +110,13 @@ public class LezyLookAt
      * Prevent angle wrapping from taking the long way around (e.g. 350° to 10° swinging through 180°).
      * Smooths relative to the keyframe immediately preceding the target tick.
      */
-    private static double unwrap(KeyframeChannel<Double> channel, float tick, double angle)
+    private static double unwrap(KeyframeChannel<Double> channel, float tick, double angle, boolean isPitch)
     {
+        if (isPitch)
+        {
+            return angle;
+        }
+
         Keyframe<Double> prev = null;
 
         for (Keyframe<Double> keyframe : channel.getKeyframes())

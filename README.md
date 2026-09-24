@@ -55,13 +55,13 @@ Ada tiga setting, bisa diubah dari dua tempat:
 
 **Lewat settings screen BBS** (ikon gerigi → kategori BBS Lezy):
 
-| Setting             | Range  | Keterangan                                                                                                                                              |
-| ------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Enable render limit   | on/off | Nyalain/matemin seluruh fitur batas render.                                                                                                             |
-| Max rendered models   | 0–2000 | Jumlah model yang tetap dirender per frame. Sisanya di-hide. **0 = mati** (semua dirender).                                                             |
-| Focus distance        | 0–256m | Prioritas model di sekitar jarak ini dari kamera. **0 = model terdekat** yang menang. Bisa dipakai untuk ngeliat replay jauh tanpa naikin render limit. |
+| Setting               | Range  | Keterangan                                                                                                                                                                                            |
+| --------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Enable render limit   | on/off | Nyalain/matemin seluruh fitur batas render.                                                                                                                                                           |
+| Max rendered models   | 0–2000 | Jumlah model yang tetap dirender per frame. Sisanya di-hide. **0 = mati** (semua dirender).                                                                                                           |
+| Focus distance        | 0–256m | Prioritas model di sekitar jarak ini dari kamera. **0 = model terdekat** yang menang. Bisa dipakai untuk ngeliat replay jauh tanpa naikin render limit.                                               |
 | Separate audio tracks | on/off | Hasil export bawa dua track audio terpisah (klip BBS + suara Minecraft). Cuma ngaruh pas opsi export BBS **audio** dan **minecraft sounds** dua-duanya nyala. Mati = satu track campuran kayak biasa. |
-| Open folder on import | on/off | Otomatis buka File Explorer ke folder tujuan saat drag & drop file ke BBS. Default: **mati** (tidak otomatis buka folder). |
+| Open folder on import | on/off | Otomatis buka File Explorer ke folder tujuan saat drag & drop file ke BBS. Default: **mati** (tidak otomatis buka folder).                                                                            |
 
 **Lewat toolbar preview film editor** — klik ikon mata (👁, sebelah tombol motion path) untuk buka popup: toggle On/Off, slider Render Limit, slider Focus Distance. Perubahan otomatis kesimpan ke `bbslezy.json`.
 
@@ -87,4 +87,4 @@ Hasilnya ada di `build/libs/bbs-lezy-<versi>.jar`.
 
 ## License
 
-MIT — bebas dipake dan dimodifikasi. Bosan dengan bug? Pull request terbuka.
+MIT — bebas dipake dan dimodifikasi. Bosan dengan bug atau pengen nambahin fitur? Fork aja sendiri
