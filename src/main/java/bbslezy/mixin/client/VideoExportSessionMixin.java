@@ -40,6 +40,16 @@ public abstract class VideoExportSessionMixin
     {
         if (LodSettings.separateAudioTracks.get())
         {
+            if (file != null && file.isFile())
+            {
+                File filmWav = new File(file.getParentFile(), file.getName().replace(".wav", "") + ".film.wav");
+
+                if (file.renameTo(filmWav))
+                {
+                    file = filmWav;
+                }
+            }
+
             LezyAudioMuxer.setDeferredFilm(file);
             cir.setReturnValue(null);
         }

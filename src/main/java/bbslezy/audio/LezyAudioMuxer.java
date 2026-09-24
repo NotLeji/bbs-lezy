@@ -126,9 +126,17 @@ public class LezyAudioMuxer
 
             File finalResult = merged.renameTo(result) ? result : merged;
 
-            if (finalResult != null && mc != null && mc.exists())
+            if (finalResult != null)
             {
-                mc.delete();
+                if (film != null && film.exists())
+                {
+                    film.delete();
+                }
+
+                if (mc != null && mc.exists())
+                {
+                    mc.delete();
+                }
             }
 
             return finalResult;
