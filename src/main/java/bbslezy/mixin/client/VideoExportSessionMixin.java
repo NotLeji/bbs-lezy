@@ -61,6 +61,13 @@ public abstract class VideoExportSessionMixin
             return LezyAudioMuxer.muxTwoTracks(video, deferred, audio, movieName);
         }
 
-        return VideoMuxer.mux(video, audio, movieName);
+        File result = VideoMuxer.mux(video, audio, movieName);
+
+        if (result != null && audio != null && audio.exists())
+        {
+            audio.delete();
+        }
+
+        return result;
     }
 }

@@ -124,7 +124,14 @@ public class LezyAudioMuxer
                 return merged;
             }
 
-            return merged.renameTo(result) ? result : merged;
+            File finalResult = merged.renameTo(result) ? result : merged;
+
+            if (finalResult != null && mc != null && mc.exists())
+            {
+                mc.delete();
+            }
+
+            return finalResult;
         }
         catch (Exception e)
         {
