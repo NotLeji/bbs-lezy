@@ -4,7 +4,10 @@ import bbslezy.actions.MobDeathActionClip;
 import bbslezy.actions.ProjectileAttackActionClip;
 import bbslezy.audio.LezyCopyAudioImporter;
 import bbslezy.ui.film.clips.actions.UIMobDeathActionClip;
+import bbslezy.client.screen.ScreenEffectRenderer;
 import mchorse.bbs_mod.api.client.events.RegisterClipPanelsEvent;
+import mchorse.bbs_mod.api.client.events.RegisterFrameOverlaysEvent;
+import net.minecraft.client.MinecraftClient;
 import mchorse.bbs_mod.ui.film.clips.actions.UIAttackActionClip;
 
 import mchorse.bbs_mod.api.BBSAddonMod;
@@ -50,6 +53,19 @@ public class BBSLodClient implements BBSAddonMod
     {
         event.register(MobDeathActionClip.class, UIMobDeathActionClip::new);
         event.register(ProjectileAttackActionClip.class, UIAttackActionClip::new);
+    }
+
+    @Subscribe
+    public void onFrameOverlays(RegisterFrameOverlaysEvent event)
+    {
+        event.register((stack, batcher, context) ->
+        {
+            MinecraftClient mc = MinecraftClient.getInstance();
+            int w = mc.getWindow().getScaledWidth();
+            int h = mc.getWindow().getScaledHeight();
+
+            ScreenEffectRenderer.render(batcher, context, w, h);
+        });
     }
 
     /**
