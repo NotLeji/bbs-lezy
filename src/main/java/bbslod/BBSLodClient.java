@@ -3,8 +3,20 @@ package bbslod;
 import bbslezy.actions.MobDeathActionClip;
 import bbslezy.actions.ProjectileAttackActionClip;
 import bbslezy.audio.LezyCopyAudioImporter;
-import bbslezy.ui.film.clips.actions.UIMobDeathActionClip;
+import bbslezy.camera.clips.screen.CinematicClip;
+import bbslezy.camera.clips.screen.ColorClip;
+import bbslezy.camera.clips.screen.EyeClip;
+import bbslezy.camera.clips.screen.GrainClip;
+import bbslezy.camera.clips.screen.LetterboxClip;
+import bbslezy.camera.clips.screen.VignetteClip;
 import bbslezy.client.screen.ScreenEffectRenderer;
+import bbslezy.ui.film.clips.UICinematicClip;
+import bbslezy.ui.film.clips.UIColorClip;
+import bbslezy.ui.film.clips.UIEyeClip;
+import bbslezy.ui.film.clips.UIGrainClip;
+import bbslezy.ui.film.clips.UILetterboxClip;
+import bbslezy.ui.film.clips.UIVignetteClip;
+import bbslezy.ui.film.clips.actions.UIMobDeathActionClip;
 import mchorse.bbs_mod.api.client.events.RegisterClipPanelsEvent;
 import mchorse.bbs_mod.api.client.events.RegisterFrameOverlaysEvent;
 import net.minecraft.client.MinecraftClient;
@@ -53,6 +65,12 @@ public class BBSLodClient implements BBSAddonMod
     {
         event.register(MobDeathActionClip.class, UIMobDeathActionClip::new);
         event.register(ProjectileAttackActionClip.class, UIAttackActionClip::new);
+        event.register(ColorClip.class, UIColorClip::new);
+        event.register(LetterboxClip.class, UILetterboxClip::new);
+        event.register(GrainClip.class, UIGrainClip::new);
+        event.register(EyeClip.class, UIEyeClip::new);
+        event.register(CinematicClip.class, UICinematicClip::new);
+        event.register(VignetteClip.class, UIVignetteClip::new);
     }
 
     @Subscribe
