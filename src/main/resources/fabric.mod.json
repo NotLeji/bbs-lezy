@@ -3,7 +3,7 @@
 	"id": "bbslezy",
 	"version": "${version}",
 	"name": "BBS Lezy",
-	"description": "Caps how many of a BBS film scene's models render at once, and adds mass-select and instant-scroll controls to the replay list.",
+	"description": "LOD render capping, mass replay controls, CML screen effects (vintage camera, color grade, grain, letterbox, vignette), action clips, and Discord Rich Presence for BBS.",
 	"license": "MIT",
 	"environment": "*",
 	"icon": "assets/bbslezy/icon.png",

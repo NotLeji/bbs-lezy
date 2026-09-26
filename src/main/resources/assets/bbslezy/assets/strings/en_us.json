@@ -14,6 +14,10 @@
 	"bbslezy.config.general.open_folder_on_import-comment": "Automatically open the destination folder in File Explorer when dragging and dropping files into BBS.",
 	"bbslezy.config.general.baking_batch_percent": "Baking batch percentage",
 	"bbslezy.config.general.baking_batch_percent-comment": "Controls aggressiveness / percentage of total replays processed per frame batch during Look At baking. Higher = faster but heavier, lower = smoother progress bar and gentler on frame pacing.",
+	"bbslezy.config.general.discord_enabled": "Enable Discord Presence",
+	"bbslezy.config.general.discord_enabled-comment": "Displays rich presence activity in Discord while editing films or playing BBS.",
+	"bbslezy.config.general.discord_app_id": "Discord Application ID",
+	"bbslezy.config.general.discord_app_id-comment": "The Discord Application Client ID from the Discord Developer Portal. Leave empty for default.",
 	"bbslezy.importer.copy_audio": "Audio (copy as-is)",
 	"bbslezy.ui.replays.select_all": "Select all replays",
 	"bbslezy.ui.replays.select_same_model": "Select same model",
@@ -25,5 +29,14 @@
 	"bbslezy.ui.lod.enabled": "LOD enabled",
 	"bbslezy.ui.lod.render_limit": "Render limit",
 	"bbslezy.ui.lod.focus_distance": "Focus distance",
-	"bbslezy.ui.dashboard.keys.toggle_shaders": "Toggle Iris shaders"
+	"bbslezy.ui.dashboard.keys.toggle_shaders": "Toggle Iris shaders",
+	"bbs.ui.camera.clips.bbs:color": "Color Grade & Vintage",
+	"bbs.ui.camera.clips.bbs:letterbox": "Letterbox (Black Bars)",
+	"bbs.ui.camera.clips.bbs:grain": "Film Grain",
+	"bbs.ui.camera.clips.bbs:eye": "Eye Blink",
+	"bbs.ui.camera.clips.bbs:cinematic": "Cinematic (Vintage, Lens, VHS)",
+	"bbs.ui.camera.clips.bbs:vignette": "Vignette",
+	"bbs.ui.camera.clips.bbs:mob_death": "Mob Death (Poof)",
+	"bbs.ui.camera.clips.bbs:projectile_attack": "Projectile Attack",
+	"bbs.ui.camera.clips.bbs:close_container": "Close Container"
 }
