@@ -17,7 +17,10 @@ import bbslezy.ui.film.clips.UIGrainClip;
 import bbslezy.ui.film.clips.UILetterboxClip;
 import bbslezy.ui.film.clips.UIVignetteClip;
 import bbslezy.ui.film.clips.actions.UIMobDeathActionClip;
+import bbslezy.discord.DiscordPresenceManager;
 import mchorse.bbs_mod.api.client.events.RegisterClipPanelsEvent;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import mchorse.bbs_mod.api.client.events.RegisterFrameOverlaysEvent;
 import net.minecraft.client.MinecraftClient;
 import mchorse.bbs_mod.ui.film.clips.actions.UIAttackActionClip;
@@ -94,5 +97,8 @@ public class BBSLodClient implements BBSAddonMod
     public void onClientReady(BBSClientReadyEvent event)
     {
         LodEngine.register();
+        DiscordPresenceManager.INSTANCE.init();
+        ClientTickEvents.END_CLIENT_TICK.register((client) -> DiscordPresenceManager.INSTANCE.tick());
+        ClientLifecycleEvents.CLIENT_STOPPING.register((client) -> DiscordPresenceManager.INSTANCE.shutdown());
     }
 }
