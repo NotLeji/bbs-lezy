@@ -4,7 +4,15 @@ import mchorse.bbs_mod.api.BBSAddonMod;
 import mchorse.bbs_mod.api.BBSApi;
 import mchorse.bbs_mod.api.Subscribe;
 import mchorse.bbs_mod.api.events.RegisterSourcePacksEvent;
-
+import bbslezy.actions.CloseContainerActionClip;
+import bbslezy.actions.MobDeathActionClip;
+import bbslezy.actions.ProjectileAttackActionClip;
+import mchorse.bbs_mod.api.events.RegisterActionClipsEvent;
+import mchorse.bbs_mod.api.events.RegisterSourcePacksEvent;
+import mchorse.bbs_mod.resources.Link;
+import mchorse.bbs_mod.ui.utils.icons.Icons;
+import mchorse.bbs_mod.camera.clips.ClipFactoryData;
+import mchorse.bbs_mod.utils.colors.Colors;
 /**
  * The common half of the BBS Lezy addon — registered under the {@code bbs-addon} entry point and
  * loaded on both sides.
@@ -26,5 +34,13 @@ public class BBSLod implements BBSAddonMod
 
         /* Makes this addon's own assets addressable as bbslezy:... links. */
         event.registerAddon(MOD_ID, BBSLod.class);
+    }
+
+    @Subscribe
+    public void onActionClips(RegisterActionClipsEvent event)
+    {
+        event.factory.register(Link.bbs("mob_death"), MobDeathActionClip.class, new ClipFactoryData(Icons.SKULL, Colors.RED));
+        event.factory.register(Link.bbs("projectile_attack"), ProjectileAttackActionClip.class, new ClipFactoryData(Icons.ARROW_DOWN, Colors.RED));
+        event.factory.register(Link.bbs("close_container"), CloseContainerActionClip.class, new ClipFactoryData(Icons.FULLSCREEN, Colors.MAGENTA));
     }
 }

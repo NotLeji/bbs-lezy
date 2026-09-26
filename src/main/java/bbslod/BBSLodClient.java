@@ -1,6 +1,11 @@
 package bbslod;
 
+import bbslezy.actions.MobDeathActionClip;
+import bbslezy.actions.ProjectileAttackActionClip;
 import bbslezy.audio.LezyCopyAudioImporter;
+import bbslezy.ui.film.clips.actions.UIMobDeathActionClip;
+import mchorse.bbs_mod.api.client.events.RegisterClipPanelsEvent;
+import mchorse.bbs_mod.ui.film.clips.actions.UIAttackActionClip;
 
 import mchorse.bbs_mod.api.BBSAddonMod;
 import mchorse.bbs_mod.api.Subscribe;
@@ -38,6 +43,13 @@ public class BBSLodClient implements BBSAddonMod
     public void onImporters(RegisterImportersEvent event)
     {
         event.register(new LezyCopyAudioImporter());
+    }
+
+    @Subscribe
+    public void onClipPanels(RegisterClipPanelsEvent event)
+    {
+        event.register(MobDeathActionClip.class, UIMobDeathActionClip::new);
+        event.register(ProjectileAttackActionClip.class, UIAttackActionClip::new);
     }
 
     /**
