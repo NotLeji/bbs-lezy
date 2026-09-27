@@ -3,10 +3,13 @@ package bbslod;
 import mchorse.bbs_mod.api.BBSAddonMod;
 import mchorse.bbs_mod.api.BBSApi;
 import mchorse.bbs_mod.api.Subscribe;
+import bbslezy.actions.LezyDamageActionClip;
 import bbslezy.camera.clips.screen.CinematicClip;
 import bbslezy.camera.clips.screen.ColorClip;
+import bbslezy.camera.clips.screen.LetterboxClip;
 import bbslezy.camera.clips.screen.VignetteClip;
 import bbslezy.utils.keyframes.factories.LensRadiusSettingsKeyframeFactory;
+import mchorse.bbs_mod.api.events.RegisterActionClipsEvent;
 import mchorse.bbs_mod.api.events.RegisterCameraClipsEvent;
 import mchorse.bbs_mod.api.events.RegisterKeyframeFactoriesEvent;
 import mchorse.bbs_mod.api.events.RegisterSourcePacksEvent;
@@ -37,6 +40,12 @@ public class BBSLod implements BBSAddonMod
         event.registerAddon(MOD_ID, BBSLod.class);
     }
 
+    @Subscribe
+    public void onActionClips(RegisterActionClipsEvent event)
+    {
+        event.factory.register(Link.bbs("damage"), LezyDamageActionClip.class, new ClipFactoryData(Icons.EXCLAMATION, Colors.RED));
+    }
+
 
     @Subscribe
     public void onKeyframeFactories(RegisterKeyframeFactoriesEvent event)
@@ -48,6 +57,7 @@ public class BBSLod implements BBSAddonMod
     public void onCameraClips(RegisterCameraClipsEvent event)
     {
         event.factory.register(Link.bbs("color"), ColorClip.class, new ClipFactoryData(Icons.IMAGE, 0x4488ff));
+        event.factory.register(Link.bbs("letterbox"), LetterboxClip.class, new ClipFactoryData(Icons.FULLSCREEN, 0x222222));
         event.factory.register(Link.bbs("cinematic"), CinematicClip.class, new ClipFactoryData(Icons.CAMERA, 0xff8800));
         event.factory.register(Link.bbs("vignette"), VignetteClip.class, new ClipFactoryData(Icons.CIRCLE, 0x333333));
     }

@@ -7,8 +7,6 @@ import mchorse.bbs_mod.data.types.BaseType;
 import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.utils.clips.ClipContext;
-import mchorse.bbs_mod.utils.colors.Color;
-import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.joml.Matrices;
 import mchorse.bbs_mod.utils.keyframes.Keyframe;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
@@ -22,8 +20,6 @@ import java.util.List;
 
 public class CinematicClip extends CameraClip
 {
-    private static final Color DEFAULT_LETTERBOX_COLOR = Color.rgba(Colors.A100);
-
     public static final double DEFAULT_ABERRATION_ANGLE = 0D;
     public static final double DEFAULT_ABERRATION_DIRECTIONAL = 0D;
     public static final double DEFAULT_ABERRATION_RADIUS = 1D;
@@ -47,16 +43,6 @@ public class CinematicClip extends CameraClip
     /* Film Grain */
     public final KeyframeChannel<Double> grainStrength = new KeyframeChannel<>("grain_strength", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> grainSize = new KeyframeChannel<>("grain_size", KeyframeFactories.DOUBLE);
-
-    /* Framing / Letterbox */
-    public final KeyframeChannel<Double> letterboxHeight = new KeyframeChannel<>("letterbox_height", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> letterboxWidth = new KeyframeChannel<>("letterbox_width", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> letterboxSmoothness = new KeyframeChannel<>("letterbox_smoothness", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Color> letterboxColor = new KeyframeChannel<>("letterbox_color", KeyframeFactories.COLOR);
-    public final KeyframeChannel<Double> letterboxRotation = new KeyframeChannel<>("letterbox_rotation", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> letterboxZoom = new KeyframeChannel<>("letterbox_zoom", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> letterboxOffsetX = new KeyframeChannel<>("letterbox_offset_x", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> letterboxOffsetY = new KeyframeChannel<>("letterbox_offset_y", KeyframeFactories.DOUBLE);
 
     /* Lens & Optics */
     public final KeyframeChannel<Double> lensDistortion = new KeyframeChannel<>("lensDistortion", KeyframeFactories.DOUBLE);
@@ -89,13 +75,7 @@ public class CinematicClip extends CameraClip
     public final KeyframeChannel[] channels;
 
     private ColorEffect colorEffect = new ColorEffect();
-    private LetterboxEffect letterboxEffect = new LetterboxEffect();
     private GrainEffect grainEffect = new GrainEffect();
-
-    public static List<LetterboxEffect> getLetterboxEffects(ClipContext context)
-    {
-        return context.clipData.get("letterboxEffects", ArrayList::new);
-    }
 
     public static List<GrainEffect> getGrainEffects(ClipContext context)
     {
@@ -112,16 +92,6 @@ public class CinematicClip extends CameraClip
             /* Film Grain */
             this.grainStrength,
             this.grainSize,
-
-            /* Letterbox */
-            this.letterboxHeight,
-            this.letterboxWidth,
-            this.letterboxSmoothness,
-            this.letterboxColor,
-            this.letterboxRotation,
-            this.letterboxZoom,
-            this.letterboxOffsetX,
-            this.letterboxOffsetY,
 
             /* Lens & Optics */
             this.lensDistortion,
@@ -212,33 +182,7 @@ public class CinematicClip extends CameraClip
 
         this.colorEffect.reset();
 
-        /* 1. Letterbox / Framing */
-        float lbHeight = this.letterboxHeight.isEmpty() ? 0F : (float) (double) this.letterboxHeight.interpolate(t);
-
-        if (lbHeight > 0F)
-        {
-            float lbWidth = this.letterboxWidth.isEmpty() ? 1F : (float) (double) this.letterboxWidth.interpolate(t);
-            float lbSmooth = (this.letterboxSmoothness.isEmpty() ? 0F : (float) (double) this.letterboxSmoothness.interpolate(t)) * 0.25F;
-            float lbRot = this.letterboxRotation.isEmpty() ? 0F : (float) (double) this.letterboxRotation.interpolate(t);
-            float lbZoom = this.letterboxZoom.isEmpty() ? 1F : (float) (double) this.letterboxZoom.interpolate(t);
-            float lbOffX = this.letterboxOffsetX.isEmpty() ? 0F : (float) (double) this.letterboxOffsetX.interpolate(t);
-            float lbOffY = this.letterboxOffsetY.isEmpty() ? 0F : (float) (double) this.letterboxOffsetY.interpolate(t);
-            Color lbCol = this.letterboxColor.isEmpty() ? DEFAULT_LETTERBOX_COLOR : this.letterboxColor.interpolate(t, DEFAULT_LETTERBOX_COLOR);
-
-            this.letterboxEffect.size = Math.max(0F, lbHeight * 0.25F * factor);
-            this.letterboxEffect.width = lbWidth;
-            this.letterboxEffect.smoothness = lbSmooth;
-            this.letterboxEffect.color = Colors.setA(lbCol.getARGBColor(), 1F);
-            this.letterboxEffect.rotation = lbRot;
-            this.letterboxEffect.zoom = Math.max(0.01F, lbZoom);
-            this.letterboxEffect.offsetX = lbOffX;
-            this.letterboxEffect.offsetY = lbOffY;
-            this.letterboxEffect.renderOrder = context.count;
-
-            getLetterboxEffects(context).add(this.letterboxEffect);
-        }
-
-        /* 2. Film Grain */
+        /* 1. Film Grain */
         float gStr = (this.grainStrength.isEmpty() ? 0F : (float) (double) this.grainStrength.interpolate(t)) * 0.25F;
 
         if (gStr > 0F)
@@ -252,7 +196,7 @@ public class CinematicClip extends CameraClip
             getGrainEffects(context).add(this.grainEffect);
         }
 
-        /* 3. Cinematic Shader Effects */
+        /* 2. Cinematic Shader Effects */
         float ab = (this.aberration.isEmpty() ? 0F : (float) (double) this.aberration.interpolate(t)) * 0.25F;
         float abAngle = interpolateOrDefault(this.aberrationAngle, t, DEFAULT_ABERRATION_ANGLE);
         float abDirectional = interpolateOrDefault(this.aberrationDirectional, t, DEFAULT_ABERRATION_DIRECTIONAL);

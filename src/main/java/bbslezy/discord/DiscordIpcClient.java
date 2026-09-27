@@ -19,6 +19,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -64,41 +69,95 @@ public class DiscordIpcClient
             return true;
         }
 
-        if (!this.openPipe())
-        {
-            LOGGER.error("Discord Rich Presence: could not open IPC pipe (is Discord running?)");
+        String os = System.getProperty("os.name", "").toLowerCase();
+        boolean ok = os.contains("win") ? this.connectWindows() : this.connectUnix();
 
+        if (!ok)
+        {
+            LOGGER.error("Discord Rich Presence: could not connect to Discord IPC (is Discord running?)");
             return false;
         }
+
+        this.connected = true;
+        this.running = true;
+        this.readerThread = new Thread(this::readLoop, "BBS-Discord-IPC");
+        this.readerThread.setDaemon(true);
+        this.readerThread.start();
+
+        LOGGER.info("Discord Rich Presence connected (application ID: {})", this.applicationId);
+        return true;
+    }
+
+    private boolean connectWindows()
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            String pipeName = "\\\\.\\pipe\\discord-ipc-" + i;
+
+            try
+            {
+                this.windowsPipe = new RandomAccessFile(pipeName, "rw");
+                LOGGER.info("Discord Rich Presence opened IPC pipe {}", pipeName);
+
+                String error = this.handshakeWithTimeout();
+
+                if (error == null)
+                {
+                    return true;
+                }
+
+                LOGGER.debug("Discord Rich Presence handshake failed on {}: {}", pipeName, error);
+                this.closePipe();
+            }
+            catch (IOException e)
+            {
+                LOGGER.debug("Discord Rich Presence could not open IPC pipe {}: {}", pipeName, e.getMessage());
+            }
+        }
+
+        return false;
+    }
+
+    private boolean connectUnix()
+    {
+        if (!this.openUnixPipe())
+        {
+            return false;
+        }
+
+        String error = this.handshakeWithTimeout();
+
+        if (error != null)
+        {
+            LOGGER.error("Discord Rich Presence Unix handshake failed: {}", error);
+            this.closePipe();
+            return false;
+        }
+
+        return true;
+    }
+
+    private String handshakeWithTimeout()
+    {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<String> future = executor.submit(this::handshake);
 
         try
         {
-            String handshakeError = this.handshake();
-
-            if (handshakeError != null)
-            {
-                LOGGER.error("Discord Rich Presence handshake failed: {}", handshakeError);
-                this.closePipe();
-
-                return false;
-            }
-
-            this.connected = true;
-            this.running = true;
-            this.readerThread = new Thread(this::readLoop, "BBS-Discord-IPC");
-            this.readerThread.setDaemon(true);
-            this.readerThread.start();
-
-            LOGGER.info("Discord Rich Presence connected (application ID: {})", this.applicationId);
-
-            return true;
+            return future.get(1500, TimeUnit.MILLISECONDS);
         }
-        catch (IOException e)
+        catch (TimeoutException e)
         {
-            LOGGER.error("Discord Rich Presence connection failed", e);
-            this.closePipe();
-
-            return false;
+            future.cancel(true);
+            return "Handshake timed out after 1.5s";
+        }
+        catch (Exception e)
+        {
+            return "Handshake error: " + e.getMessage();
+        }
+        finally
+        {
+            executor.shutdownNow();
         }
     }
 

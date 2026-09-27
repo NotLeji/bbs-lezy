@@ -1,13 +1,17 @@
 package bbslod;
 
+import bbslezy.actions.LezyDamageActionClip;
 import bbslezy.audio.LezyCopyAudioImporter;
 import bbslezy.camera.clips.screen.CinematicClip;
 import bbslezy.camera.clips.screen.ColorClip;
+import bbslezy.camera.clips.screen.LetterboxClip;
 import bbslezy.camera.clips.screen.VignetteClip;
 import bbslezy.client.screen.ScreenEffectRenderer;
 import bbslezy.ui.film.clips.UICinematicClip;
 import bbslezy.ui.film.clips.UIColorClip;
+import bbslezy.ui.film.clips.UILetterboxClip;
 import bbslezy.ui.film.clips.UIVignetteClip;
+import mchorse.bbs_mod.ui.film.clips.actions.UIDamageActionClip;
 import bbslezy.discord.DiscordPresenceManager;
 import mchorse.bbs_mod.api.client.events.RegisterClipPanelsEvent;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -61,7 +65,9 @@ public class BBSLodClient implements BBSAddonMod
     @Subscribe
     public void onClipPanels(RegisterClipPanelsEvent event)
     {
+        event.register(LezyDamageActionClip.class, UIDamageActionClip::new);
         event.register(ColorClip.class, UIColorClip::new);
+        event.register(LetterboxClip.class, UILetterboxClip::new);
         event.register(CinematicClip.class, UICinematicClip::new);
         event.register(VignetteClip.class, UIVignetteClip::new);
     }

@@ -4,6 +4,7 @@ import bbslezy.camera.clips.screen.CinematicClip;
 import bbslezy.camera.clips.screen.ColorClip;
 import bbslezy.camera.clips.screen.ColorEffect;
 import bbslezy.camera.clips.screen.GrainEffect;
+import bbslezy.camera.clips.screen.LetterboxClip;
 import bbslezy.camera.clips.screen.LetterboxEffect;
 import mchorse.bbs_mod.ui.framework.elements.utils.Batcher2D;
 import mchorse.bbs_mod.utils.MathUtils;
@@ -26,7 +27,7 @@ public class ScreenEffectRenderer
     public static void render(Batcher2D batcher, ClipContext context, int screenW, int screenH)
     {
         List<ColorEffect> effects = ColorClip.getEffects(context);
-        List<LetterboxEffect> letterboxEffects = CinematicClip.getLetterboxEffects(context);
+        List<LetterboxEffect> letterboxEffects = LetterboxClip.getEffects(context);
         List<GrainEffect> grainEffects = CinematicClip.getGrainEffects(context);
 
         if (effects.isEmpty() && letterboxEffects.isEmpty() && grainEffects.isEmpty())

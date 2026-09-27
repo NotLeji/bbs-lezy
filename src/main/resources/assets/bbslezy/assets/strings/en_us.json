@@ -32,6 +32,7 @@
 	"bbslezy.ui.lod.focus_distance": "Focus distance",
 	"bbslezy.ui.dashboard.keys.toggle_shaders": "Toggle Iris shaders",
 	"bbs.ui.camera.clips.bbs:color": "Color Grade",
+	"bbs.ui.camera.clips.bbs:letterbox": "Letterbox (Black Bars)",
 	"bbs.ui.camera.clips.bbs:cinematic": "Cinematic Effect",
 	"bbs.ui.camera.clips.bbs:vignette": "Vignette"
 }
