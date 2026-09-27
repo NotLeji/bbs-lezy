@@ -2,6 +2,8 @@ package bbslezy.forms.renderers;
 
 import bbslezy.forms.utils.Illusion;
 import bbslezy.forms.utils.LezyIllusionHelper;
+import com.mojang.blaze3d.systems.RenderSystem;
+import mchorse.bbs_mod.forms.FormTranslucentQueue;
 import mchorse.bbs_mod.forms.FormUtilsClient;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.forms.forms.Form;
@@ -77,19 +79,19 @@ public final class FormIllusionRenderer
 
         isRenderingIllusion = true;
 
-        boolean wasActive = mchorse.bbs_mod.forms.FormTranslucentQueue.suspend();
+        boolean wasActive = FormTranslucentQueue.suspend();
 
         try
         {
-            com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-            com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
-            com.mojang.blaze3d.systems.RenderSystem.enableDepthTest();
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.enableDepthTest();
 
             renderIllusionCopies(form, formContext, stack, illusion, layerTransform, hitbox, height, baseColor, baseLight);
         }
         finally
         {
-            mchorse.bbs_mod.forms.FormTranslucentQueue.restore(wasActive);
+            FormTranslucentQueue.restore(wasActive);
             isRenderingIllusion = false;
             formContext.color(baseColor);
             formContext.light = baseLight;
@@ -128,7 +130,7 @@ public final class FormIllusionRenderer
         {
             Vector3f dir = directions.get(i % dirCount);
             int rank = i / dirCount + 1;
-            float distance = getIllusionDistance(illusion, hitbox, dir, rank, maxRank);
+            float distance = getIllusionDistance(illusion, rank, maxRank);
             float fadeT = maxRank <= 0 ? 1F : (rank - 0.5F) / maxRank;
             float alpha;
 
@@ -210,7 +212,11 @@ public final class FormIllusionRenderer
         }
     }
 
-    private static float getIllusionDistance(Illusion illusion, AABB hitbox, Vector3f dir, int rank, int maxRank)
+    /**
+     * Distance of the {@code rank}-th copy from the form. Visible for tests: the uniform
+     * fallback (an unset spacing dividing the spread) is the one rule no other test can reach.
+     */
+    static float getIllusionDistance(Illusion illusion, int rank, int maxRank)
     {
         if (illusion.uniform)
         {
