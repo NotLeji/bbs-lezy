@@ -125,12 +125,12 @@ public class ScreenEffectRenderer
     private static void renderLetterboxBars(Batcher2D batcher, LetterboxEffect effect, int screenW, int screenH, int barH)
     {
         int color = effect.color;
-        int smoothH = (int) (screenH * effect.smoothness);
+        int smoothH = (int) (barH * MathUtils.clamp(effect.smoothness, 0F, 1F));
         float barWidthFactor = effect.width;
         int barW = Math.max(1, Math.round(screenW * barWidthFactor));
         int barX = (screenW - barW) / 2;
 
-        if (smoothH > 0 && smoothH < barH)
+        if (smoothH > 0)
         {
             int solidH = barH - smoothH;
             int transparent = Colors.setA(color, 0F);

@@ -39,14 +39,14 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
     {
         super.registerUI();
 
-        this.height = this.trackpad(this.clip.height).limit(0D, 0.5D);
+        this.height = this.trackpad(this.clip.height).limit(0D, 0.4D).values(0.005D, 0.01D, 0.05D);
         this.height.tooltip(IKey.raw("Bar thickness (0.12 = standard 2.39:1 cinema scope)"));
 
-        this.width = this.trackpad(this.clip.width).limit(0D, 1D);
+        this.width = this.trackpad(this.clip.width).limit(0D, 1D).values(0.01D, 0.05D, 0.1D);
         this.width.tooltip(IKey.raw("Bar width coverage"));
 
-        this.smoothness = this.trackpad(this.clip.smoothness).limit(0D, 1D);
-        this.smoothness.tooltip(IKey.raw("Inner edge gradient feathering"));
+        this.smoothness = this.trackpad(this.clip.smoothness).limit(0D, 1D).values(0.02D, 0.05D, 0.1D);
+        this.smoothness.tooltip(IKey.raw("Inner edge gradient feathering (0 = solid hard bars, 1 = full soft fade)"));
 
         this.color = new UIColor((c) -> this.editor.editMultiple(this.clip.color, (v) -> v.set(Color.rgba(c))));
         this.color.tooltip(IKey.raw("Letterbox bar color (default black)"));

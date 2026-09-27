@@ -51,7 +51,7 @@ public abstract class VideoExportSessionMixin
             }
 
             LezyAudioMuxer.setDeferredFilm(file);
-            cir.setReturnValue(null);
+            cir.setReturnValue(new Wave(1, 2, 48000, 16, new byte[4]));
         }
     }
 
@@ -64,11 +64,18 @@ public abstract class VideoExportSessionMixin
             target = "Lmchorse/bbs_mod/utils/VideoMuxer;mux(Ljava/io/File;Ljava/io/File;Ljava/lang/String;)Ljava/io/File;"))
     private static File bbslezy$muxTwoTracks(File video, File audio, String movieName)
     {
-        File deferred = LezyAudioMuxer.consumeDeferredFilm();
-
-        if (deferred != null && deferred.isFile())
+        if (LodSettings.separateAudioTracks.get())
         {
-            return LezyAudioMuxer.muxTwoTracks(video, deferred, audio, movieName);
+            File deferred = LezyAudioMuxer.consumeDeferredFilm();
+
+            if (deferred != null && deferred.isFile())
+            {
+                return LezyAudioMuxer.muxTwoTracks(video, deferred, audio, movieName);
+            }
+        }
+        else
+        {
+            LezyAudioMuxer.consumeDeferredFilm();
         }
 
         File result = VideoMuxer.mux(video, audio, movieName);

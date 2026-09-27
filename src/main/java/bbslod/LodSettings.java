@@ -22,6 +22,8 @@ public class LodSettings
     public static ValueInt bakingBatchPercent;
     public static ValueBoolean discordEnabled;
     public static ValueString discordAppId;
+    public static ValueInt videoCqp;
+    public static ValueString videoCodec;
 
     public static void register(SettingsBuilder builder)
     {
@@ -35,5 +37,7 @@ public class LodSettings
         bakingBatchPercent = builder.getInt("baking_batch_percent", 5, 1, 100);
         discordEnabled = builder.getBoolean("discord_enabled", false);
         discordAppId = builder.getString("discord_app_id", "");
+        videoCqp = builder.getInt("video_cqp", 18, 0, 51).slider();
+        videoCodec = builder.getString("video_codec", "h264");
     }
 }

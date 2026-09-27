@@ -16,7 +16,8 @@
         "UIScreenMixin",
         "WorldVideoExportSessionMixin",
         "MultiLinkThreadMixin",
-        "UIFormUndoHandlerMixin"
+        "UIFormUndoHandlerMixin",
+        "VideoRecorderMixin"
     ],
     "injectors": {
         "defaultRequire": 0
