@@ -3,7 +3,7 @@
 <p align="center"><img src="bbs-lezy.webp" alt="BBS Lezy" width="500"></p>
 
 <p align="center">
-  <a href="README.md">English</a> &nbsp;|&nbsp; <b>Bahasa Indonesia</b>
+  <a href="README.md">English</a>  |  <b>Bahasa Indonesia</b>
 </p>
 
 ---
@@ -130,7 +130,7 @@ Biburan dan fitur besarnya berawal dari karya orang-orang ini, jadi terima kasih
 - [ElgatoPro300](https://www.youtube.com/@ElGatoPro300) — buat **screen effect clips** dan **illusion**. Dua fitur itu hasil porting dari BBS CML miliknya, jadi credit-nya balik lagi ke dia.
 - [Wemmpy](https://www.youtube.com/@Wemppy4) — soal teks FatalError dan support bahasa Indonesia.
 
-AI dipakai buat ngebut-ngobut kode dan nulis dokumentasi. Boleh, asal jangan dipakai buat buru-buru ngerelease hal yang belum dites sendiri.
+dan AI yang bersedia untuk dipecut 😈
 
 ## License
 
