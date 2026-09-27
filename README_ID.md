@@ -36,9 +36,9 @@ Nggak semua model replay dirender setiap frame — hanya yang terdekat dengan ka
 
 Many thanks to ElgatoPro300 (who make BBS CML) to make this feature
 
-<p align="center"><a href="docs/camera-effects-demo.mp4"><img src="docs/camera-effects-demo.jpg" alt="Screen effect clips preview" width="640"></a></p>
+<p align="center"><a href="https://youtu.be/tbHc5Atulu8"><img src="docs/camera-effects-demo.jpg" alt="Screen effect clips preview" width="640"></a></p>
 
-<p align="center"><sub>Klik gambar untuk memutar video demo (MP4, 5 detik, ada suaranya).</sub></p>
+<p align="center"><sub>Klik gambar untuk memutar video demo di YouTube (5 detik, ada suaranya).</sub></p>
 
 - **Cinematic Effect** — satu clip yang menggabungkan efek kamera jadul: vintage film (flicker, goresan acak, desaturasi), framing / letterbox, film grain, dan optik (fisheye, chromatic aberration, VHS glitch, radial blur). Tiap efek punya parameter sendiri dan bisa dikombinasikan.
 - **Color Grade** — color grading murni (saturation, hue, brightness, contrast, lift, gamma, gain) plus flat overlay tint.
