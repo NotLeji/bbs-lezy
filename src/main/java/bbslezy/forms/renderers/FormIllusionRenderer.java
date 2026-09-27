@@ -52,7 +52,7 @@ public final class FormIllusionRenderer
 
         Illusion illusion = LezyIllusionHelper.resolveIllusion(form);
 
-        if (illusion == null || illusion.count <= 0)
+        if (illusion == null || !illusion.enabled || illusion.count <= 0)
         {
             return;
         }
@@ -214,7 +214,14 @@ public final class FormIllusionRenderer
     {
         if (illusion.uniform)
         {
-            return illusion.spacing * rank + illusion.offset;
+            float spacing = illusion.spacing;
+
+            if (spacing <= 0F)
+            {
+                spacing = maxRank > 0 ? illusion.spread / maxRank : illusion.spread;
+            }
+
+            return spacing * rank + illusion.offset;
         }
 
         return illusion.spread * (rank * maxRank - rank * (rank - 1) / 2F) / maxRank + illusion.offset;

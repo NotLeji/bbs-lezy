@@ -23,7 +23,7 @@ public class Illusion implements IMapSerializable
     public static final int RIGHT = 8;
     public static final int UP = 16;
     public static final int DOWN = 32;
-
+    public boolean enabled = true;
     public int count;
     public float spread;
     public int directions;
@@ -72,6 +72,7 @@ public class Illusion implements IMapSerializable
     public boolean hasSameShape(Illusion illusion)
     {
         return illusion != null
+            && this.enabled == illusion.enabled
             && this.directions == illusion.directions
             && this.invert == illusion.invert
             && this.uniform == illusion.uniform
@@ -93,6 +94,7 @@ public class Illusion implements IMapSerializable
     {
         Illusion illusion = new Illusion();
 
+        illusion.enabled = this.enabled;
         illusion.count = this.count;
         illusion.spread = this.spread;
         illusion.directions = this.directions;
@@ -127,8 +129,8 @@ public class Illusion implements IMapSerializable
         if (obj instanceof Illusion illusion)
         {
             return this.hasSameShape(illusion)
+                && this.enabled == illusion.enabled
                 && this.count == illusion.count
-                && this.spread == illusion.spread
                 && this.offset == illusion.offset
                 && this.opacity == illusion.opacity
                 && this.spacing == illusion.spacing
@@ -144,6 +146,7 @@ public class Illusion implements IMapSerializable
     @Override
     public void fromData(MapType data)
     {
+        this.enabled = data.has("enabled") ? data.getBool("enabled") : true;
         this.count = data.getInt("count");
         this.spread = data.getFloat("spread");
         this.directions = data.getInt("directions");
@@ -193,6 +196,7 @@ public class Illusion implements IMapSerializable
     @Override
     public void toData(MapType data)
     {
+        data.putBool("enabled", this.enabled);
         data.putInt("count", this.count);
         data.putFloat("spread", this.spread);
         data.putInt("directions", this.directions);

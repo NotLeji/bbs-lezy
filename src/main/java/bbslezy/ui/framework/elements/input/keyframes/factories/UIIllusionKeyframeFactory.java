@@ -16,6 +16,7 @@ import java.util.function.Consumer;
 
 public class UIIllusionKeyframeFactory extends UIKeyframeFactory<Illusion>
 {
+    private UIToggle enabled;
     private UITrackpad count;
     private UITrackpad spread;
     private UIToggle front;
@@ -42,10 +43,11 @@ public class UIIllusionKeyframeFactory extends UIKeyframeFactory<Illusion>
     public UIIllusionKeyframeFactory(Keyframe<Illusion> keyframe, UIKeyframes editor)
     {
         super(keyframe, editor);
+        this.enabled = new UIToggle(L10n.lang("bbslezy.ui.forms.editors.general.illusion_enabled"), (b) -> this.editKeyframe((il) -> il.enabled = b.getValue()));
+        this.enabled.tooltip(L10n.lang("bbslezy.ui.forms.editors.general.illusion_enabled-tooltip"));
 
         this.count = new UITrackpad((v) -> this.editKeyframe((il) -> il.count = v.intValue()));
         this.count.limit(0D).integer().tooltip(L10n.lang("bbslezy.ui.forms.editors.general.illusion_count-tooltip"));
-
         this.spread = new UITrackpad((v) -> this.editKeyframe((il) -> il.spread = v.floatValue()));
         this.spread.tooltip(L10n.lang("bbslezy.ui.forms.editors.general.illusion_spread-tooltip"));
 
@@ -103,6 +105,7 @@ public class UIIllusionKeyframeFactory extends UIKeyframeFactory<Illusion>
         });
 
         UIElement fields = UI.column(5, 0,
+            this.enabled,
             UI.labelRow(L10n.lang("bbslezy.ui.forms.editors.general.illusion_count"), this.count),
             UI.labelRow(L10n.lang("bbslezy.ui.forms.editors.general.illusion_spread"), this.spread),
             UI.row(this.front, this.back),
@@ -165,6 +168,7 @@ public class UIIllusionKeyframeFactory extends UIKeyframeFactory<Illusion>
 
         Illusion illusion = keyframe.getValue();
 
+        this.enabled.setValue(illusion.enabled);
         this.count.setValue(illusion.count);
         this.spread.setValue(illusion.spread);
         this.front.setValue((illusion.directions & Illusion.FRONT) != 0);

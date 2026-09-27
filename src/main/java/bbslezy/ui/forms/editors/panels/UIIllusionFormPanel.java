@@ -19,6 +19,7 @@ import java.util.function.Consumer;
 
 public class UIIllusionFormPanel extends UIFormPanel<Form>
 {
+    public UIToggle enabled;
     public UITrackpad count;
     public UITrackpad spread;
     public UIToggle front;
@@ -45,6 +46,8 @@ public class UIIllusionFormPanel extends UIFormPanel<Form>
     public UIIllusionFormPanel(UIForm editor)
     {
         super(editor);
+        this.enabled = new UIToggle(L10n.lang("bbslezy.ui.forms.editors.general.illusion_enabled"), (b) -> this.editIllusion((il) -> il.enabled = b.getValue()));
+        this.enabled.tooltip(L10n.lang("bbslezy.ui.forms.editors.general.illusion_enabled-tooltip"));
 
         this.count = new UITrackpad((v) -> this.editIllusion((il) -> il.count = v.intValue()));
         this.count.limit(0D).integer().tooltip(L10n.lang("bbslezy.ui.forms.editors.general.illusion_count-tooltip"));
@@ -110,6 +113,7 @@ public class UIIllusionFormPanel extends UIFormPanel<Form>
 
         UISection general = new UISection(L10n.lang("bbslezy.ui.forms.editors.general.illusion_section_general"));
         general.fields.add(
+            this.enabled,
             UI.labelRow(L10n.lang("bbslezy.ui.forms.editors.general.illusion_count"), this.count),
             UI.labelRow(L10n.lang("bbslezy.ui.forms.editors.general.illusion_spread"), this.spread),
             UI.row(this.front, this.back),
@@ -177,7 +181,7 @@ public class UIIllusionFormPanel extends UIFormPanel<Form>
         {
             illusion = new Illusion();
         }
-
+        this.enabled.setValue(illusion.enabled);
         this.count.setValue(illusion.count);
         this.spread.setValue(illusion.spread);
         this.front.setValue((illusion.directions & Illusion.FRONT) != 0);

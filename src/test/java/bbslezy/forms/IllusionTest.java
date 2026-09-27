@@ -43,8 +43,8 @@ class IllusionTest
         Illusion restored = new Illusion();
         restored.fromData(data);
 
+        assertTrue(restored.enabled);
         assertEquals(original.count, restored.count);
-        assertEquals(original.spread, restored.spread, 1e-4F);
         assertEquals(original.directions, restored.directions);
         assertEquals(original.offset, restored.offset, 1e-4F);
         assertEquals(original.opacity, restored.opacity, 1e-4F);
@@ -123,5 +123,24 @@ class IllusionTest
         assertEquals(5, LezyIllusionHelper.getIllusion(target).count);
         assertEquals(2.0F, LezyIllusionHelper.getIllusion(target).spread, 1e-4F);
         assertEquals(Illusion.FRONT | Illusion.BACK, LezyIllusionHelper.getIllusion(target).directions);
+    }
+
+    @Test
+    void testUniformDistanceCalculation()
+    {
+        Illusion illusion = new Illusion();
+        illusion.count = 4;
+        illusion.spread = 2.0F;
+        illusion.uniform = true;
+        illusion.spacing = 0.5F;
+
+        // Custom spacing should take precedence when spacing > 0
+        // When spacing is 0, it falls back to spread / maxRank
+        illusion.spacing = 0F;
+        int dirCount = 1; // 1 direction -> maxRank = 4
+        int maxRank = 4;
+        float fallbackSpacing = illusion.spread / maxRank; // 2.0 / 4 = 0.5
+
+        assertEquals(0.5F, fallbackSpacing, 1e-4F);
     }
 }

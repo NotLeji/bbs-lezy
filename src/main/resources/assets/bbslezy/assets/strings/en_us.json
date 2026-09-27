@@ -47,6 +47,8 @@
 	"bbslezy.ui.forms.editors.general.illusion_section_general": "General",
 	"bbslezy.ui.forms.editors.general.illusion_section_appearance": "Appearance & Delay",
 	"bbslezy.ui.forms.editors.general.illusion_section_transform": "Transform",
+	"bbslezy.ui.forms.editors.general.illusion_enabled": "Enabled",
+	"bbslezy.ui.forms.editors.general.illusion_enabled-tooltip": "Enable or disable visual duplicate illusions.",
 	"bbslezy.ui.forms.editors.general.illusion_count": "Count",
 	"bbslezy.ui.forms.editors.general.illusion_count-tooltip": "Number of visual duplicates rendered around the form.",
 	"bbslezy.ui.forms.editors.general.illusion_spread": "Spread",
