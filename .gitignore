@@ -51,4 +51,4 @@ TESTING_GUIDE.md
 TESTER_GUIDE.md
 *.mp4
 *.webm
-!docs/camera-effects-demo.webm
+!docs/camera-effects-demo.mp4
