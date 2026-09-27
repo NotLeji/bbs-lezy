@@ -3,7 +3,7 @@
 <p align="center"><img src="bbs-lezy.webp" alt="BBS Lezy" width="500"></p>
 
 <p align="center">
-  <b>English</b> &nbsp;|&nbsp; <a href="README_ID.md">Bahasa Indonesia</a>
+  <b>English</b>  |  <a href="README_ID.md">Bahasa Indonesia</a>
 </p>
 
 ---
@@ -130,7 +130,7 @@ The fun and most of the features started as someone else's work, so a big thank 
 - [ElgatoPro300](https://www.youtube.com/@ElGatoPro300) — for **screen effect clips** and **illusion**. Both were ported from his BBS CML, so all credit goes back to him.
 - [Wemmpy](https://www.youtube.com/@Wemppy4) — for the FatalError text and Indonesian language support.
 
-AI was used to churn out code and write documentation. Sure, as long as you don't use it to rush a release of something you haven't tested yourself.
+and the AI that was willing to be chopped up for it 😈
 
 ## License
 
