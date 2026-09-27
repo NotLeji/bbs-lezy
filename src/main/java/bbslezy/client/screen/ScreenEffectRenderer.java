@@ -65,7 +65,7 @@ public class ScreenEffectRenderer
     }
 
     /** One track's worth of the frame: the tint it lays down, the pass over it, the bars on top. */
-    private static void renderLayer(Batcher2D batcher, int layer, int screenW, int screenH,
+    public static void renderLayer(Batcher2D batcher, int layer, int screenW, int screenH,
         List<ColorEffect> effects, List<LetterboxEffect> letterboxEffects, List<GrainEffect> grainEffects)
     {
         List<ColorEffect> shaderEffects = new ArrayList<>();
