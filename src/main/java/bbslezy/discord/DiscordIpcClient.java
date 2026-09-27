@@ -367,7 +367,7 @@ public class DiscordIpcClient
 
         JsonObject response = JsonParser.parseString(new String(data, StandardCharsets.UTF_8)).getAsJsonObject();
 
-        if (response.has("evt"))
+        if (response.has("evt") && response.get("evt").isJsonPrimitive())
         {
             String event = response.get("evt").getAsString();
 
@@ -450,7 +450,7 @@ public class DiscordIpcClient
             {
                 if (this.running)
                 {
-                    LOGGER.debug("Discord Rich Presence IPC reader stopped", e);
+                    LOGGER.warn("Discord Rich Presence IPC reader stopped", e);
                 }
 
                 break;
@@ -465,7 +465,9 @@ public class DiscordIpcClient
     {
         JsonObject frame = JsonParser.parseString(new String(data, StandardCharsets.UTF_8)).getAsJsonObject();
 
-        if (!frame.has("evt"))
+        /* Acks carry "evt": null — getAsString() on JsonNull throws and would kill the reader,
+        which makes Discord drop the presence right after setting it. */
+        if (!frame.has("evt") || !frame.get("evt").isJsonPrimitive())
         {
             return;
         }
