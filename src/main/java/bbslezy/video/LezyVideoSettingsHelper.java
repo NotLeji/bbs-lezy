@@ -5,6 +5,8 @@ import org.lwjgl.opengl.GL11;
 
 public class LezyVideoSettingsHelper
 {
+    public static volatile boolean forceCpuOnce = false;
+
     public static String apply(String params)
     {
         if (params == null || params.isEmpty())
@@ -19,12 +21,66 @@ public class LezyVideoSettingsHelper
 
         int detectedGpu = detectGpu(gpuMode);
 
-        if (!hwAccel)
+        if (forceCpuOnce || !hwAccel)
         {
+            forceCpuOnce = false;
             return applyCpuEncoding(params, codecMode, cqp);
         }
 
         return applyGpuEncoding(params, codecMode, detectedGpu, cqp);
+    }
+
+    public static boolean isHwAccelUnsupported()
+    {
+        if (forceCpuOnce)
+        {
+            return false;
+        }
+
+        boolean hwAccel = LodSettings.hardwareAcceleration == null || LodSettings.hardwareAcceleration.get();
+
+        if (!hwAccel)
+        {
+            return false;
+        }
+
+        int codecMode = LodSettings.videoCodec != null ? LodSettings.videoCodec.get() : 0;
+        int gpuMode = LodSettings.gpuVendor != null ? LodSettings.gpuVendor.get() : 0;
+        int detectedGpu = detectGpu(gpuMode);
+
+        /* VP9 (codecMode == 2) has no hardware encoder in NVIDIA (NVENC) or AMD (AMF). */
+        if (codecMode == 2 && (detectedGpu == 1 || detectedGpu == 2))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static String getGpuName()
+    {
+        int gpuMode = LodSettings.gpuVendor != null ? LodSettings.gpuVendor.get() : 0;
+        int detectedGpu = detectGpu(gpuMode);
+
+        switch (detectedGpu)
+        {
+            case 1: return "NVIDIA (NVENC)";
+            case 2: return "AMD (AMF)";
+            case 3: return "Intel (QSV)";
+            default: return "GPU";
+        }
+    }
+
+    public static String getCodecName()
+    {
+        int codecMode = LodSettings.videoCodec != null ? LodSettings.videoCodec.get() : 0;
+
+        switch (codecMode)
+        {
+            case 1: return "H.265 / HEVC (MP4)";
+            case 2: return "VP9 (WebM)";
+            default: return "H.264 (MP4)";
+        }
     }
 
     private static int detectGpu(int gpuMode)

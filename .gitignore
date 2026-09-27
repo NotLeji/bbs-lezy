@@ -49,3 +49,5 @@ run-client.log
 request-tambahan.txt
 TESTING_GUIDE.md
 TESTER_GUIDE.md
+*.mp4
+*.webm

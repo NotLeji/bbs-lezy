@@ -99,4 +99,65 @@ class LezyVideoSettingsHelperTest
         assertTrue(result.contains("-c:v libx264"), "Should use CPU libx264");
         assertTrue(result.contains("-qp 21"), "Should replace -qp with 21");
     }
+
+    @Test
+    void testVp9UnsupportedOnNvencAndAmf()
+    {
+        LodSettings.hardwareAcceleration.set(true);
+        LodSettings.videoCodec.set(2); // VP9
+
+        LodSettings.gpuVendor.set(1); // NVIDIA
+        assertTrue(LezyVideoSettingsHelper.isHwAccelUnsupported(), "VP9 should be flagged unsupported on NVENC");
+
+        LodSettings.gpuVendor.set(2); // AMD
+        assertTrue(LezyVideoSettingsHelper.isHwAccelUnsupported(), "VP9 should be flagged unsupported on AMF");
+
+        LodSettings.videoCodec.set(0); // H.264
+        assertFalse(LezyVideoSettingsHelper.isHwAccelUnsupported(), "H.264 should be supported on AMF");
+
+        LodSettings.videoCodec.set(2); // VP9
+        LodSettings.hardwareAcceleration.set(false); // Hardware accel OFF
+        assertFalse(LezyVideoSettingsHelper.isHwAccelUnsupported(), "When HW accel is off, should not flag unsupported");
+    }
+
+    @Test
+    void testForceCpuOnceOverridesAndResets()
+    {
+        String defaultParams = "-f rawvideo -pix_fmt bgr24 -s %WIDTH%x%HEIGHT% -r %FPS% -i - -vf %FILTERS% -c:v libx264 -preset ultrafast -tune zerolatency -qp 18 -pix_fmt yuv420p %NAME%.mp4";
+
+        LodSettings.hardwareAcceleration.set(true);
+        LodSettings.gpuVendor.set(1); // NVIDIA
+        LodSettings.videoCodec.set(2); // VP9
+        LodSettings.videoCqp.set(20);
+
+        LezyVideoSettingsHelper.forceCpuOnce = true;
+        assertFalse(LezyVideoSettingsHelper.isHwAccelUnsupported(), "forceCpuOnce should bypass unsupported check");
+
+        String result = LezyVideoSettingsHelper.apply(defaultParams);
+        assertTrue(result.contains("-c:v libvpx-vp9"), "Should encode via CPU libvpx-vp9");
+        assertTrue(result.contains("-crf 20"), "Should use -crf 20 for VP9");
+        assertFalse(LezyVideoSettingsHelper.forceCpuOnce, "forceCpuOnce must be reset to false after apply");
+    }
+
+    @Test
+    void testGetGpuAndCodecNames()
+    {
+        LodSettings.gpuVendor.set(1);
+        assertEquals("NVIDIA (NVENC)", LezyVideoSettingsHelper.getGpuName());
+
+        LodSettings.gpuVendor.set(2);
+        assertEquals("AMD (AMF)", LezyVideoSettingsHelper.getGpuName());
+
+        LodSettings.gpuVendor.set(3);
+        assertEquals("Intel (QSV)", LezyVideoSettingsHelper.getGpuName());
+
+        LodSettings.videoCodec.set(0);
+        assertEquals("H.264 (MP4)", LezyVideoSettingsHelper.getCodecName());
+
+        LodSettings.videoCodec.set(1);
+        assertEquals("H.265 / HEVC (MP4)", LezyVideoSettingsHelper.getCodecName());
+
+        LodSettings.videoCodec.set(2);
+        assertEquals("VP9 (WebM)", LezyVideoSettingsHelper.getCodecName());
+    }
 }
