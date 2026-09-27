@@ -1,8 +1,21 @@
 package bbslezy.camera.clips.screen;
 
-public class ColorEffect
+public class ColorEffect implements LayeredEffect
 {
+    public int layer;
     public int renderOrder;
+
+    @Override
+    public int layer()
+    {
+        return this.layer;
+    }
+
+    @Override
+    public int renderOrder()
+    {
+        return this.renderOrder;
+    }
 
     public boolean hasOverlay;
     public int overlayColor;
@@ -55,6 +68,7 @@ public class ColorEffect
 
     public void reset()
     {
+        this.layer = 0;
         this.renderOrder = 0;
         this.hasOverlay = false;
         this.hasVignette = false;

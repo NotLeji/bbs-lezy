@@ -111,6 +111,7 @@ public class LetterboxClip extends CameraClip
             this.effect.offsetX = offX;
             this.effect.offsetY = offY;
             this.effect.renderOrder = context.count;
+            this.effect.layer = this.layer.get();
 
             getEffects(context).add(this.effect);
         }

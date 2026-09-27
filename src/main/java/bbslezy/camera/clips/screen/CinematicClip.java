@@ -192,6 +192,7 @@ public class CinematicClip extends CameraClip
             this.grainEffect.strength = gStr * factor;
             this.grainEffect.size = Math.max(0.25F, gSize);
             this.grainEffect.renderOrder = context.count;
+            this.grainEffect.layer = this.layer.get();
 
             getGrainEffects(context).add(this.grainEffect);
         }
@@ -274,6 +275,7 @@ public class CinematicClip extends CameraClip
             this.colorEffect.heatSpeed = hsp * factor;
             this.colorEffect.heatScale = hsc * factor;
             this.colorEffect.time = t / 20.0F;
+            this.colorEffect.layer = this.layer.get();
             this.colorEffect.renderOrder = context.count;
 
             ColorClip.getEffects(context).add(this.colorEffect);
