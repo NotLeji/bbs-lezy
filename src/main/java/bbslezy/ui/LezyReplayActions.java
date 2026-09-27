@@ -7,6 +7,7 @@ import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.forms.ModelForm;
 import mchorse.bbs_mod.ui.film.replays.ReplayListEntry;
 import mchorse.bbs_mod.ui.film.replays.UIReplayList;
+import mchorse.bbs_mod.network.ClientNetwork;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -49,6 +50,7 @@ public class LezyReplayActions
         if (panel != null)
         {
             panel.notifyServer(ActionState.RESTART);
+            respawnCast(panel);
 
             if (panel.getController() != null)
             {
@@ -60,6 +62,31 @@ public class LezyReplayActions
 
         list.refreshReplayList();
     }
+
+    /**
+     * Asks the server to reconcile its actors, which is the only thing that puts a body back.
+     *
+     * <p>{@code RESTART} is not that thing here. In the film editor the server takes the rewind
+     * path, and a rewind only walks the tick counter and re-poses the actors that are still
+     * standing - it never rebuilds the cast. A replay an action clip killed has been dropped from
+     * the server's actor map for good, so from then on it is drawn (the client rebuilds its own
+     * entities) but has no body behind it: the next Damage clip looks the actor up, gets nothing,
+     * and the replay stops dying for the rest of the session.</p>
+     *
+     * <p>Syncing the film root is what makes the server reconcile, and the dead come back standing
+     * at the replay's keyframed position. The value does not have to change for this - the server
+     * reacts to the path, not the payload - so the film's data is left exactly as it was.</p>
+     */
+    private static void respawnCast(UIFilmPanel panel)
+    {
+        Film film = panel.getData();
+
+        if (film != null)
+        {
+            ClientNetwork.sendSyncData(film.getId(), film);
+        }
+    }
+
 
     /**
      * Everything that shares a model with the picked replays: the point is a duplicate farm,

@@ -1,8 +1,22 @@
 package bbslezy.camera.clips.screen;
 
-public class LetterboxEffect
+public class LetterboxEffect implements LayeredEffect
 {
+    public int layer;
     public int renderOrder;
+
+    @Override
+    public int layer()
+    {
+        return this.layer;
+    }
+
+    @Override
+    public int renderOrder()
+    {
+        return this.renderOrder;
+    }
+
     public float size;
     public float smoothness;
     public int color;
