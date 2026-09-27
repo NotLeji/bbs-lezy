@@ -45,11 +45,9 @@ public class LezyVideoSettingsHelper
         }
 
         int codecMode = LodSettings.videoCodec != null ? LodSettings.videoCodec.get() : 0;
-        int gpuMode = LodSettings.gpuVendor != null ? LodSettings.gpuVendor.get() : 0;
-        int detectedGpu = detectGpu(gpuMode);
 
-        /* VP9 (codecMode == 2) has no hardware encoder in NVIDIA (NVENC) or AMD (AMF). */
-        if (codecMode == 2 && (detectedGpu == 1 || detectedGpu == 2))
+        /* VP9 (codecMode == 2) has no hardware encoder in NVIDIA (NVENC), AMD (AMF), or Intel consumer GPUs. */
+        if (codecMode == 2)
         {
             return true;
         }
@@ -168,7 +166,7 @@ public class LezyVideoSettingsHelper
             }
             else if (codecMode == 2)
             {
-                encoderArgs = "-c:v vp9_qsv -global_quality " + cqp;
+                encoderArgs = "-c:v libvpx-vp9 -b:v 0 -deadline realtime -crf " + cqp;
                 params = params.replaceAll("%NAME%\\.mp4", "%NAME%.webm");
             }
             else
