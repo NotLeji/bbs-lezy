@@ -8,8 +8,6 @@ import mchorse.bbs_mod.ui.film.UIFilmPanel;
 import mchorse.bbs_mod.ui.framework.UIBaseMenu;
 import mchorse.bbs_mod.ui.framework.UIScreen;
 
-import net.minecraft.client.MinecraftClient;
-
 import com.mojang.logging.LogUtils;
 
 import org.slf4j.Logger;
@@ -51,13 +49,14 @@ public class DiscordPresenceManager
             return;
         }
 
-        this.workerThread = new Thread(this::workerLoop, "BBS-Discord-Presence");
-        this.workerThread.setDaemon(true);
-        this.workerThread.start();
-
         this.gameRunning = true;
         this.gameSessionStart = System.currentTimeMillis() / 1000L;
         this.idleRefreshTicks = 0;
+
+        /* Set state before the worker starts, otherwise a queued task can race past init. */
+        this.workerThread = new Thread(this::workerLoop, "BBS-Discord-Presence");
+        this.workerThread.setDaemon(true);
+        this.workerThread.start();
 
         if (this.isEnabled())
         {
@@ -266,7 +265,7 @@ public class DiscordPresenceManager
             return;
         }
 
-        if (!MinecraftClient.getInstance().isRunning())
+        if (!this.gameRunning)
         {
             return;
         }
@@ -283,7 +282,7 @@ public class DiscordPresenceManager
             if (!this.loggedInvalidAppId)
             {
                 this.loggedInvalidAppId = true;
-                LOGGER.debug("Discord Rich Presence: invalid application ID \"{}\".", applicationId);
+                LOGGER.warn("Discord Rich Presence: invalid application ID \"{}\".", applicationId);
             }
 
             return;
@@ -298,6 +297,9 @@ public class DiscordPresenceManager
             {
                 this.client = null;
                 this.connectedApplicationId = "";
+
+                /* ponytail: no backoff here — retry happens on the next presence task
+                (UI state change or the 600-tick idle refresh), max ~30 s. */
 
                 return;
             }
