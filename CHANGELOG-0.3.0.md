@@ -1,4 +1,65 @@
-## Changelog
+## Changelog / Catatan Rilis
+
+---
+
+## Bahasa Indonesia
+
+### Format versi berubah: 1.x jadi 0.x
+
+Versi sekarang **0.3.0**, turun dari 1.2.0. Ini disengaja.
+
+Fitur screen effect clips dan illusion itu hasil porting dari BBS CML, artinya sebagian
+besar kodenya nyentuh internal BBS lewat mixin. Internal itu bergerak tiap rilis BBS, dan
+sebagian hasil port (khususnya per-track compositing) masih adaptasi desain, bukan desain
+final. Menyamakan ini dengan 1.x bakal janji stabilitas yang build ini nggak punya, dan
+sekali udah keluar 1.0, nomor versi jadi janji yang harus dijaga di tiap update BBS. 0.x
+bilang hal yang sama tanpa komitmen itu. Naik ke 1.0.0 kalau target mixin udah settle.
+
+### Baru
+
+- **Screen effect clips** — Cinematic Effect (vintage film, film grain, fisheye, chromatic
+  aberration, VHS glitch, radial blur), Color Grade, Vignette, dan Letterbox. Semua bisa
+  diatur per clip dan dianimasikan di camera timeline. Porting dari BBS CML.
+- **Illusion** — duplikasi visual di sekitar form atau model block tanpa nambah entitas.
+  Bisa diarahkan ke 6 arah (depan, belakang, kiri, kanan, atas, bawah), dengan spread,
+  opacity fade, plus Uniform Distance, Real, Distort, dan Gradual
+  Transform. Bisa di-keyframe lewat Dope Sheet sebagai track `illusion` dan
+  `illusion_transform`. Porting dari BBS CML.
+- **Hierarki clip per track** — efek clip ngikutin urutan track di camera timeline. Tiap
+  track yang ada isinya dapat pass sendiri, dari track paling bawah ke atas, jadi Color
+  Grade di track atas dibaca sebagai lapisan di atas grade track bawah, bukan dijumlahkan
+  jadi satu look. Clip di track yang sama tetap dijumlahkan. Film yang semua clipnya ada
+  di satu track tetap cuma satu pass, jadi nggak ada biaya tambahan.
+- **Subtitle dan image overlay ngikutin hierarki yang sama** — overlay di track atas
+  sekarang digambar di atas efek track bawah, bukan selalu tenggelam di bawahnya.
+- **Setting Video CQP** — 0 sampai 51, default 18.
+- **Setting Video Codec** — h264 (default), h265 (HEVC), atau vp9 (WebM).
+- **Peringatan codec GPU** — VP9 nggak punya hardware encoder di GPU konsumen manapun.
+  Dipilih bareng hardware acceleration nyala, muncul dialog nawarin fallback ke CPU buat
+  export itu aja, daripada gagal diam-diem di tengah render.
+- **Reset replay actors** — menu klik kanan di panel list replay buat me-respawn semua
+  replay actor ke posisi awal dan menyegarkan display-nya.
+- README dua bahasa: English plus versi Indonesia, dengan tombol ganti bahasa di atas.
+
+### Diperbaiki
+
+- **Action clip abis restart** — clip damage berhenti kerja pas rewind atau restart karena
+  actor yang mati dibuang dari cast di server dan nggak pernah dibangun ulang. Aksi reset
+  sekarang sync film biar cast-nya beneran respawn.
+- **Interleave overlay** — BBS mendaftarkan renderer image dan subtitle-nya sebelum event
+  addon jalan, jadi take-over-nya sekarang lewat reflection dan beneran aktif. Sebelumnya
+  accessor-nya ditolak diam-diem dan subtitle tetap tenggelam di bawah color grade.
+
+### Credit
+
+Screen effect clips dan illusion adalah port fitur dari
+[BBS CML](https://www.youtube.com/@ElGatoPro300) karya
+[ElgatoPro300](https://www.youtube.com/@ElGatoPro300). Semua credit buat dua fitur itu
+balik lagi ke dia.
+
+---
+
+## English
 
 ### Version format changed: 1.x to 0.x
 
