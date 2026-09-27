@@ -21,8 +21,6 @@ public class LodSettings
     public static ValueBoolean separateAudioTracks;
     public static ValueBoolean openFolderOnImport;
     public static ValueInt bakingBatchPercent;
-    public static ValueBoolean discordEnabled;
-    public static ValueString discordAppId;
     public static ValueInt videoCqp;
     public static ValueInt videoCodec;
     public static ValueBoolean hardwareAcceleration;
@@ -38,8 +36,6 @@ public class LodSettings
         separateAudioTracks = builder.getBoolean("separate_audio_tracks", false);
         openFolderOnImport = builder.getBoolean("open_folder_on_import", false);
         bakingBatchPercent = builder.getInt("baking_batch_percent", 5, 1, 100);
-        discordEnabled = builder.getBoolean("discord_enabled", false);
-        discordAppId = builder.getString("discord_app_id", "");
         videoCqp = builder.getInt("video_cqp", 18, 0, 51).slider();
         videoCodec = builder.getInt("video_codec", 0, 0, 2).modes(
             IKey.raw("H.264 (MP4)"),

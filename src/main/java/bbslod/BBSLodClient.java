@@ -25,9 +25,6 @@ import mchorse.bbs_mod.api.client.events.RegisterKeyframeEditorsEvent;
 import mchorse.bbs_mod.l10n.L10n;
 import mchorse.bbs_mod.ui.film.clips.actions.UIDamageActionClip;
 import mchorse.bbs_mod.ui.framework.elements.input.keyframes.factories.UIKeyframeFactory;
-import bbslezy.discord.DiscordPresenceManager;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import mchorse.bbs_mod.api.BBSAddonMod;
 import mchorse.bbs_mod.api.Subscribe;
@@ -61,8 +58,6 @@ public class BBSLodClient implements BBSAddonMod
         event.register(Icons.GEAR, BBSLod.MOD_ID, (builder) ->
         {
             LodSettings.register(builder);
-            LodSettings.discordEnabled.postCallback((v, f) -> DiscordPresenceManager.INSTANCE.onSettingsChanged());
-            LodSettings.discordAppId.postCallback((v, f) -> DiscordPresenceManager.INSTANCE.onSettingsChanged());
         });
     }
 
@@ -120,9 +115,6 @@ public class BBSLodClient implements BBSAddonMod
     public void onClientReady(BBSClientReadyEvent event)
     {
         LodEngine.register();
-        DiscordPresenceManager.INSTANCE.init();
-        ClientTickEvents.END_CLIENT_TICK.register((client) -> DiscordPresenceManager.INSTANCE.tick());
-        ClientLifecycleEvents.CLIENT_STOPPING.register((client) -> DiscordPresenceManager.INSTANCE.shutdown());
         UIKeyframeFactory.register(LensRadiusSettingsKeyframeFactory.INSTANCE, UILensRadiusSettingsKeyframeFactory::new);
         mchorse.bbs_mod.film.replays.tracks.TrackStyle.register("illusion", Icons.POSE, mchorse.bbs_mod.utils.colors.Colors.DEEP_PINK);
         mchorse.bbs_mod.film.replays.tracks.TrackStyle.register("illusion_transform", Icons.ALL_DIRECTIONS, 0xdd66ff);
