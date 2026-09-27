@@ -19,12 +19,14 @@ import bbslezy.utils.keyframes.factories.IllusionKeyframeFactory;
 import bbslezy.utils.keyframes.factories.LensRadiusSettingsKeyframeFactory;
 import mchorse.bbs_mod.api.client.events.FormRenderEvents;
 import mchorse.bbs_mod.api.client.events.RegisterClipPanelsEvent;
+import mchorse.bbs_mod.film.replays.tracks.TrackStyle;
 import mchorse.bbs_mod.api.client.events.RegisterFormPanelsEvent;
 import mchorse.bbs_mod.api.client.events.RegisterFrameOverlaysEvent;
 import mchorse.bbs_mod.api.client.events.RegisterKeyframeEditorsEvent;
 import mchorse.bbs_mod.l10n.L10n;
 import mchorse.bbs_mod.ui.film.clips.actions.UIDamageActionClip;
 import mchorse.bbs_mod.ui.framework.elements.input.keyframes.factories.UIKeyframeFactory;
+import mchorse.bbs_mod.utils.colors.Colors;
 import net.minecraft.client.MinecraftClient;
 import mchorse.bbs_mod.api.BBSAddonMod;
 import mchorse.bbs_mod.api.Subscribe;
@@ -116,8 +118,8 @@ public class BBSLodClient implements BBSAddonMod
     {
         LodEngine.register();
         UIKeyframeFactory.register(LensRadiusSettingsKeyframeFactory.INSTANCE, UILensRadiusSettingsKeyframeFactory::new);
-        mchorse.bbs_mod.film.replays.tracks.TrackStyle.register("illusion", Icons.POSE, mchorse.bbs_mod.utils.colors.Colors.DEEP_PINK);
-        mchorse.bbs_mod.film.replays.tracks.TrackStyle.register("illusion_transform", Icons.ALL_DIRECTIONS, 0xdd66ff);
+        TrackStyle.register("illusion", Icons.POSE, Colors.DEEP_PINK);
+        TrackStyle.register("illusion_transform", Icons.ALL_DIRECTIONS, 0xdd66ff);
         FormRenderEvents.AFTER.register(FormIllusionRenderer::render);
     }
 }

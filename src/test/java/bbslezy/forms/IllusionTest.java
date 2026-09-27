@@ -125,22 +125,4 @@ class IllusionTest
         assertEquals(Illusion.FRONT | Illusion.BACK, LezyIllusionHelper.getIllusion(target).directions);
     }
 
-    @Test
-    void testUniformDistanceCalculation()
-    {
-        Illusion illusion = new Illusion();
-        illusion.count = 4;
-        illusion.spread = 2.0F;
-        illusion.uniform = true;
-        illusion.spacing = 0.5F;
-
-        // Custom spacing should take precedence when spacing > 0
-        // When spacing is 0, it falls back to spread / maxRank
-        illusion.spacing = 0F;
-        int dirCount = 1; // 1 direction -> maxRank = 4
-        int maxRank = 4;
-        float fallbackSpacing = illusion.spread / maxRank; // 2.0 / 4 = 0.5
-
-        assertEquals(0.5F, fallbackSpacing, 1e-4F);
-    }
 }
