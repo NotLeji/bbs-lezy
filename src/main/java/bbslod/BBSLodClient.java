@@ -11,7 +11,10 @@ import bbslezy.ui.film.clips.UICinematicClip;
 import bbslezy.ui.film.clips.UIColorClip;
 import bbslezy.ui.film.clips.UILetterboxClip;
 import bbslezy.ui.film.clips.UIVignetteClip;
+import bbslezy.ui.framework.elements.input.keyframes.factories.UILensRadiusSettingsKeyframeFactory;
+import bbslezy.utils.keyframes.factories.LensRadiusSettingsKeyframeFactory;
 import mchorse.bbs_mod.ui.film.clips.actions.UIDamageActionClip;
+import mchorse.bbs_mod.ui.framework.elements.input.keyframes.factories.UIKeyframeFactory;
 import bbslezy.discord.DiscordPresenceManager;
 import mchorse.bbs_mod.api.client.events.RegisterClipPanelsEvent;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -96,5 +99,6 @@ public class BBSLodClient implements BBSAddonMod
         DiscordPresenceManager.INSTANCE.init();
         ClientTickEvents.END_CLIENT_TICK.register((client) -> DiscordPresenceManager.INSTANCE.tick());
         ClientLifecycleEvents.CLIENT_STOPPING.register((client) -> DiscordPresenceManager.INSTANCE.shutdown());
+        UIKeyframeFactory.register(LensRadiusSettingsKeyframeFactory.INSTANCE, UILensRadiusSettingsKeyframeFactory::new);
     }
 }

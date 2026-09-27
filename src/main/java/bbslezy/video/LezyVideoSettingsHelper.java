@@ -1,6 +1,7 @@
 package bbslezy.video;
 
 import bbslod.LodSettings;
+import org.lwjgl.opengl.GL11;
 
 public class LezyVideoSettingsHelper
 {
@@ -13,7 +14,120 @@ public class LezyVideoSettingsHelper
 
         int cqp = LodSettings.videoCqp != null ? LodSettings.videoCqp.get() : 18;
         int codecMode = LodSettings.videoCodec != null ? LodSettings.videoCodec.get() : 0;
+        boolean hwAccel = LodSettings.hardwareAcceleration == null || LodSettings.hardwareAcceleration.get();
+        int gpuMode = LodSettings.gpuVendor != null ? LodSettings.gpuVendor.get() : 0;
 
+        int detectedGpu = detectGpu(gpuMode);
+
+        if (!hwAccel)
+        {
+            return applyCpuEncoding(params, codecMode, cqp);
+        }
+
+        return applyGpuEncoding(params, codecMode, detectedGpu, cqp);
+    }
+
+    private static int detectGpu(int gpuMode)
+    {
+        if (gpuMode != 0)
+        {
+            return gpuMode; // 1 = NVIDIA, 2 = AMD, 3 = Intel
+        }
+
+        try
+        {
+            if (org.lwjgl.opengl.GL.getCapabilities() != null)
+            {
+                String vendor = (GL11.glGetString(GL11.GL_VENDOR) + " " + GL11.glGetString(GL11.GL_RENDERER)).toLowerCase();
+
+                if (vendor.contains("nvidia") || vendor.contains("geforce") || vendor.contains("quadro"))
+                {
+                    return 1;
+                }
+
+                if (vendor.contains("amd") || vendor.contains("ati") || vendor.contains("radeon"))
+                {
+                    return 2;
+                }
+
+                if (vendor.contains("intel") || vendor.contains("uhd") || vendor.contains("iris") || vendor.contains("arc"))
+                {
+                    return 3;
+                }
+            }
+        }
+        catch (Throwable ignored)
+        {}
+
+        return 1; // Default to NVIDIA if cannot query OpenGL string
+    }
+
+    private static String applyGpuEncoding(String params, int codecMode, int gpu, int cqp)
+    {
+        /* Remove CPU-specific tuning params that break hardware encoders */
+        params = params.replaceAll("-preset \\S+", "");
+        params = params.replaceAll("-tune \\S+", "");
+        params = params.replaceAll("-qp \\d+", "");
+        params = params.replaceAll("-crf \\d+", "");
+
+        String encoderArgs;
+
+        if (gpu == 1) // NVIDIA NVENC
+        {
+            if (codecMode == 1)
+            {
+                encoderArgs = "-c:v hevc_nvenc -preset p4 -cq " + cqp + " -tag:v hvc1";
+            }
+            else if (codecMode == 2)
+            {
+                encoderArgs = "-c:v libvpx-vp9 -b:v 0 -deadline realtime -crf " + cqp;
+                params = params.replaceAll("%NAME%\\.mp4", "%NAME%.webm");
+            }
+            else
+            {
+                encoderArgs = "-c:v h264_nvenc -preset p4 -cq " + cqp;
+            }
+        }
+        else if (gpu == 2) // AMD AMF
+        {
+            if (codecMode == 1)
+            {
+                encoderArgs = "-c:v hevc_amf -rc cqp -qp_i " + cqp + " -qp_p " + cqp + " -tag:v hvc1";
+            }
+            else if (codecMode == 2)
+            {
+                encoderArgs = "-c:v libvpx-vp9 -b:v 0 -deadline realtime -crf " + cqp;
+                params = params.replaceAll("%NAME%\\.mp4", "%NAME%.webm");
+            }
+            else
+            {
+                encoderArgs = "-c:v h264_amf -rc cqp -qp_i " + cqp + " -qp_p " + cqp;
+            }
+        }
+        else // Intel QSV
+        {
+            if (codecMode == 1)
+            {
+                encoderArgs = "-c:v hevc_qsv -global_quality " + cqp + " -tag:v hvc1";
+            }
+            else if (codecMode == 2)
+            {
+                encoderArgs = "-c:v vp9_qsv -global_quality " + cqp;
+                params = params.replaceAll("%NAME%\\.mp4", "%NAME%.webm");
+            }
+            else
+            {
+                encoderArgs = "-c:v h264_qsv -global_quality " + cqp;
+            }
+        }
+
+        params = params.replaceAll("-c:v \\S+", encoderArgs);
+
+        return params.replaceAll("\\s+", " ").trim();
+    }
+
+    private static String applyCpuEncoding(String params, int codecMode, int cqp)
+    {
         /* Replace CQP / CRF parameter */
         if (params.contains("-qp "))
         {
@@ -24,7 +138,6 @@ public class LezyVideoSettingsHelper
             params = params.replaceAll("-crf \\d+", "-crf " + cqp);
         }
 
-        /* Replace video codec */
         if (codecMode == 1)
         {
             params = params.replaceAll("-c:v \\S+", "-c:v libx265 -tag:v hvc1");
@@ -41,6 +154,6 @@ public class LezyVideoSettingsHelper
             params = params.replaceAll("-c:v \\S+", "-c:v libx264");
         }
 
-        return params;
+        return params.replaceAll("\\s+", " ").trim();
     }
 }

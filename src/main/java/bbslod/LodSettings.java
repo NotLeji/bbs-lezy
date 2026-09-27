@@ -25,6 +25,8 @@ public class LodSettings
     public static ValueString discordAppId;
     public static ValueInt videoCqp;
     public static ValueInt videoCodec;
+    public static ValueBoolean hardwareAcceleration;
+    public static ValueInt gpuVendor;
 
     public static void register(SettingsBuilder builder)
     {
@@ -43,6 +45,13 @@ public class LodSettings
             IKey.raw("H.264 (MP4)"),
             IKey.raw("H.265 / HEVC (MP4)"),
             IKey.raw("VP9 (WebM)")
+        );
+        hardwareAcceleration = builder.getBoolean("hardware_acceleration", true);
+        gpuVendor = builder.getInt("gpu_vendor", 0, 0, 3).modes(
+            IKey.raw("Auto-Detect GPU"),
+            IKey.raw("NVIDIA (NVENC)"),
+            IKey.raw("AMD (AMF)"),
+            IKey.raw("Intel (QSV)")
         );
     }
 }
