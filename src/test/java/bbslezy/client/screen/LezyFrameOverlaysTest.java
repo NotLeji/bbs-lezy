@@ -87,4 +87,12 @@ class LezyFrameOverlaysTest
         assertEquals(List.of(4), List.copyOf(LezyFrameOverlays.collectTracks(
             List.of(), List.of(), List.of(), Map.of(), subtitles)));
     }
+
+    @Test
+    void installTakesOverOverlayRegistry()
+    {
+        mchorse.bbs_mod.ui.film.FrameOverlays.setup();
+        assertTrue(LezyFrameOverlays.install());
+        assertTrue(LezyFrameOverlays.isInstalled());
+    }
 }
