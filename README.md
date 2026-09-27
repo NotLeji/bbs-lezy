@@ -2,131 +2,136 @@
 
 <p align="center"><img src="bbs-lezy.webp" alt="BBS Lezy" width="500"></p>
 
+<p align="center">
+  <b>English</b> &nbsp;|&nbsp; <a href="README_ID.md">Bahasa Indonesia</a>
+</p>
+
 ---
 
-BBS Lezy adalah addon untuk membantu proses pembuatan konten Minecraft Leji dengan target video seperti Grox, Reff, Remanrhn, dll.
+BBS Lezy is an addon for making Minecraft content aimed at video, the kind of thing Grox, Reff, Remanrhn and friends put out.
 
-Addon ini dirancang untuk scene berskala besar dan kemudahan editing: batas render model (LOD) untuk ribuan actor, manajemen panel replay massal, **export video 2 track audio terpisah** (klip BBS + suara Minecraft), **pembacaan langsung berbagai format audio** (.mp3, .m4a, .opus, .flac, dll) tanpa konversi, serta perbaikan workflow lainnya. Semua fitur dapat dikonfigurasi langsung dari editor BBS tanpa perlu ngoprek file config secara manual.
+It is built for large scenes and for editing speed: a model render limit (LOD) for thousands of actors, bulk replay panel management, **video export with two separate audio tracks** (BBS clips + Minecraft sounds), **direct playback of many audio formats** (.mp3, .m4a, .opus, .flac, and so on) with no conversion step, plus a pile of workflow fixes. Everything is configurable straight from the BBS editor, no config file surgery required.
 
-## Fitur
+## Features
 
-**1. Batas render model (Limit Replay)**
+**1. Model render limit (Limit Replay)**
 
-Nggak semua model replay dirender setiap frame — hanya yang terdekat dengan kamera yang masuk hitungan. Berguna banget pas scene punya ribuan actor sampai GPU menangis. Model yang terpilih untuk di-hide dimanipulasi lewat runtime value BBS, jadi keyframe animasi nggak rusak. Pas rendering/export video, tinggal dimatiin biar semua model tergambar.
+Not every replay model is drawn every frame — only the ones closest to the camera make the cut. Worth having when a scene runs to thousands of actors and the GPU starts crying. Hidden models are toggled through a BBS runtime value, so animation keyframes are left untouched. Turn it off for renders and video exports and every model gets drawn.
 
-**2. Panel replay**
+**2. Replay panel**
 
-- **Select all replays** — pilih semua replay di film, termasuk yang ada di dalam folder tertutup (select-all bawaan BBS cuma yang terlihat di layar).
-- **Select same model** — pilih semua replay yang model-nya sama dengan seleksi sekarang. Cocok untuk ambil semua hasil duplicate farm dalam satu kali klik.
-- **Duplicate to total** — angka yang dimasukkan adalah **total** copy di seluruh seleksi, bukan per-replay. Misal: pilih 3 replay, input 150, hasilnya 150 copy (50 per replay), bukan 450. Tiap replay dapat kategori sendiri (`Duplicates N`) biar gampang dikontrol atau dihapus.
-- **Tombol scroll atas/bawah** — lompat instant ke atas atau ke bawah daftar replay, tanpa animasi. Berguna pas daudarnya udah ribuan baris.
-- **Reset replay actors** — menu klik kanan di panel list replay untuk me-respawn semua replay actor kembali ke posisi awal dan menyegarkan display-nya, tanpa perlu keluar-masuk dashboard.
+- **Select all replays** — select every replay in the film, including the ones inside collapsed folders (the stock BBS select-all only grabs what is on screen).
+- **Select same model** — select every replay whose model matches the current selection. Good for grabbing an entire duplicate-farm result in one click.
+- **Duplicate to total** — the number you type is the **total** copy count across the whole selection, not a per-replay count. Say you select 3 replays and enter 150, you get 150 copies (50 each), not 450. Each replay gets its own `Duplicates N` group so they stay easy to manage or delete.
+- **Scroll up/down buttons** — jump straight to the top or bottom of the replay list with no animation. Handy once the list runs to thousands of rows.
+- **Reset replay actors** — right-click menu in the replay list panel to respawn every replay actor back to its start and refresh the display, without leaving and re-entering the dashboard.
 
-**3. Audio export & codec**
+**3. Audio export & codecs**
 
-- **Separate audio tracks (2 track audio terpisah)** — saat export video dengan opsi bawaan BBS **audio** dan **minecraft sounds** dua-duanya aktif, hasil video membawa **dua track audio terpisah** (Track 1: audio klip film BBS, Track 2: efek suara/SFX Minecraft) bukan satu track campuran. Setiap track dipaksa stereo 2-channel standar (AAC 192k) sehingga langsung rapi saat diimpor ke software editing (Premiere Pro, DaVinci Resolve, CapCut, Vegas Pro, dll). File WAV sementara otomatis dibersihkan setelah mux selesai.
-- **Multi-codec audio langsung & dikenali di Pick Audio** — BBS kini bisa langsung membaca `.mp3`, `.m4a`, `.aac`, `.opus`, `.wma`, `.alac`, `.ape`, `.flac`, `.aif/.aiff`, dan `.ac3`. File-file ini langsung terdeteksi di menu "Pick audio...", bisa dipreview waveform-nya, diedit (offset, durasi, volume), dicut/split di timeline, dan dirender layaknya WAV bawaan. Decode berjalan on-demand via ffmpeg, sehingga file asli di disk tidak pernah diubah atau dikonversi.
-- **Import file audio tanpa konversi** — file audio yang di-drag & drop ke dalam BBS langsung disalin **apa adanya** (byte-identical), tidak lagi dire-encode paksa menjadi WAV mono. Khusus file video (`.mp4`), audionya tetap diekstrak otomatis seperti biasa.
+- **Separate audio tracks** — when exporting with BBS's **audio** and **minecraft sounds** both enabled, the result carries **two separate audio tracks** (Track 1: BBS film clip audio, Track 2: Minecraft SFX) instead of one stereo mix. Each track is forced to standard 2-channel stereo (AAC 192k) so it drops straight into Premiere Pro, DaVinci Resolve, CapCut, Vegas Pro and friends. Temporary WAV files are cleaned up once the mux finishes.
+- **Multi-codec audio, picked straight in the audio browser** — BBS can now read `.mp3`, `.m4a`, `.aac`, `.opus`, `.wma`, `.alac`, `.ape`, `.flac`, `.aif/.aiff` and `.ac3` directly. They show up in the "Pick audio..." menu, get a waveform preview, can be edited (offset, duration, volume), cut or split on the timeline, and render just like the built-in WAVs. Decoding is on-demand through ffmpeg, so the file on disk is never modified or converted.
+- **Import audio without conversion** — dropped audio files are copied **verbatim** (byte-identical) instead of being force-re-encoded to mono WAV. Video files (`.mp4`) still get their audio extracted the usual way.
 
-**4. Screen effect clips (Big Thanks to ElgatoPro300)**
+**4. Screen effect clips (big thanks to ElgatoPro300)**
 
-Many thanks to ElgatoPro300 (who make BBS CML) to make this feature
+Many thanks to ElgatoPro300, who made BBS CML, the source of this feature.
 
 <p align="center"><a href="docs/camera-effects-demo.webm"><img src="docs/camera-effects-demo.jpg" alt="Screen effect clips preview" width="640"></a></p>
 
-<p align="center"><sub>Klik gambar untuk memutar video demo (WebM, 5 detik).</sub></p>
+<p align="center"><sub>Click the image to play the demo clip (WebM, 5 seconds).</sub></p>
 
-- **Cinematic Effect** — satu clip yang menggabungkan efek kamera jadul: vintage film (flicker, goresan acak, desaturasi), framing / letterbox, film grain, dan optik (fisheye, chromatic aberration, VHS glitch, radial blur). Tiap efek punya parameter sendiri dan bisa dikombinasikan.
-- **Color Grade** — color grading murni (saturation, hue, brightness, contrast, lift, gamma, gain) plus flat overlay tint.
-- **Vignette** — penggelapan radial di tepi frame.
-- **Letterbox** — bar hitam sinematik (tinggi, lebar, smoothness, warna, offset, rotasi, zoom).
-- **Hierarki clip per track** — efek clip sekarang mengikuti urutan track di camera timeline. Tiap track dapat pass sendiri, dari track paling bawah ke atas, jadi Color Grade di track atas dibaca sebagai lapisan efek di atas grade track bawah — bukan dijumlahkan jadi satu look. Beberapa clip di track yang sama tetap dijumlahkan seperti biasa, berguna buat menumpuk grade. Film yang semua clipnya ada di satu track tetap cuma satu pass, jadi tidak ada biaya performa tambahan.
+- **Cinematic Effect** — one clip bundling the whole vintage camera look: film flicker, random scratches, desaturation, framing/letterbox, film grain, and optics (fisheye, chromatic aberration, VHS glitch, radial blur). Every effect has its own parameters and they combine freely.
+- **Color Grade** — pure color grading (saturation, hue, brightness, contrast, lift, gamma, gain) plus a flat overlay tint.
+- **Vignette** — radial darkening toward the frame edges.
+- **Letterbox** — cinematic black bars (height, width, smoothness, color, offset, rotation, zoom).
+- **Per-track clip hierarchy** — clip effects now follow the track order in the camera timeline. Each track gets its own pass, bottom track first, so a Color Grade on an upper track reads as an effect layer on top of the lower track's grade instead of being summed into a single look. Several clips on the same track still stack together, which is useful for building a look up in layers. A film with every clip on one track still costs a single pass, so there is no extra performance cost.
 
-**5. Illusion (duplikasi visual)**
+**5. Illusion (visual duplication)**
 
-Thanks again to ElgatoPro300 :D
+Thanks again to ElgatoPro300.
 
-- Menambah duplikat visual di sekitar form atau model block **tanpa menambah entitas** di scene. Jadi satu actor bisa terlihat jadi 10 tanpa menambah beban entity Minecraft.
-- Bisa diarahkan ke 6 arah (depan, belakang, kiri, kanan, atas, bawah), diatur jaraknya (spread / spacing), diberi opacity fade, dan punya toggle **Enabled** untuk menyalakan / mematikan semua duplikat.
-- Opsi lanjutan: **Uniform Distance** (jarak antar duplikat sama rata), **Real** (duplikat ikut berinteraksi dengan block dunia, misal menapak blok), **Distort** (duplikat hancur jadi streak), dan **Gradual Transform** (transformasi naik dari model utama ke duplikat terakhir).
-- Bisa di-keyframe lewat Dope Sheet sebagai track `illusion` dan `illusion_transform`, jadi jarak serta transformasi bisa dianimasikan sepanjang timeline — baik di Model Block maupun di Replay Actor.
-- Semua parameter diatur dari section **Illusion** di panel Form Editor.
+- Adds visual duplicates around a form or model block **without adding entities** to the scene. One actor can look like ten without ten times the entity load.
+- Aimed in 6 directions (front, back, left, right, up, down), with adjustable spread, opacity fade, and an **Enabled** toggle to turn all duplicates on or off.
+- Advanced options: **Uniform Distance** (even spacing between duplicates), **Real** (duplicates interact with world blocks, e.g. stomping on them), **Distort** (duplicates smear into streaks), and **Gradual Transform** (the transform ramps from the main model up to the last duplicate).
+- Keyframable from the Dope Sheet as the `illusion` and `illusion_transform` tracks, so distance and transform can be animated along the timeline — on Model Blocks and Replay Actors alike.
+- All parameters live in the **Illusion** section of the Form Editor panel.
 
 **6. Video export (CQP, codec & GPU)**
 
-- **Video CQP** — atur kualitas/kompresi (0–51, default 18).
-- **Video Codec** — pilih `h264` (default, kompatibilitas maksimum), `h265` (HEVC, kompresi lebih baik), atau `vp9` (WebM).
-- **Hardware Acceleration (GPU)** — pakai encoder GPU (NVIDIA NVENC / AMD AMF / Intel QSV) buat render jauh lebih cepat dan beban CPU lebih ringan. Default: **nyala**. Ada opsi **Auto-Detect GPU** atau pilih vendor tertentu.
+- **Video CQP** — controls quality/compression (0–51, default 18).
+- **Video Codec** — pick `h264` (default, maximum compatibility), `h265` (HEVC, better compression), or `vp9` (WebM).
+- **Hardware Acceleration (GPU)** — encode on the GPU (NVIDIA NVENC / AMD AMF / Intel QSV) for much faster exports and a lighter CPU load. Default: **on**. There is an **Auto-Detect** option or you can pick a specific vendor.
+- **GPU codec warning** — VP9 has no hardware encoder on any consumer GPU, so selecting it with hardware acceleration on pops up a dialog offering to fall back to CPU encoding for that one export.
 
-## Dokumentasi
+## Documentation
 
-### Requirement
+### Requirements
 
-| Item      | Versi                                    |
-| --------- | ---------------------------------------- |
-| Minecraft | 1.20.1                                   |
-| Java      | 17+                                      |
-| Fabric    | Loader 0.16.14, Fabric API 0.92.1+1.20.1 |
-| BBS FS    | 2.7-1.20.1                               |
-| Sodium    | 0.5.8                                    |
-| Iris      | Opsional (untuk dukungan shader)         |
+| Item      | Version                                     |
+| --------- | ------------------------------------------- |
+| Minecraft | 1.20.1                                      |
+| Java      | 17+                                         |
+| Fabric    | Loader 0.16.14, Fabric API 0.92.1+1.20.1    |
+| BBS FS    | 2.7-1.20.1                                  |
+| Sodium    | 0.5.8                                       |
+| Iris      | Optional (for shader support)               |
 
 ### Install
 
-1. Download file `.jar` dari [Releases](../../releases) (nggak perlu git clone).
-2. Drop ke folder `mods` seperti addon Fabric pada umumnya.
+1. Download the `.jar` from [Releases](../../releases) (no git clone needed).
+2. Drop it in your `mods` folder like any other Fabric addon.
 
-### Setting Lezy
+### Lezy settings
 
-Semua setting bisa diubah dari dua tempat:
+Every setting is reachable from two places:
 
-**Lewat settings screen BBS** (ikon gerigi → kategori BBS Lezy):
+**Through the BBS settings screen** (gear icon → BBS Lezy category):
 
-| Setting                 | Range   | Keterangan                                                                                                                                                                                                        |
-| ----------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Enable render limit     | on/off  | Nyalain/matemin seluruh fitur batas render.                                                                                                                                                                       |
-| Max rendered models     | 0–2000  | Jumlah model yang tetap dirender per frame. Sisanya di-hide. **0 = mati** (semua dirender).                                                                                                                       |
-| Focus distance          | 0–256m  | Prioritas model di sekitar jarak ini dari kamera. **0 = model terdekat** yang menang. Bisa dipakai untuk ngeliat replay jauh tanpa naikin render limit.                                                           |
-| Separate audio tracks   | on/off  | Hasil export bawa dua track audio terpisah (klip BBS + suara Minecraft). Cuma ngaruh pas opsi export BBS **audio** dan **minecraft sounds** dua-duanya nyala. Mati = satu track campuran kayak biasa.             |
-| Open folder on import   | on/off  | Otomatis buka File Explorer ke folder tujuan saat drag & drop file ke BBS. Default: **mati** (tidak otomatis buka folder).                                                                                        |
-| Baking batch percentage | 1–100%  | Mengatur seberapa agresif / persentase total replay yang diproses per kelompok frame saat Look At baking. Nilai tinggi = lebih cepat selesai, nilai rendah = progress bar lebih halus & stabil (default: **5%**). |
-| Video CQP (Quality)     | 0–51    | Constant Quantization Parameter. Makin kecil makin bagus kualitasnya, makin besar makin kecil filenya. **0 = lossless**, 18 = default (high quality), 23 = seimbang, 28 = file kecil.                             |
-| Video Codec             | pilihan | `h264` (default, kompatibilitas maksimum), `h265` (HEVC, kompresi lebih baik), atau `vp9` (WebM).                                                                                                                 |
-| Hardware Acceleration   | on/off  | Pakai encoder GPU (NVIDIA NVENC / AMD AMF / Intel QSV) buat render jauh lebih cepat. Default: **nyala**.                                                                                                          |
-| GPU Encoder             | pilihan | Vendor encoder yang dipakai: Auto-Detect (dari GPU OpenGL yang aktif), NVIDIA (NVENC), AMD (AMF), atau Intel (QSV).                                                                                               |
+| Setting                 | Range   | Description                                                                                                                                                                                                                          |
+| ----------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Enable render limit     | on/off  | Turns the whole render limit feature on or off.                                                                                                                                                                                      |
+| Max rendered models     | 0–2000  | How many models stay rendered per frame. The rest are hidden. **0 disables it** (everything renders).                                                                                                                                 |
+| Focus distance          | 0–256m  | Prioritizes models around this distance from the camera. **0 means nearest model wins.** Useful for watching distant replays without raising the render limit.                                                                   |
+| Separate audio tracks   | on/off  | Export results carry two separate audio tracks (BBS clips + Minecraft sounds). Only applies when both the BBS **audio** and **minecraft sounds** export options are on. Off = one mixed track as usual.                             |
+| Open folder on import   | on/off  | Automatically open File Explorer at the destination folder when files are dropped into BBS. Default: **off** (folder does not open by itself).                                                                                              |
+| Baking batch percentage | 1–100%  | How aggressive the per-frame batch is, as a percentage of total replays processed during Look At baking. Higher finishes faster, lower gives a smoother and steadier progress bar (default: **5%**).                            |
+| Video CQP (Quality)     | 0–51    | Constant Quantization Parameter. Lower means better quality, higher means a smaller file. **0 = lossless**, 18 = default (high quality), 23 = balanced, 28 = small file.                                                          |
+| Video Codec             | choice  | `h264` (default, maximum compatibility), `h265` (HEVC, better compression), or `vp9` (WebM).                                                                                                                                        |
+| Hardware Acceleration   | on/off  | Use the GPU encoder (NVIDIA NVENC / AMD AMF / Intel QSV) for much faster renders. Default: **on**.                                                                                                                                    |
+| GPU Encoder             | choice  | Which vendor encoder to use: Auto-Detect (from the active OpenGL GPU), NVIDIA (NVENC), AMD (AMF), or Intel (QSV).                                                                                                                     |
 
-**Lewat toolbar preview film editor** — klik ikon mata (sebelah tombol motion path) untuk buka popup: toggle On/Off, slider Render Limit, slider Focus Distance. Perubahan otomatis kesimpan ke `bbslezy.json`.
+**Through the film editor preview toolbar** — click the eye icon (next to the motion path button) to open a popup: on/off toggle, Render Limit slider, Focus Distance slider. Changes save themselves to `bbslezy.json`.
 
-File setting-nya ada di `<folder config BBS>/bbs/settings/bbslezy.json`.
+The settings file lives at `<BBS config folder>/bbs/settings/bbslezy.json`.
 
-### Build dari source
+### Build from source
 
 ```bash
 sh ./gradlew build
 ```
 
-Hasilnya ada di `build/libs/bbs-lezy-<versi>.jar`.
+The result ends up in `build/libs/bbs-lezy-<version>.jar`.
 
-> Catatan: BBS-nya sendiri harus sudah ter-publish ke maven local dulu (`sh ./gradlew publishToMavenLocal` dari folder BBS). Addon ini dikunci ke BBS 2.7-1.20.1 — versi BBS beda bikin dev environment aneh.
+> Note: BBS itself has to be published to maven local first (`sh ./gradlew publishToMavenLocal` from the BBS folder). This addon is locked to BBS 2.7-1.20.1 — a different BBS version makes the dev environment behave strangely.
 
-### Catatan teknis
+### Technical notes
 
-- **Mixin UI bersifat fail-safe**: `bbslezy.mixins.json` pake `required: false` + `defaultRequire: 0`. Kalau BBS internal berubah dan mixin gagal, addon tetap jalan — cuma fitur panel replay dan audio yang ilang, fitur Limit Replay tetap aman karena lewat API resmi. Target mixin baru: `VideoExportSession` (two-track export), `AudioReader` (codec), `ToWAVImporter`/`WAVImporter` (no-conversion import), `UISoundOverlayPanel` (pick audio), `UIScreen` (drag-import auto open folder toggle), `UIProcessReplaysPanel` (Look at per-tick & async baking), `UIFormUndoHandler` (single compound undo).
-- **Restore override hanya dilakukan di `RENDER_AFTER` dan `SHUTDOWN`**, bukan di render pass biasa, karena shadow dan name tag digambar setelahnya.
-- **Budget dihitung sebagai squared distance** — nggak ada `sqrt` dan nggak ada alokasi `Vec3d` per form, biar murah pas ribuan actor.
-- Form yang terkunci ke kamera (`anchor` punya target) nggak ikut di-cull, sama seperti behavior bawaan BBS.
-- Editor click tetap bisa select actor yang lagi di-cap — pass picking di-skip dari culling.
+- **UI mixins are fail-safe**: `bbslezy.mixins.json` uses `required: false` + `defaultRequire: 0`. If BBS internals shift and a mixin fails, the addon still loads — you only lose the replay panel and audio features, while the Limit Replay feature stays safe because it goes through the official API. Mixin targets: `VideoExportSession` (two-track export), `AudioReader` (codecs), `ToWAVImporter`/`WAVImporter` (conversion-free import), `UISoundOverlayPanel` (audio browser), `UIScreen` (open folder on import toggle), `UIProcessReplaysPanel` (per-tick Look At and async baking), `UIFormUndoHandler` (single compound undo).
+- **Override restore only happens in `RENDER_AFTER` and `SHUTDOWN`**, not in the normal render pass, because shadows and name tags are drawn after it.
+- **The budget is computed as squared distance** — no `sqrt`, no per-form `Vec3d` allocation, so it stays cheap with thousands of actors.
+- Forms locked to the camera (an `anchor` with a target) are never culled, matching stock BBS behavior.
+- Editor clicks can still select an actor that is currently capped — the picking pass is skipped from culling.
 
-## Credit
+## Credits
 
-Biburan dan fitur besarnya berawal dari karya orang-orang ini, jadi terima kasih yang sebesar-besaranya:
+The fun and most of the features started as someone else's work, so a big thank you to:
 
-- [McHorse](https://www.youtube.com/@McHorsesCreations) — penulis BBS FS itu sendiri.
-- [ElgatoPro300](https://www.youtube.com/@ElGatoPro300) — buat **screen effect clips** dan **illusion**. Dua fitur itu hasil porting dari BBS CML miliknya, jadi credit-nya balik lagi ke dia.
-- [Wemmpy](https://www.youtube.com/@Wemppy4) — soal teks FatalError dan support bahasa Indonesia.
+- [McHorse](https://www.youtube.com/@McHorsesCreations) — the author of BBS FS itself.
+- [ElgatoPro300](https://www.youtube.com/@ElGatoPro300) — for **screen effect clips** and **illusion**. Both were ported from his BBS CML, so all credit goes back to him.
+- [Wemmpy](https://www.youtube.com/@Wemppy4) — for the FatalError text and Indonesian language support.
 
-AI dipakai buat ngebut-ngobut kode dan nulis dokumentasi. Boleh, asal jangan dipakai buat buru-buru ngerelease hal yang belum dites sendiri.
+AI was used to churn out code and write documentation. Sure, as long as you don't use it to rush a release of something you haven't tested yourself.
 
 ## License
 
-MIT — bebas dipake dan dimodifikasi. Bosan dengan bug atau pengen nambahin fitur? Fork aja sendiri
+MIT — free to use and modify. Bored of a bug or want to add a feature? Fork it yourself.
