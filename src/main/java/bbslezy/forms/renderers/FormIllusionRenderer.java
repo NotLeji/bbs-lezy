@@ -50,7 +50,7 @@ public final class FormIllusionRenderer
             return;
         }
 
-        Illusion illusion = LezyIllusionHelper.getIllusion(form);
+        Illusion illusion = LezyIllusionHelper.resolveIllusion(form);
 
         if (illusion == null || illusion.count <= 0)
         {
@@ -79,6 +79,10 @@ public final class FormIllusionRenderer
 
         try
         {
+            com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+            com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
+            com.mojang.blaze3d.systems.RenderSystem.enableDepthTest();
+
             renderIllusionCopies(form, formContext, stack, illusion, layerTransform, hitbox, height, baseColor, baseLight);
         }
         finally

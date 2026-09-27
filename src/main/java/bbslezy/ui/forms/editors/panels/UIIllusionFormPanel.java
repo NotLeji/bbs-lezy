@@ -87,12 +87,14 @@ public class UIIllusionFormPanel extends UIFormPanel<Form>
 
         this.distortUniform = new UIToggle(L10n.lang("bbslezy.ui.forms.editors.general.illusion_distort_uniform"), (b) -> this.editIllusion((il) -> il.distortUniform = b.getValue()));
         this.distortInvert = new UIToggle(L10n.lang("bbslezy.ui.forms.editors.general.illusion_distort_invert"), (b) -> this.editIllusion((il) -> il.distortInvert = b.getValue()));
-
-        this.illusionTransform = new UIPropTransform().callbacks(() ->
+        this.illusionTransform = new UIPropTransform().callbacks(null, () ->
         {
-            ValueTransform val = LezyIllusionHelper.getIllusionTransformValue(this.form);
+            if (this.form != null)
+            {
+                Transform t = this.illusionTransform.getTransform();
 
-            return val != null ? val : null;
+                LezyIllusionHelper.setIllusionTransform(this.form, t);
+            }
         }).barBackground();
         this.illusionTransform.valueBinding(() ->
         {
@@ -100,7 +102,6 @@ public class UIIllusionFormPanel extends UIFormPanel<Form>
 
             this.illusionTransform.setTransform(t != null ? t : (this.form != null ? LezyIllusionHelper.getIllusion(this.form).transform : null));
         });
-
         this.gradual = new UIToggle(L10n.lang("bbslezy.ui.forms.editors.general.illusion_gradual"), (b) -> this.editIllusion((il) -> il.gradual = b.getValue()));
         this.gradual.tooltip(L10n.lang("bbslezy.ui.forms.editors.general.illusion_gradual-tooltip"));
 
@@ -145,18 +146,19 @@ public class UIIllusionFormPanel extends UIFormPanel<Form>
             return;
         }
 
-        ValueIllusion val = LezyIllusionHelper.getIllusionValue(this.form);
+        Illusion illusion = LezyIllusionHelper.getIllusion(this.form);
 
-        if (val == null)
+        if (illusion == null)
         {
-            val = new ValueIllusion(LezyIllusionHelper.ILLUSION_ID, new Illusion());
-            this.form.add(val);
+            illusion = new Illusion();
+        }
+        else
+        {
+            illusion = illusion.copy();
         }
 
-        Illusion illusion = val.get().copy();
-
         consumer.accept(illusion);
-        val.set(illusion);
+        LezyIllusionHelper.setIllusion(this.form, illusion);
     }
 
     private void toggleDirection(int bit, boolean enabled)

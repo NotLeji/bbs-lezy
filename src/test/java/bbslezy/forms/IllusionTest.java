@@ -99,4 +99,29 @@ class IllusionTest
         List<Vector3f> fallback = FormIllusionRenderer.getIllusionDirections(0);
         assertEquals(4, fallback.size()); // Front, Left, Right, Back
     }
+
+    @Test
+    void testDualPropertySync()
+    {
+        mchorse.bbs_mod.forms.forms.ModelForm source = new mchorse.bbs_mod.forms.forms.ModelForm();
+        mchorse.bbs_mod.forms.forms.ModelForm target = new mchorse.bbs_mod.forms.forms.ModelForm();
+
+        Illusion illusion = new Illusion();
+        illusion.count = 5;
+        illusion.spread = 2.0F;
+        illusion.directions = Illusion.FRONT | Illusion.BACK;
+
+        LezyIllusionHelper.setIllusion(source, illusion);
+
+        assertNotNull(LezyIllusionHelper.getIllusion(source));
+        assertEquals(5, LezyIllusionHelper.getIllusion(source).count);
+        assertNull(LezyIllusionHelper.getIllusion(target));
+
+        LezyIllusionHelper.syncIllusion(source, target);
+
+        assertNotNull(LezyIllusionHelper.getIllusion(target));
+        assertEquals(5, LezyIllusionHelper.getIllusion(target).count);
+        assertEquals(2.0F, LezyIllusionHelper.getIllusion(target).spread, 1e-4F);
+        assertEquals(Illusion.FRONT | Illusion.BACK, LezyIllusionHelper.getIllusion(target).directions);
+    }
 }

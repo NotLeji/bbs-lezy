@@ -66,6 +66,8 @@ public class BBSLod implements BBSAddonMod
     {
         event.register((form) ->
         {
+            form.add(new ValueIllusion("illusion", new Illusion()));
+            form.add(new ValueTransform("illusion_transform", new Transform()));
             form.add(new ValueIllusion("bbslezy:illusion", new Illusion()));
             form.add(new ValueTransform("bbslezy:illusion_transform", new Transform()));
         });

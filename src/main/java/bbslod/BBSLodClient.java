@@ -124,6 +124,10 @@ public class BBSLodClient implements BBSAddonMod
         ClientTickEvents.END_CLIENT_TICK.register((client) -> DiscordPresenceManager.INSTANCE.tick());
         ClientLifecycleEvents.CLIENT_STOPPING.register((client) -> DiscordPresenceManager.INSTANCE.shutdown());
         UIKeyframeFactory.register(LensRadiusSettingsKeyframeFactory.INSTANCE, UILensRadiusSettingsKeyframeFactory::new);
+        mchorse.bbs_mod.film.replays.tracks.TrackStyle.register("illusion", Icons.POSE, mchorse.bbs_mod.utils.colors.Colors.DEEP_PINK);
+        mchorse.bbs_mod.film.replays.tracks.TrackStyle.register("bbslezy:illusion", Icons.POSE, mchorse.bbs_mod.utils.colors.Colors.DEEP_PINK);
+        mchorse.bbs_mod.film.replays.tracks.TrackStyle.register("illusion_transform", Icons.ALL_DIRECTIONS, 0xdd66ff);
+        mchorse.bbs_mod.film.replays.tracks.TrackStyle.register("bbslezy:illusion_transform", Icons.ALL_DIRECTIONS, 0xdd66ff);
         FormRenderEvents.AFTER.register(FormIllusionRenderer::render);
     }
 }
