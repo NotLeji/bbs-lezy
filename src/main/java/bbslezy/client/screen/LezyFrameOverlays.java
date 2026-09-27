@@ -6,7 +6,10 @@ import bbslezy.camera.clips.screen.ColorEffect;
 import bbslezy.camera.clips.screen.GrainEffect;
 import bbslezy.camera.clips.screen.LetterboxClip;
 import bbslezy.camera.clips.screen.LetterboxEffect;
-import bbslezy.mixin.client.FrameOverlaysMixin;
+import com.mojang.blaze3d.systems.RenderSystem;
+import org.lwjgl.opengl.GL11;
+
+import java.lang.reflect.Field;
 
 import mchorse.bbs_mod.camera.clips.misc.ImageClip;
 import mchorse.bbs_mod.camera.clips.misc.ImageOverlay;
@@ -63,12 +66,15 @@ public class LezyFrameOverlays
 
         try
         {
-            List<FrameOverlays.IFrameOverlayRenderer> renderers = FrameOverlaysMixin.bbslezy$getRenderers();
+            Field f = FrameOverlays.class.getDeclaredField("RENDERERS");
+            f.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            List<FrameOverlays.IFrameOverlayRenderer> renderers = (List<FrameOverlays.IFrameOverlayRenderer>) f.get(null);
 
             /* setup() registers the image renderer and the subtitle renderer before the event that
              * addons answer, so these two are them - but a registry that came back short or in an
              * order this does not know is left completely alone. */
-            if (renderers.size() < BBS_OVERLAY_RENDERERS)
+            if (renderers == null || renderers.size() < BBS_OVERLAY_RENDERERS)
             {
                 return false;
             }
@@ -84,6 +90,11 @@ public class LezyFrameOverlays
         }
     }
 
+    public static boolean isInstalled()
+    {
+        return ownsRegistry;
+    }
+
     public static void render(MatrixStack stack, Batcher2D batcher, ClipContext context, int screenW, int screenH)
     {
         List<ColorEffect> effects = ColorClip.getEffects(context);
@@ -91,11 +102,25 @@ public class LezyFrameOverlays
         List<GrainEffect> grainEffects = CinematicClip.getGrainEffects(context);
         List<ImageOverlay> images = ImageClip.getImages(context);
         List<Subtitle> subtitles = SubtitleClip.getSubtitles(context);
-
         if (effects.isEmpty() && letterboxEffects.isEmpty() && grainEffects.isEmpty() && images.isEmpty() && subtitles.isEmpty())
         {
             return;
         }
+
+        if (!ownsRegistry)
+        {
+            install();
+        }
+
+        if (!ownsRegistry)
+        {
+            ScreenEffectRenderer.render(batcher, context, screenW, screenH);
+            return;
+        }
+
+        int[] prevViewport = new int[4];
+        GL11.glGetIntegerv(GL11.GL_VIEWPORT, prevViewport);
+        RenderSystem.disableDepthTest();
 
         Map<Object, Integer> overlayLayers = trackOfOverlays(context);
         Map<ImageOverlay, Integer> imageLayers = mapByLayer(images, overlayLayers);
@@ -109,11 +134,15 @@ public class LezyFrameOverlays
 
             UIImageRenderer.renderImages(stack, batcher, atLayer(images, imageLayers, track));
             UISubtitleRenderer.renderSubtitles(stack, batcher, atLayer(subtitles, subtitleLayers, track));
+            batcher.flush();
         }
 
         effects.clear();
         letterboxEffects.clear();
         grainEffects.clear();
+
+        GL11.glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
+        RenderSystem.enableDepthTest();
     }
 
     /**

@@ -85,9 +85,9 @@ public class BBSLodClient implements BBSAddonMod
     {
         /* BBS's own image and subtitle renderers go into this pass instead of ahead of it, so a
          * subtitle on an upper track is drawn over the effects of the tracks below it rather than
-         * under them. Declines to take over when the accessor did not apply, and then this is the
-         * plain end-of-frame renderer it was before. */
-        boolean layered = LezyFrameOverlays.install();
+         * under them. If the registry takeover fails, LezyFrameOverlays automatically falls back
+         * to drawing standard effects. */
+        LezyFrameOverlays.install();
 
         event.register((stack, batcher, context) ->
         {
@@ -95,14 +95,7 @@ public class BBSLodClient implements BBSAddonMod
             int w = mc.getWindow().getScaledWidth();
             int h = mc.getWindow().getScaledHeight();
 
-            if (layered)
-            {
-                LezyFrameOverlays.render(stack, batcher, context, w, h);
-            }
-            else
-            {
-                ScreenEffectRenderer.render(batcher, context, w, h);
-            }
+            LezyFrameOverlays.render(stack, batcher, context, w, h);
         });
     }
 
