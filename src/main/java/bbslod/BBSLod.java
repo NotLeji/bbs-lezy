@@ -8,11 +8,17 @@ import bbslezy.camera.clips.screen.CinematicClip;
 import bbslezy.camera.clips.screen.ColorClip;
 import bbslezy.camera.clips.screen.LetterboxClip;
 import bbslezy.camera.clips.screen.VignetteClip;
+import bbslezy.forms.utils.Illusion;
+import bbslezy.forms.values.ValueIllusion;
+import bbslezy.utils.keyframes.factories.IllusionKeyframeFactory;
 import bbslezy.utils.keyframes.factories.LensRadiusSettingsKeyframeFactory;
 import mchorse.bbs_mod.api.events.RegisterActionClipsEvent;
 import mchorse.bbs_mod.api.events.RegisterCameraClipsEvent;
+import mchorse.bbs_mod.api.events.RegisterFormModifiersEvent;
 import mchorse.bbs_mod.api.events.RegisterKeyframeFactoriesEvent;
 import mchorse.bbs_mod.api.events.RegisterSourcePacksEvent;
+import mchorse.bbs_mod.settings.values.core.ValueTransform;
+import mchorse.bbs_mod.utils.pose.Transform;
 import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.camera.clips.ClipFactoryData;
@@ -51,8 +57,19 @@ public class BBSLod implements BBSAddonMod
     public void onKeyframeFactories(RegisterKeyframeFactoriesEvent event)
     {
         event.register("lens_radius_settings", LensRadiusSettingsKeyframeFactory.INSTANCE);
+        event.register("bbslezy:illusion", IllusionKeyframeFactory.INSTANCE);
+        event.register("illusion", IllusionKeyframeFactory.INSTANCE);
     }
 
+    @Subscribe
+    public void onFormModifiers(RegisterFormModifiersEvent event)
+    {
+        event.register((form) ->
+        {
+            form.add(new ValueIllusion("bbslezy:illusion", new Illusion()));
+            form.add(new ValueTransform("bbslezy:illusion_transform", new Transform()));
+        });
+    }
     @Subscribe
     public void onCameraClips(RegisterCameraClipsEvent event)
     {

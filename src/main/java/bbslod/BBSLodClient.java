@@ -11,17 +11,24 @@ import bbslezy.ui.film.clips.UICinematicClip;
 import bbslezy.ui.film.clips.UIColorClip;
 import bbslezy.ui.film.clips.UILetterboxClip;
 import bbslezy.ui.film.clips.UIVignetteClip;
+import bbslezy.forms.renderers.FormIllusionRenderer;
+import bbslezy.ui.forms.editors.panels.UIIllusionFormPanel;
+import bbslezy.ui.framework.elements.input.keyframes.factories.UIIllusionKeyframeFactory;
 import bbslezy.ui.framework.elements.input.keyframes.factories.UILensRadiusSettingsKeyframeFactory;
+import bbslezy.utils.keyframes.factories.IllusionKeyframeFactory;
 import bbslezy.utils.keyframes.factories.LensRadiusSettingsKeyframeFactory;
+import mchorse.bbs_mod.api.client.events.FormRenderEvents;
+import mchorse.bbs_mod.api.client.events.RegisterClipPanelsEvent;
+import mchorse.bbs_mod.api.client.events.RegisterFormPanelsEvent;
+import mchorse.bbs_mod.api.client.events.RegisterFrameOverlaysEvent;
+import mchorse.bbs_mod.api.client.events.RegisterKeyframeEditorsEvent;
+import mchorse.bbs_mod.l10n.L10n;
 import mchorse.bbs_mod.ui.film.clips.actions.UIDamageActionClip;
 import mchorse.bbs_mod.ui.framework.elements.input.keyframes.factories.UIKeyframeFactory;
 import bbslezy.discord.DiscordPresenceManager;
-import mchorse.bbs_mod.api.client.events.RegisterClipPanelsEvent;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import mchorse.bbs_mod.api.client.events.RegisterFrameOverlaysEvent;
 import net.minecraft.client.MinecraftClient;
-
 import mchorse.bbs_mod.api.BBSAddonMod;
 import mchorse.bbs_mod.api.Subscribe;
 import mchorse.bbs_mod.api.client.events.BBSClientReadyEvent;
@@ -87,6 +94,23 @@ public class BBSLodClient implements BBSAddonMod
             ScreenEffectRenderer.render(batcher, context, w, h);
         });
     }
+    @Subscribe
+    public void onKeyframeEditors(RegisterKeyframeEditorsEvent event)
+    {
+        event.register(IllusionKeyframeFactory.INSTANCE, UIIllusionKeyframeFactory::new);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void registerIllusionPanel(mchorse.bbs_mod.ui.forms.editors.forms.UIForm uiForm)
+    {
+        uiForm.registerPanel(new UIIllusionFormPanel(uiForm), L10n.lang("bbslezy.ui.forms.editors.illusion"), Icons.POSE);
+    }
+
+    @Subscribe
+    public void onFormPanels(RegisterFormPanelsEvent event)
+    {
+        event.register(BBSLodClient::registerIllusionPanel);
+    }
 
     /**
      * The film and form render events are plain Fabric events rather than the addon bus, because
@@ -100,5 +124,6 @@ public class BBSLodClient implements BBSAddonMod
         ClientTickEvents.END_CLIENT_TICK.register((client) -> DiscordPresenceManager.INSTANCE.tick());
         ClientLifecycleEvents.CLIENT_STOPPING.register((client) -> DiscordPresenceManager.INSTANCE.shutdown());
         UIKeyframeFactory.register(LensRadiusSettingsKeyframeFactory.INSTANCE, UILensRadiusSettingsKeyframeFactory::new);
+        FormRenderEvents.AFTER.register(FormIllusionRenderer::render);
     }
 }
