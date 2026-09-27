@@ -1,6 +1,7 @@
 package bbslezy.ui;
-
+import mchorse.bbs_mod.actions.ActionState;
 import mchorse.bbs_mod.film.Film;
+import mchorse.bbs_mod.ui.film.UIFilmPanel;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.forms.ModelForm;
@@ -36,6 +37,27 @@ public class LezyReplayActions
     public static void selectAll(UIReplayList list)
     {
         list.selection.setAll(list.getList());
+        list.refreshReplayList();
+    }
+
+    /**
+     * Resets film actors and replays without having to exit and re-enter the film editor.
+     * Respawn entities to clear death states or displaced actors.
+     */
+    public static void resetReplays(UIReplayList list, UIFilmPanel panel)
+    {
+        if (panel != null)
+        {
+            panel.notifyServer(ActionState.RESTART);
+
+            if (panel.getController() != null)
+            {
+                panel.getController().createEntities();
+            }
+
+            panel.setCursor(panel.getCursor());
+        }
+
         list.refreshReplayList();
     }
 

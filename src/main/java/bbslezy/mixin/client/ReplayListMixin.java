@@ -62,6 +62,11 @@ public class ReplayListMixin
             LezyReplayActions.selectAll(self);
         });
 
+        menu.action(Icons.REFRESH, L10n.lang("bbslezy.ui.replays.reset_replay"), () ->
+        {
+            LezyReplayActions.resetReplays(self, this.panel);
+        });
+
         if (self.getSelectedReplayFirst() == null)
         {
             return;

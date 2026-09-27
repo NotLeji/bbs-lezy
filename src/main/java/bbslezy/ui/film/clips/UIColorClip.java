@@ -1,6 +1,7 @@
 package bbslezy.ui.film.clips;
 
 import bbslezy.camera.clips.screen.ColorClip;
+import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.ui.Keys;
 import mchorse.bbs_mod.ui.UIKeys;
@@ -37,6 +38,7 @@ public class UIColorClip extends UIClip<ColorClip>
         {
             value.set(c);
         }));
+        this.overlayColor.tooltip(IKey.raw("Flat color overlay tint blended over the camera view"));
 
         this.keyframes = new UIKeyframeEditor((consumer) -> new UIFilmKeyframes(this.editor, consumer));
         this.keyframes.view.rulerRenderer((context) ->
@@ -61,7 +63,9 @@ public class UIColorClip extends UIClip<ColorClip>
         super.registerPanels();
 
         this.panels.add(this.section(IKey.raw("Overlay Color"), this.overlayColor));
-        this.panels.add(this.section(IKey.raw("Keyframes"), this.edit));
+        this.panels.add(this.section(IKey.raw("Color Grading Tracks"), this.edit).tooltip(
+            IKey.raw("Animate saturation, hue, brightness, contrast, lift, gamma, and gain tracks")
+        ));
     }
 
     @Override
@@ -77,5 +81,28 @@ public class UIColorClip extends UIClip<ColorClip>
             int sheetColor = channel.getId().hashCode() & Colors.RGB;
             this.keyframes.view.addSheet(new UIKeyframeSheet(channel.getId(), IKey.constant(channel.getId()), sheetColor, channel, null));
         }
+    }
+
+    @Override
+    public void applyUndoData(MapType data)
+    {
+        if ("color_keyframes".equals(data.getString("embed")))
+        {
+            this.editor.embedView(this.keyframes);
+            this.keyframes.view.resetView();
+        }
+
+        super.applyUndoData(data);
+    }
+
+    @Override
+    public void collectUndoData(MapType data)
+    {
+        if (this.keyframes.hasParent())
+        {
+            data.putString("embed", "color_keyframes");
+        }
+
+        super.collectUndoData(data);
     }
 }

@@ -1,29 +1,19 @@
 package bbslod;
 
-import bbslezy.actions.MobDeathActionClip;
-import bbslezy.actions.ProjectileAttackActionClip;
 import bbslezy.audio.LezyCopyAudioImporter;
 import bbslezy.camera.clips.screen.CinematicClip;
 import bbslezy.camera.clips.screen.ColorClip;
-import bbslezy.camera.clips.screen.EyeClip;
-import bbslezy.camera.clips.screen.GrainClip;
-import bbslezy.camera.clips.screen.LetterboxClip;
 import bbslezy.camera.clips.screen.VignetteClip;
 import bbslezy.client.screen.ScreenEffectRenderer;
 import bbslezy.ui.film.clips.UICinematicClip;
 import bbslezy.ui.film.clips.UIColorClip;
-import bbslezy.ui.film.clips.UIEyeClip;
-import bbslezy.ui.film.clips.UIGrainClip;
-import bbslezy.ui.film.clips.UILetterboxClip;
 import bbslezy.ui.film.clips.UIVignetteClip;
-import bbslezy.ui.film.clips.actions.UIMobDeathActionClip;
 import bbslezy.discord.DiscordPresenceManager;
 import mchorse.bbs_mod.api.client.events.RegisterClipPanelsEvent;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import mchorse.bbs_mod.api.client.events.RegisterFrameOverlaysEvent;
 import net.minecraft.client.MinecraftClient;
-import mchorse.bbs_mod.ui.film.clips.actions.UIAttackActionClip;
 
 import mchorse.bbs_mod.api.BBSAddonMod;
 import mchorse.bbs_mod.api.Subscribe;
@@ -54,7 +44,12 @@ public class BBSLodClient implements BBSAddonMod
     @Subscribe
     public void onClientSettings(RegisterClientSettingsEvent event)
     {
-        event.register(Icons.GEAR, BBSLod.MOD_ID, LodSettings::register);
+        event.register(Icons.GEAR, BBSLod.MOD_ID, (builder) ->
+        {
+            LodSettings.register(builder);
+            LodSettings.discordEnabled.postCallback((v, f) -> DiscordPresenceManager.INSTANCE.onSettingsChanged());
+            LodSettings.discordAppId.postCallback((v, f) -> DiscordPresenceManager.INSTANCE.onSettingsChanged());
+        });
     }
 
     @Subscribe
@@ -66,12 +61,7 @@ public class BBSLodClient implements BBSAddonMod
     @Subscribe
     public void onClipPanels(RegisterClipPanelsEvent event)
     {
-        event.register(MobDeathActionClip.class, UIMobDeathActionClip::new);
-        event.register(ProjectileAttackActionClip.class, UIAttackActionClip::new);
         event.register(ColorClip.class, UIColorClip::new);
-        event.register(LetterboxClip.class, UILetterboxClip::new);
-        event.register(GrainClip.class, UIGrainClip::new);
-        event.register(EyeClip.class, UIEyeClip::new);
         event.register(CinematicClip.class, UICinematicClip::new);
         event.register(VignetteClip.class, UIVignetteClip::new);
     }

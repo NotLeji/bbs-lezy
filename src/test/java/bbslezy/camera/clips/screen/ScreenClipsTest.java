@@ -17,15 +17,6 @@ class ScreenClipsTest
     }
 
     @Test
-    void grainClip_properties()
-    {
-        GrainClip clip = new GrainClip();
-        assertNotNull(clip.create());
-        assertInstanceOf(GrainClip.class, clip.create());
-        assertEquals(2, clip.channels.length);
-    }
-
-    @Test
     void vignetteClip_properties()
     {
         VignetteClip clip = new VignetteClip();
@@ -35,20 +26,14 @@ class ScreenClipsTest
     }
 
     @Test
-    void eyeClip_properties()
-    {
-        EyeClip clip = new EyeClip();
-        assertNotNull(clip.create());
-        assertInstanceOf(EyeClip.class, clip.create());
-    }
-
-    @Test
     void cinematicClip_properties()
     {
         CinematicClip clip = new CinematicClip();
         assertNotNull(clip.create());
         assertInstanceOf(CinematicClip.class, clip.create());
         assertNotNull(clip.vintage, "CinematicClip must have vintage keyframe channel");
+        assertNotNull(clip.letterboxHeight, "CinematicClip must have letterbox channel");
+        assertNotNull(clip.grainStrength, "CinematicClip must have grain channel");
     }
 
     @Test

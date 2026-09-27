@@ -26,6 +26,7 @@ public class DiscordPresenceManager
 
     private static final String STATE = "BBS Film Studio";
     private static final String IDLE_DETAILS = "In Minecraft";
+    public static final String DEFAULT_APPLICATION_ID = "1224765922849886238";
     private static final int IDLE_REFRESH_INTERVAL = 600;
 
     private final BlockingQueue<PresenceTask> tasks = new LinkedBlockingQueue<>();
@@ -74,6 +75,32 @@ public class DiscordPresenceManager
         {
             this.workerThread.interrupt();
             this.workerThread = null;
+        }
+    }
+
+    public void onSettingsChanged()
+    {
+        if (!this.isEnabled())
+        {
+            this.enqueue(PresenceTask.clear());
+
+            return;
+        }
+
+        this.enqueue(PresenceTask.reconnect());
+
+        if (!this.gameRunning)
+        {
+            return;
+        }
+
+        if (this.bbsUiOpen)
+        {
+            this.enqueue(PresenceTask.set(this.details, this.sessionStart));
+        }
+        else
+        {
+            this.enqueue(PresenceTask.set(IDLE_DETAILS, this.gameSessionStart));
         }
     }
 
@@ -129,14 +156,17 @@ public class DiscordPresenceManager
 
     private String getApplicationId()
     {
-        if (LodSettings.discordAppId == null)
+        if (LodSettings.discordAppId != null)
         {
-            return "";
+            String id = LodSettings.discordAppId.get();
+
+            if (id != null && !id.trim().isEmpty())
+            {
+                return id.trim();
+            }
         }
 
-        String id = LodSettings.discordAppId.get();
-
-        return id == null ? "" : id.trim();
+        return DEFAULT_APPLICATION_ID;
     }
 
     private boolean isEnabled()
@@ -322,6 +352,11 @@ public class DiscordPresenceManager
         private static PresenceTask clear()
         {
             return new PresenceTask(true, false, "", 0L);
+        }
+
+        private static PresenceTask reconnect()
+        {
+            return new PresenceTask(false, true, "", 0L);
         }
     }
 }

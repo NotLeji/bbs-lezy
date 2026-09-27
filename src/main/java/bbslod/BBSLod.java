@@ -3,17 +3,10 @@ package bbslod;
 import mchorse.bbs_mod.api.BBSAddonMod;
 import mchorse.bbs_mod.api.BBSApi;
 import mchorse.bbs_mod.api.Subscribe;
-import bbslezy.actions.CloseContainerActionClip;
-import bbslezy.actions.MobDeathActionClip;
-import bbslezy.actions.ProjectileAttackActionClip;
 import bbslezy.camera.clips.screen.CinematicClip;
 import bbslezy.camera.clips.screen.ColorClip;
-import bbslezy.camera.clips.screen.EyeClip;
-import bbslezy.camera.clips.screen.GrainClip;
-import bbslezy.camera.clips.screen.LetterboxClip;
 import bbslezy.camera.clips.screen.VignetteClip;
 import bbslezy.utils.keyframes.factories.LensRadiusSettingsKeyframeFactory;
-import mchorse.bbs_mod.api.events.RegisterActionClipsEvent;
 import mchorse.bbs_mod.api.events.RegisterCameraClipsEvent;
 import mchorse.bbs_mod.api.events.RegisterKeyframeFactoriesEvent;
 import mchorse.bbs_mod.api.events.RegisterSourcePacksEvent;
@@ -44,13 +37,6 @@ public class BBSLod implements BBSAddonMod
         event.registerAddon(MOD_ID, BBSLod.class);
     }
 
-    @Subscribe
-    public void onActionClips(RegisterActionClipsEvent event)
-    {
-        event.factory.register(Link.bbs("mob_death"), MobDeathActionClip.class, new ClipFactoryData(Icons.SKULL, Colors.RED));
-        event.factory.register(Link.bbs("projectile_attack"), ProjectileAttackActionClip.class, new ClipFactoryData(Icons.ARROW_DOWN, Colors.RED));
-        event.factory.register(Link.bbs("close_container"), CloseContainerActionClip.class, new ClipFactoryData(Icons.FULLSCREEN, Colors.MAGENTA));
-    }
 
     @Subscribe
     public void onKeyframeFactories(RegisterKeyframeFactoriesEvent event)
@@ -62,9 +48,6 @@ public class BBSLod implements BBSAddonMod
     public void onCameraClips(RegisterCameraClipsEvent event)
     {
         event.factory.register(Link.bbs("color"), ColorClip.class, new ClipFactoryData(Icons.IMAGE, 0x4488ff));
-        event.factory.register(Link.bbs("letterbox"), LetterboxClip.class, new ClipFactoryData(Icons.FULLSCREEN, 0x222222));
-        event.factory.register(Link.bbs("grain"), GrainClip.class, new ClipFactoryData(Icons.MATERIAL, 0xaaaaaa));
-        event.factory.register(Link.bbs("eye"), EyeClip.class, new ClipFactoryData(Icons.VISIBLE, 0xffaa00));
         event.factory.register(Link.bbs("cinematic"), CinematicClip.class, new ClipFactoryData(Icons.CAMERA, 0xff8800));
         event.factory.register(Link.bbs("vignette"), VignetteClip.class, new ClipFactoryData(Icons.CIRCLE, 0x333333));
     }

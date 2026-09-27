@@ -1,6 +1,7 @@
 package bbslezy.ui.film.clips;
 
 import bbslezy.camera.clips.screen.CinematicClip;
+import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.ui.Keys;
 import mchorse.bbs_mod.ui.UIKeys;
@@ -18,7 +19,7 @@ import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
 
 public class UICinematicClip extends UIClip<CinematicClip>
 {
-    public UIButton edit;
+    public UIButton editAll;
     public UIKeyframeEditor keyframes;
 
     public UICinematicClip(CinematicClip clip, IUIClipsDelegate editor)
@@ -39,13 +40,13 @@ public class UICinematicClip extends UIClip<CinematicClip>
         this.keyframes.view.duration(() -> this.clip.duration.get());
         this.keyframes.setUndoId("cinematic_keyframes");
 
-        this.edit = new UIButton(UIKeys.GENERAL_EDIT, (b) ->
+        this.editAll = new UIButton(UIKeys.GENERAL_EDIT, (b) ->
         {
             this.editor.embedView(this.keyframes);
             this.keyframes.view.resetView();
             this.keyframes.view.getGraph().clearSelection();
         });
-        this.edit.keys().register(Keys.FORMS_EDIT, () -> this.edit.clickItself());
+        this.editAll.keys().register(Keys.FORMS_EDIT, () -> this.editAll.clickItself());
     }
 
     @Override
@@ -53,7 +54,10 @@ public class UICinematicClip extends UIClip<CinematicClip>
     {
         super.registerPanels();
 
-        this.panels.add(this.section(IKey.raw("Keyframes (Vintage, VHS, Lens, etc.)"), this.edit));
+        this.panels.add(this.section(
+            IKey.raw("Keyframe Tracks"),
+            this.editAll
+        ).tooltip(IKey.raw("Open timeline dope sheet to animate all cinematic tracks: Vintage film, Letterbox, Film Grain, Lens Distortion, VHS, and Atmosphere")));
     }
 
     @Override
@@ -68,5 +72,28 @@ public class UICinematicClip extends UIClip<CinematicClip>
             int sheetColor = channel.getId().hashCode() & Colors.RGB;
             this.keyframes.view.addSheet(new UIKeyframeSheet(channel.getId(), IKey.constant(channel.getId()), sheetColor, channel, null));
         }
+    }
+
+    @Override
+    public void applyUndoData(MapType data)
+    {
+        if ("cinematic_keyframes".equals(data.getString("embed")))
+        {
+            this.editor.embedView(this.keyframes);
+            this.keyframes.view.resetView();
+        }
+
+        super.applyUndoData(data);
+    }
+
+    @Override
+    public void collectUndoData(MapType data)
+    {
+        if (this.keyframes.hasParent())
+        {
+            data.putString("embed", "cinematic_keyframes");
+        }
+
+        super.collectUndoData(data);
     }
 }

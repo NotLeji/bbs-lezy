@@ -7,6 +7,8 @@ import mchorse.bbs_mod.data.types.BaseType;
 import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.utils.clips.ClipContext;
+import mchorse.bbs_mod.utils.colors.Color;
+import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.joml.Matrices;
 import mchorse.bbs_mod.utils.keyframes.Keyframe;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
@@ -20,6 +22,8 @@ import java.util.List;
 
 public class CinematicClip extends CameraClip
 {
+    private static final Color DEFAULT_LETTERBOX_COLOR = Color.rgba(Colors.A100);
+
     public static final double DEFAULT_ABERRATION_ANGLE = 0D;
     public static final double DEFAULT_ABERRATION_DIRECTIONAL = 0D;
     public static final double DEFAULT_ABERRATION_RADIUS = 1D;
@@ -36,6 +40,33 @@ public class CinematicClip extends CameraClip
     public static final double DEFAULT_LENS_SHARPEN = 1D;
     public static final double DEFAULT_LENS_DISTANCE_FACTOR = 0D;
 
+    /* Vintage & Retro */
+    public final KeyframeChannel<Double> vintage = new KeyframeChannel<>("vintage", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> vhs = new KeyframeChannel<>("vhs", KeyframeFactories.DOUBLE);
+
+    /* Film Grain */
+    public final KeyframeChannel<Double> grainStrength = new KeyframeChannel<>("grain_strength", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> grainSize = new KeyframeChannel<>("grain_size", KeyframeFactories.DOUBLE);
+
+    /* Framing / Letterbox */
+    public final KeyframeChannel<Double> letterboxHeight = new KeyframeChannel<>("letterbox_height", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> letterboxWidth = new KeyframeChannel<>("letterbox_width", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> letterboxSmoothness = new KeyframeChannel<>("letterbox_smoothness", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Color> letterboxColor = new KeyframeChannel<>("letterbox_color", KeyframeFactories.COLOR);
+    public final KeyframeChannel<Double> letterboxRotation = new KeyframeChannel<>("letterbox_rotation", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> letterboxZoom = new KeyframeChannel<>("letterbox_zoom", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> letterboxOffsetX = new KeyframeChannel<>("letterbox_offset_x", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> letterboxOffsetY = new KeyframeChannel<>("letterbox_offset_y", KeyframeFactories.DOUBLE);
+
+    /* Lens & Optics */
+    public final KeyframeChannel<Double> lensDistortion = new KeyframeChannel<>("lensDistortion", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> lensDistanceFactor = new KeyframeChannel<>("lens_distance_factor", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<LensRadiusSettings> lensRadius = new KeyframeChannel<>("lens_radius", LensRadiusSettingsKeyframeFactory.INSTANCE);
+    public final KeyframeChannel<Double> lensHardness = new KeyframeChannel<>("lens_hardness", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> lensSharpen = new KeyframeChannel<>("lens_sharpen", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> radialBlur = new KeyframeChannel<>("radialBlur", KeyframeFactories.DOUBLE);
+
+    /* Chromatic Aberration */
     public final KeyframeChannel<Double> aberration = new KeyframeChannel<>("aberration", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> aberrationAngle = new KeyframeChannel<>("aberration_angle", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> aberrationDirectional = new KeyframeChannel<>("aberration_directional", KeyframeFactories.DOUBLE);
@@ -46,14 +77,8 @@ public class CinematicClip extends CameraClip
     public final KeyframeChannel<Double> aberrationCenterY = new KeyframeChannel<>("aberration_center_y", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> aberrationGreen = new KeyframeChannel<>("aberration_green", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> aberrationSpectrum = new KeyframeChannel<>("aberration_spectrum", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> vhs = new KeyframeChannel<>("vhs", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> lensDistortion = new KeyframeChannel<>("lensDistortion", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> lensDistanceFactor = new KeyframeChannel<>("lens_distance_factor", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<LensRadiusSettings> lensRadius = new KeyframeChannel<>("lens_radius", LensRadiusSettingsKeyframeFactory.INSTANCE);
-    public final KeyframeChannel<Double> lensHardness = new KeyframeChannel<>("lens_hardness", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> lensSharpen = new KeyframeChannel<>("lens_sharpen", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> vintage = new KeyframeChannel<>("vintage", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> radialBlur = new KeyframeChannel<>("radialBlur", KeyframeFactories.DOUBLE);
+
+    /* Atmosphere & Environment */
     public final KeyframeChannel<Double> rain = new KeyframeChannel<>("rain", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> dust = new KeyframeChannel<>("dust", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> lightLeak = new KeyframeChannel<>("lightLeak", KeyframeFactories.DOUBLE);
@@ -63,11 +88,50 @@ public class CinematicClip extends CameraClip
 
     public final KeyframeChannel[] channels;
 
-    private ColorEffect effect = new ColorEffect();
+    private ColorEffect colorEffect = new ColorEffect();
+    private LetterboxEffect letterboxEffect = new LetterboxEffect();
+    private GrainEffect grainEffect = new GrainEffect();
+
+    public static List<LetterboxEffect> getLetterboxEffects(ClipContext context)
+    {
+        return context.clipData.get("letterboxEffects", ArrayList::new);
+    }
+
+    public static List<GrainEffect> getGrainEffects(ClipContext context)
+    {
+        return context.clipData.get("grainEffects", ArrayList::new);
+    }
 
     public CinematicClip()
     {
         this.channels = new KeyframeChannel[] {
+            /* Vintage & Retro */
+            this.vintage,
+            this.vhs,
+
+            /* Film Grain */
+            this.grainStrength,
+            this.grainSize,
+
+            /* Letterbox */
+            this.letterboxHeight,
+            this.letterboxWidth,
+            this.letterboxSmoothness,
+            this.letterboxColor,
+            this.letterboxRotation,
+            this.letterboxZoom,
+            this.letterboxOffsetX,
+            this.letterboxOffsetY,
+
+            /* Lens & Optics */
+            this.lensDistortion,
+            this.lensDistanceFactor,
+            this.lensRadius,
+            this.lensHardness,
+            this.lensSharpen,
+            this.radialBlur,
+
+            /* Aberration */
             this.aberration,
             this.aberrationAngle,
             this.aberrationDirectional,
@@ -78,14 +142,8 @@ public class CinematicClip extends CameraClip
             this.aberrationCenterY,
             this.aberrationGreen,
             this.aberrationSpectrum,
-            this.vhs,
-            this.lensDistortion,
-            this.lensDistanceFactor,
-            this.lensRadius,
-            this.lensHardness,
-            this.lensSharpen,
-            this.vintage,
-            this.radialBlur,
+
+            /* Atmosphere */
             this.rain,
             this.dust,
             this.lightLeak,
@@ -94,30 +152,10 @@ public class CinematicClip extends CameraClip
             this.heatScale,
         };
 
-        this.add(this.aberration);
-        this.add(this.aberrationAngle);
-        this.add(this.aberrationDirectional);
-        this.add(this.aberrationRadius);
-        this.add(this.aberrationHardness);
-        this.add(this.aberrationBalance);
-        this.add(this.aberrationCenterX);
-        this.add(this.aberrationCenterY);
-        this.add(this.aberrationGreen);
-        this.add(this.aberrationSpectrum);
-        this.add(this.vhs);
-        this.add(this.lensDistortion);
-        this.add(this.lensDistanceFactor);
-        this.add(this.lensRadius);
-        this.add(this.lensHardness);
-        this.add(this.lensSharpen);
-        this.add(this.vintage);
-        this.add(this.radialBlur);
-        this.add(this.rain);
-        this.add(this.dust);
-        this.add(this.lightLeak);
-        this.add(this.heatStrength);
-        this.add(this.heatSpeed);
-        this.add(this.heatScale);
+        for (KeyframeChannel channel : this.channels)
+        {
+            this.add(channel);
+        }
     }
 
     @Override
@@ -172,8 +210,49 @@ public class CinematicClip extends CameraClip
         float t = context.relativeTick + context.transition;
         float factor = this.envelope.factorEnabled(this.duration.get(), t);
 
-        this.effect.reset();
+        this.colorEffect.reset();
 
+        /* 1. Letterbox / Framing */
+        float lbHeight = this.letterboxHeight.isEmpty() ? 0F : (float) (double) this.letterboxHeight.interpolate(t);
+
+        if (lbHeight > 0F)
+        {
+            float lbWidth = this.letterboxWidth.isEmpty() ? 1F : (float) (double) this.letterboxWidth.interpolate(t);
+            float lbSmooth = (this.letterboxSmoothness.isEmpty() ? 0F : (float) (double) this.letterboxSmoothness.interpolate(t)) * 0.25F;
+            float lbRot = this.letterboxRotation.isEmpty() ? 0F : (float) (double) this.letterboxRotation.interpolate(t);
+            float lbZoom = this.letterboxZoom.isEmpty() ? 1F : (float) (double) this.letterboxZoom.interpolate(t);
+            float lbOffX = this.letterboxOffsetX.isEmpty() ? 0F : (float) (double) this.letterboxOffsetX.interpolate(t);
+            float lbOffY = this.letterboxOffsetY.isEmpty() ? 0F : (float) (double) this.letterboxOffsetY.interpolate(t);
+            Color lbCol = this.letterboxColor.isEmpty() ? DEFAULT_LETTERBOX_COLOR : this.letterboxColor.interpolate(t, DEFAULT_LETTERBOX_COLOR);
+
+            this.letterboxEffect.size = Math.max(0F, lbHeight * 0.25F * factor);
+            this.letterboxEffect.width = lbWidth;
+            this.letterboxEffect.smoothness = lbSmooth;
+            this.letterboxEffect.color = Colors.setA(lbCol.getARGBColor(), 1F);
+            this.letterboxEffect.rotation = lbRot;
+            this.letterboxEffect.zoom = Math.max(0.01F, lbZoom);
+            this.letterboxEffect.offsetX = lbOffX;
+            this.letterboxEffect.offsetY = lbOffY;
+            this.letterboxEffect.renderOrder = context.count;
+
+            getLetterboxEffects(context).add(this.letterboxEffect);
+        }
+
+        /* 2. Film Grain */
+        float gStr = (this.grainStrength.isEmpty() ? 0F : (float) (double) this.grainStrength.interpolate(t)) * 0.25F;
+
+        if (gStr > 0F)
+        {
+            float gSize = this.grainSize.isEmpty() ? 1F : (float) (double) this.grainSize.interpolate(t) * 0.25F;
+
+            this.grainEffect.strength = gStr * factor;
+            this.grainEffect.size = Math.max(0.25F, gSize);
+            this.grainEffect.renderOrder = context.count;
+
+            getGrainEffects(context).add(this.grainEffect);
+        }
+
+        /* 3. Cinematic Shader Effects */
         float ab = (this.aberration.isEmpty() ? 0F : (float) (double) this.aberration.interpolate(t)) * 0.25F;
         float abAngle = interpolateOrDefault(this.aberrationAngle, t, DEFAULT_ABERRATION_ANGLE);
         float abDirectional = interpolateOrDefault(this.aberrationDirectional, t, DEFAULT_ABERRATION_DIRECTIONAL);
@@ -225,38 +304,37 @@ public class CinematicClip extends CameraClip
 
         if (ab != 0F || vh != 0F || ld != 0F || vt != 0F || rb != 0F || rn != 0F || ds != 0F || ll != 0F || hs != 0F)
         {
-            this.effect.hasCinematic = true;
-            this.effect.aberration = ab * factor;
-            this.effect.aberrationAngle = abAngle;
-            this.effect.aberrationDirectional = MathUtils.clamp(abDirectional, 0F, 1F);
-            this.effect.aberrationRadius = Math.max(0F, abRadius);
-            this.effect.aberrationHardness = MathUtils.clamp(abHardness, 0F, 1F);
-            this.effect.aberrationBalance = MathUtils.clamp(abBalance, -1F, 1F);
-            this.effect.aberrationCenterX = MathUtils.clamp(abCenterX, 0F, 1F);
-            this.effect.aberrationCenterY = MathUtils.clamp(abCenterY, 0F, 1F);
-            this.effect.aberrationGreen = Math.max(0F, abGreen);
-            this.effect.aberrationSpectrum = MathUtils.clamp(abSpectrum, 0F, 1F);
-            this.effect.vhs = vh * factor;
-            this.effect.lensDistortion = lens;
-            this.effect.lensRadiusX = radiusX;
-            this.effect.lensRadiusY = radiusY;
-            this.effect.lensHardness = hardness;
-            this.effect.lensSharpen = Math.max(0F, ls) * factor;
-            this.effect.vintage = vt * factor;
-            this.effect.radialBlur = rb * factor;
-            this.effect.rain = rn * factor;
-            this.effect.dust = ds * factor;
-            this.effect.lightLeak = ll * factor;
-            this.effect.heatStrength = hs * factor;
-            this.effect.heatSpeed = hsp * factor;
-            this.effect.heatScale = hsc * factor;
-            this.effect.time = t / 20.0F;
-            this.effect.renderOrder = context.count;
+            this.colorEffect.hasCinematic = true;
+            this.colorEffect.aberration = ab * factor;
+            this.colorEffect.aberrationAngle = abAngle;
+            this.colorEffect.aberrationDirectional = MathUtils.clamp(abDirectional, 0F, 1F);
+            this.colorEffect.aberrationRadius = Math.max(0F, abRadius);
+            this.colorEffect.aberrationHardness = MathUtils.clamp(abHardness, 0F, 1F);
+            this.colorEffect.aberrationBalance = MathUtils.clamp(abBalance, -1F, 1F);
+            this.colorEffect.aberrationCenterX = MathUtils.clamp(abCenterX, 0F, 1F);
+            this.colorEffect.aberrationCenterY = MathUtils.clamp(abCenterY, 0F, 1F);
+            this.colorEffect.aberrationGreen = Math.max(0F, abGreen);
+            this.colorEffect.aberrationSpectrum = MathUtils.clamp(abSpectrum, 0F, 1F);
+            this.colorEffect.vhs = vh * factor;
+            this.colorEffect.lensDistortion = lens;
+            this.colorEffect.lensRadiusX = radiusX;
+            this.colorEffect.lensRadiusY = radiusY;
+            this.colorEffect.lensHardness = hardness;
+            this.colorEffect.lensSharpen = Math.max(0F, ls) * factor;
+            this.colorEffect.vintage = vt * factor;
+            this.colorEffect.radialBlur = rb * factor;
+            this.colorEffect.rain = rn * factor;
+            this.colorEffect.dust = ds * factor;
+            this.colorEffect.lightLeak = ll * factor;
+            this.colorEffect.heatStrength = hs * factor;
+            this.colorEffect.heatSpeed = hsp * factor;
+            this.colorEffect.heatScale = hsc * factor;
+            this.colorEffect.time = t / 20.0F;
+            this.colorEffect.renderOrder = context.count;
 
-            ColorClip.getEffects(context).add(this.effect);
+            ColorClip.getEffects(context).add(this.colorEffect);
         }
     }
-
 
     @Override
     protected Clip create()
