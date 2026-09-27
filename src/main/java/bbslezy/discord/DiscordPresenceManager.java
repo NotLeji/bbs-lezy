@@ -26,7 +26,7 @@ public class DiscordPresenceManager
 
     private static final String STATE = "BBS Film Studio";
     private static final String IDLE_DETAILS = "In Minecraft";
-    public static final String DEFAULT_APPLICATION_ID = "1224765922849886238";
+    public static final String DEFAULT_APPLICATION_ID = "383226320970055681";
     private static final int IDLE_REFRESH_INTERVAL = 600;
 
     private final BlockingQueue<PresenceTask> tasks = new LinkedBlockingQueue<>();

@@ -39,8 +39,8 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
     {
         super.registerUI();
 
-        this.height = this.trackpad(this.clip.height).limit(0D, 0.4D).values(0.005D, 0.01D, 0.05D);
-        this.height.tooltip(IKey.raw("Bar thickness (0.12 = standard 2.39:1 cinema scope)"));
+        this.height = this.trackpad(this.clip.height).limit(0D, 1.5D).values(0.01D, 0.05D, 0.1D);
+        this.height.tooltip(IKey.raw("Bar thickness (0.48 = standard 2.39:1 cinema scope)"));
 
         this.width = this.trackpad(this.clip.width).limit(0D, 1D).values(0.01D, 0.05D, 0.1D);
         this.width.tooltip(IKey.raw("Bar width coverage"));

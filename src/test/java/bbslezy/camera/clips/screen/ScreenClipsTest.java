@@ -23,7 +23,7 @@ class ScreenClipsTest
         LetterboxClip clip = new LetterboxClip();
         assertNotNull(clip.create());
         assertInstanceOf(LetterboxClip.class, clip.create());
-        assertEquals(0.12D, clip.height.get(), 1e-4D, "Letterbox should default to 0.12 cinema ratio");
+        assertEquals(0.48D, clip.height.get(), 1e-4D, "Letterbox should default to 0.48 cinema ratio");
         assertEquals(1.0D, clip.width.get(), 1e-4D);
         assertEquals(8, clip.channels.length);
     }

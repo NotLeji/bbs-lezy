@@ -18,7 +18,7 @@ import java.util.List;
 
 public class LetterboxClip extends CameraClip
 {
-    public static final double DEFAULT_HEIGHT = 0.12D;
+    public static final double DEFAULT_HEIGHT = 0.48D;
     public static final double DEFAULT_WIDTH = 1.0D;
     private static final Color DEFAULT_COLOR = Color.rgba(Colors.A100);
 
@@ -84,6 +84,7 @@ public class LetterboxClip extends CameraClip
 
         if (barH > 0F)
         {
+            float sz = barH * 0.25F;
             float barW = this.widthChannel.isEmpty()
                 ? (float) (double) this.width.get()
                 : (float) (double) this.widthChannel.interpolate(t);
@@ -101,7 +102,7 @@ public class LetterboxClip extends CameraClip
             float offX = this.offsetXChannel.isEmpty() ? 0F : (float) (double) this.offsetXChannel.interpolate(t);
             float offY = this.offsetYChannel.isEmpty() ? 0F : (float) (double) this.offsetYChannel.interpolate(t);
 
-            this.effect.size = Math.max(0F, barH * factor);
+            this.effect.size = Math.max(0F, sz * factor);
             this.effect.width = barW;
             this.effect.smoothness = smooth;
             this.effect.color = Colors.setA(col.getARGBColor(), 1F);

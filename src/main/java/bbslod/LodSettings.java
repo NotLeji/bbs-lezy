@@ -1,5 +1,6 @@
 package bbslod;
 
+import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.settings.SettingsBuilder;
 import mchorse.bbs_mod.settings.values.numeric.ValueBoolean;
 import mchorse.bbs_mod.settings.values.numeric.ValueDouble;
@@ -23,7 +24,7 @@ public class LodSettings
     public static ValueBoolean discordEnabled;
     public static ValueString discordAppId;
     public static ValueInt videoCqp;
-    public static ValueString videoCodec;
+    public static ValueInt videoCodec;
 
     public static void register(SettingsBuilder builder)
     {
@@ -38,6 +39,10 @@ public class LodSettings
         discordEnabled = builder.getBoolean("discord_enabled", false);
         discordAppId = builder.getString("discord_app_id", "");
         videoCqp = builder.getInt("video_cqp", 18, 0, 51).slider();
-        videoCodec = builder.getString("video_codec", "h264");
+        videoCodec = builder.getInt("video_codec", 0, 0, 2).modes(
+            IKey.raw("H.264 (MP4)"),
+            IKey.raw("H.265 / HEVC (MP4)"),
+            IKey.raw("VP9 (WebM)")
+        );
     }
 }

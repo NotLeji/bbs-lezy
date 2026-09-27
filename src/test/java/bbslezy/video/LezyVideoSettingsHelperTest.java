@@ -1,7 +1,6 @@
 package bbslezy.video;
 
 import bbslod.LodSettings;
-import mchorse.bbs_mod.settings.values.core.ValueString;
 import mchorse.bbs_mod.settings.values.numeric.ValueInt;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -13,7 +12,7 @@ class LezyVideoSettingsHelperTest
     static void setUp()
     {
         LodSettings.videoCqp = new ValueInt("video_cqp", 18, 0, 51);
-        LodSettings.videoCodec = new ValueString("video_codec", "h264");
+        LodSettings.videoCodec = new ValueInt("video_codec", 0, 0, 2);
     }
 
     @Test
@@ -22,7 +21,7 @@ class LezyVideoSettingsHelperTest
         String defaultParams = "-f rawvideo -pix_fmt bgr24 -s %WIDTH%x%HEIGHT% -r %FPS% -i - -vf %FILTERS% -c:v libx264 -preset ultrafast -tune zerolatency -qp 18 -pix_fmt yuv420p %NAME%.mp4";
 
         LodSettings.videoCqp.set(23);
-        LodSettings.videoCodec.set("h264");
+        LodSettings.videoCodec.set(0);
 
         String result = LezyVideoSettingsHelper.apply(defaultParams);
 
@@ -36,7 +35,7 @@ class LezyVideoSettingsHelperTest
         String defaultParams = "-f rawvideo -pix_fmt bgr24 -s %WIDTH%x%HEIGHT% -r %FPS% -i - -vf %FILTERS% -c:v libx264 -preset ultrafast -tune zerolatency -qp 18 -pix_fmt yuv420p %NAME%.mp4";
 
         LodSettings.videoCqp.set(20);
-        LodSettings.videoCodec.set("h265");
+        LodSettings.videoCodec.set(1);
 
         String result = LezyVideoSettingsHelper.apply(defaultParams);
 
@@ -50,7 +49,7 @@ class LezyVideoSettingsHelperTest
         String defaultParams = "-f rawvideo -pix_fmt bgr24 -s %WIDTH%x%HEIGHT% -r %FPS% -i - -vf %FILTERS% -c:v libx264 -preset ultrafast -tune zerolatency -qp 18 -pix_fmt yuv420p %NAME%.mp4";
 
         LodSettings.videoCqp.set(30);
-        LodSettings.videoCodec.set("vp9");
+        LodSettings.videoCodec.set(2);
 
         String result = LezyVideoSettingsHelper.apply(defaultParams);
 

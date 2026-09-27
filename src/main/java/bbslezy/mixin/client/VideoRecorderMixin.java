@@ -14,12 +14,12 @@ public abstract class VideoRecorderMixin
         method = "startRecording",
         at = @At(
             value = "INVOKE",
-            target = "Lmchorse/bbs_mod/settings/values/core/ValueString;get()Ljava/lang/String;"
+            target = "Lmchorse/bbs_mod/settings/values/core/ValueString;get()Ljava/lang/Object;"
         )
     )
-    private String bbslezy$applyCustomCodecAndCqp(ValueString valueString)
+    private Object bbslezy$applyCustomCodecAndCqp(ValueString valueString)
     {
-        String original = valueString.get();
+        String original = (String) valueString.get();
 
         return LezyVideoSettingsHelper.apply(original);
     }

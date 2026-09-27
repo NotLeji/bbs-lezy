@@ -12,7 +12,7 @@ public class LezyVideoSettingsHelper
         }
 
         int cqp = LodSettings.videoCqp != null ? LodSettings.videoCqp.get() : 18;
-        String codec = LodSettings.videoCodec != null ? LodSettings.videoCodec.get().toLowerCase().trim() : "h264";
+        int codecMode = LodSettings.videoCodec != null ? LodSettings.videoCodec.get() : 0;
 
         /* Replace CQP / CRF parameter */
         if (params.contains("-qp "))
@@ -25,11 +25,11 @@ public class LezyVideoSettingsHelper
         }
 
         /* Replace video codec */
-        if ("h265".equals(codec) || "hevc".equals(codec))
+        if (codecMode == 1)
         {
             params = params.replaceAll("-c:v \\S+", "-c:v libx265 -tag:v hvc1");
         }
-        else if ("vp9".equals(codec))
+        else if (codecMode == 2)
         {
             params = params.replaceAll("-c:v \\S+", "-c:v libvpx-vp9 -b:v 0");
             params = params.replaceAll("-tune zerolatency", "-deadline realtime");
