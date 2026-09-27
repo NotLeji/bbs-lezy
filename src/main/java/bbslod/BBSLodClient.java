@@ -1,6 +1,7 @@
 package bbslod;
 
 import bbslezy.actions.LezyDamageActionClip;
+import bbslezy.client.screen.LezyFrameOverlays;
 import bbslezy.audio.LezyCopyAudioImporter;
 import bbslezy.camera.clips.screen.CinematicClip;
 import bbslezy.camera.clips.screen.ColorClip;
@@ -82,15 +83,29 @@ public class BBSLodClient implements BBSAddonMod
     @Subscribe
     public void onFrameOverlays(RegisterFrameOverlaysEvent event)
     {
+        /* BBS's own image and subtitle renderers go into this pass instead of ahead of it, so a
+         * subtitle on an upper track is drawn over the effects of the tracks below it rather than
+         * under them. Declines to take over when the accessor did not apply, and then this is the
+         * plain end-of-frame renderer it was before. */
+        boolean layered = LezyFrameOverlays.install();
+
         event.register((stack, batcher, context) ->
         {
             MinecraftClient mc = MinecraftClient.getInstance();
             int w = mc.getWindow().getScaledWidth();
             int h = mc.getWindow().getScaledHeight();
 
-            ScreenEffectRenderer.render(batcher, context, w, h);
+            if (layered)
+            {
+                LezyFrameOverlays.render(stack, batcher, context, w, h);
+            }
+            else
+            {
+                ScreenEffectRenderer.render(batcher, context, w, h);
+            }
         });
     }
+
     @Subscribe
     public void onKeyframeEditors(RegisterKeyframeEditorsEvent event)
     {
