@@ -2,6 +2,7 @@ package bbslezy.ui.framework.elements.input.keyframes.factories;
 
 import bbslezy.forms.utils.Illusion;
 import mchorse.bbs_mod.l10n.L10n;
+import mchorse.bbs_mod.ui.film.replays.UIReplaysEditorUtils;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIToggle;
 import mchorse.bbs_mod.ui.framework.elements.input.UIPropTransform;
@@ -126,15 +127,28 @@ public class UIIllusionKeyframeFactory extends UIKeyframeFactory<Illusion>
 
     private void editKeyframe(Consumer<Illusion> consumer)
     {
-        if (this.keyframe == null || this.keyframe.getValue() == null)
+        boolean[] applied = {false};
+
+        UIReplaysEditorUtils.forEachSelectedKeyframe(this.editor, this.keyframe, (selected) ->
         {
-            return;
+            applied[0] = true;
+
+            if (selected.getValue() instanceof Illusion illusion)
+            {
+                Illusion copy = illusion.copy();
+
+                consumer.accept(copy);
+                selected.setValue(copy, true);
+            }
+        });
+
+        if (!applied[0] && this.keyframe != null && this.keyframe.getValue() != null)
+        {
+            Illusion copy = this.keyframe.getValue().copy();
+
+            consumer.accept(copy);
+            this.keyframe.setValue(copy, true);
         }
-
-        Illusion copy = this.keyframe.getValue().copy();
-
-        consumer.accept(copy);
-        this.keyframe.setValue(copy);
     }
 
     private void toggleDirection(int bit, boolean enabled)

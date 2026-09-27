@@ -77,6 +77,8 @@ public final class FormIllusionRenderer
 
         isRenderingIllusion = true;
 
+        boolean wasActive = mchorse.bbs_mod.forms.FormTranslucentQueue.suspend();
+
         try
         {
             com.mojang.blaze3d.systems.RenderSystem.enableBlend();
@@ -87,6 +89,7 @@ public final class FormIllusionRenderer
         }
         finally
         {
+            mchorse.bbs_mod.forms.FormTranslucentQueue.restore(wasActive);
             isRenderingIllusion = false;
             formContext.color(baseColor);
             formContext.light = baseLight;

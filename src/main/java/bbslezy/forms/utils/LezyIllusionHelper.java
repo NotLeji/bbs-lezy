@@ -3,17 +3,18 @@ package bbslezy.forms.utils;
 import bbslezy.forms.values.ValueIllusion;
 import mchorse.bbs_mod.film.FilmControllerContext;
 import mchorse.bbs_mod.film.replays.Replay;
+import mchorse.bbs_mod.film.replays.tracks.TrackId;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.settings.values.base.BaseValue;
 import mchorse.bbs_mod.settings.values.core.ValueTransform;
+import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
+import mchorse.bbs_mod.utils.keyframes.KeyframeSegment;
 import mchorse.bbs_mod.utils.pose.Transform;
 
 public final class LezyIllusionHelper
 {
-    public static final String ILLUSION_ID = "bbslezy:illusion";
-    public static final String ILLUSION_TRANSFORM_ID = "bbslezy:illusion_transform";
-    public static final String LEGACY_ILLUSION_ID = "illusion";
-    public static final String LEGACY_ILLUSION_TRANSFORM_ID = "illusion_transform";
+    public static final String ILLUSION_ID = "illusion";
+    public static final String ILLUSION_TRANSFORM_ID = "illusion_transform";
 
     private LezyIllusionHelper()
     {}
@@ -23,14 +24,6 @@ public final class LezyIllusionHelper
         if (form == null)
         {
             return null;
-        }
-
-        /* Check "illusion" first (standard in CML & keyframe tracks), then namespaced */
-        BaseValue legacy = form.get(LEGACY_ILLUSION_ID);
-
-        if (legacy instanceof ValueIllusion legacyIllusion)
-        {
-            return legacyIllusion;
         }
 
         BaseValue value = form.get(ILLUSION_ID);
@@ -50,10 +43,6 @@ public final class LezyIllusionHelper
         return value != null ? value.get() : null;
     }
 
-    /**
-     * Resolves illusion from form, and if absent or count == 0 on a replay entity,
-     * seamlessly falls back to the owning Replay's source form and syncs it.
-     */
     public static Replay getCurrentReplay()
     {
         try
@@ -66,6 +55,12 @@ public final class LezyIllusionHelper
         }
     }
 
+    /**
+     * Resolves illusion from form. On a replay actor, checks:
+     * 1. Direct runtime value / property on the form (e.g. keyframe applied).
+     * 2. Replay keyframe channel evaluation on current tick.
+     * 3. Replay source form (for changes made in form editor before baking/keyframing).
+     */
     public static Illusion resolveIllusion(Form form)
     {
         Illusion illusion = getIllusion(form);
@@ -79,6 +74,31 @@ public final class LezyIllusionHelper
 
         if (currentReplay != null)
         {
+            /* Check if there's a keyframe track on the replay */
+            KeyframeChannel<?> channel = currentReplay.properties.get(TrackId.property("", ILLUSION_ID));
+
+            if (channel != null && !channel.isEmpty())
+            {
+                try
+                {
+                    float tick = currentReplay.keyframes.x.isEmpty() ? 0F : currentReplay.getTick(0);
+                    KeyframeSegment<?> segment = channel.find(tick);
+
+                    if (segment != null && segment.createInterpolated() instanceof Illusion interpolated)
+                    {
+                        if (interpolated.count > 0)
+                        {
+                            setIllusion(form, interpolated);
+
+                            return interpolated;
+                        }
+                    }
+                }
+                catch (Throwable ignored)
+                {}
+            }
+
+            /* Check Replay's authored form */
             Form replayForm = currentReplay.form.get();
 
             if (replayForm != null && replayForm != form)
@@ -104,13 +124,6 @@ public final class LezyIllusionHelper
             return null;
         }
 
-        BaseValue legacy = form.get(LEGACY_ILLUSION_TRANSFORM_ID);
-
-        if (legacy instanceof ValueTransform legacyTransform)
-        {
-            return legacyTransform;
-        }
-
         BaseValue value = form.get(ILLUSION_TRANSFORM_ID);
 
         if (value instanceof ValueTransform valueTransform)
@@ -125,7 +138,7 @@ public final class LezyIllusionHelper
     {
         ValueTransform value = getIllusionTransformValue(form);
 
-        if (value != null)
+        if (value != null && !value.get().isDefault())
         {
             return value.get();
         }
@@ -134,6 +147,24 @@ public final class LezyIllusionHelper
 
         if (currentReplay != null)
         {
+            KeyframeChannel<?> channel = currentReplay.properties.get(TrackId.property("", ILLUSION_TRANSFORM_ID));
+
+            if (channel != null && !channel.isEmpty())
+            {
+                try
+                {
+                    float tick = currentReplay.keyframes.x.isEmpty() ? 0F : currentReplay.getTick(0);
+                    KeyframeSegment<?> segment = channel.find(tick);
+
+                    if (segment != null && segment.createInterpolated() instanceof Transform interpolated)
+                    {
+                        return interpolated;
+                    }
+                }
+                catch (Throwable ignored)
+                {}
+            }
+
             Form replayForm = currentReplay.form.get();
 
             if (replayForm != null && replayForm != form)
@@ -141,7 +172,8 @@ public final class LezyIllusionHelper
                 return getIllusionTransform(replayForm);
             }
         }
-        return null;
+
+        return value != null ? value.get() : null;
     }
 
     public static void syncIllusion(Form source, Form target)
@@ -173,27 +205,16 @@ public final class LezyIllusionHelper
             return;
         }
 
-        ValueIllusion val1 = getIllusionValue(form);
+        ValueIllusion val = getIllusionValue(form);
 
-        if (val1 == null)
+        if (val == null)
         {
-            val1 = new ValueIllusion(LEGACY_ILLUSION_ID, illusion.copy());
-            form.add(val1);
+            val = new ValueIllusion(ILLUSION_ID, illusion.copy());
+            form.add(val);
         }
         else
         {
-            val1.set(illusion.copy());
-        }
-
-        BaseValue val2 = form.get(ILLUSION_ID);
-
-        if (val2 instanceof ValueIllusion namespaced)
-        {
-            namespaced.set(illusion.copy());
-        }
-        else if (val2 == null)
-        {
-            form.add(new ValueIllusion(ILLUSION_ID, illusion.copy()));
+            val.set(illusion.copy());
         }
     }
 
@@ -204,30 +225,17 @@ public final class LezyIllusionHelper
             return;
         }
 
-        ValueTransform val1 = getIllusionTransformValue(form);
+        ValueTransform val = getIllusionTransformValue(form);
 
-        if (val1 == null)
+        if (val == null)
         {
-            val1 = new ValueTransform(LEGACY_ILLUSION_TRANSFORM_ID, new Transform());
-            val1.set(transform.copy());
-            form.add(val1);
+            val = new ValueTransform(ILLUSION_TRANSFORM_ID, new Transform());
+            val.set(transform.copy());
+            form.add(val);
         }
         else
         {
-            val1.set(transform.copy());
-        }
-
-        BaseValue val2 = form.get(ILLUSION_TRANSFORM_ID);
-
-        if (val2 instanceof ValueTransform namespaced)
-        {
-            namespaced.set(transform.copy());
-        }
-        else if (val2 == null)
-        {
-            ValueTransform t = new ValueTransform(ILLUSION_TRANSFORM_ID, new Transform());
-            t.set(transform.copy());
-            form.add(t);
+            val.set(transform.copy());
         }
     }
 

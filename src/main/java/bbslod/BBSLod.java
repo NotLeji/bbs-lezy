@@ -57,7 +57,6 @@ public class BBSLod implements BBSAddonMod
     public void onKeyframeFactories(RegisterKeyframeFactoriesEvent event)
     {
         event.register("lens_radius_settings", LensRadiusSettingsKeyframeFactory.INSTANCE);
-        event.register("bbslezy:illusion", IllusionKeyframeFactory.INSTANCE);
         event.register("illusion", IllusionKeyframeFactory.INSTANCE);
     }
 
@@ -68,8 +67,6 @@ public class BBSLod implements BBSAddonMod
         {
             form.add(new ValueIllusion("illusion", new Illusion()));
             form.add(new ValueTransform("illusion_transform", new Transform()));
-            form.add(new ValueIllusion("bbslezy:illusion", new Illusion()));
-            form.add(new ValueTransform("bbslezy:illusion_transform", new Transform()));
         });
     }
     @Subscribe
