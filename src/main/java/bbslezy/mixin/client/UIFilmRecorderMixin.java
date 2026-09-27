@@ -34,12 +34,22 @@ public abstract class UIFilmRecorderMixin
         {
             ci.cancel();
 
-            if (this.editor == null || this.editor.getContext() == null)
+            UIContext context = this.editor != null ? this.editor.getContext() : null;
+
+            if (context == null)
+            {
+                mchorse.bbs_mod.ui.framework.UIBaseMenu menu = mchorse.bbs_mod.ui.framework.UIScreen.getCurrentMenu();
+
+                if (menu != null)
+                {
+                    context = menu.context;
+                }
+            }
+
+            if (context == null)
             {
                 return;
             }
-
-            UIContext context = this.editor.getContext();
             String gpuName = LezyVideoSettingsHelper.getGpuName();
             String codecName = LezyVideoSettingsHelper.getCodecName();
             boolean[] confirmed = new boolean[1];

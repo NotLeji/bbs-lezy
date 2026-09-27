@@ -101,7 +101,7 @@ class LezyVideoSettingsHelperTest
     }
 
     @Test
-    void testVp9UnsupportedOnNvencAndAmf()
+    void testVp9UnsupportedOnGpuArchitectures()
     {
         LodSettings.hardwareAcceleration.set(true);
         LodSettings.videoCodec.set(2); // VP9
@@ -112,8 +112,14 @@ class LezyVideoSettingsHelperTest
         LodSettings.gpuVendor.set(2); // AMD
         assertTrue(LezyVideoSettingsHelper.isHwAccelUnsupported(), "VP9 should be flagged unsupported on AMF");
 
+        LodSettings.gpuVendor.set(3); // Intel
+        assertTrue(LezyVideoSettingsHelper.isHwAccelUnsupported(), "VP9 should be flagged unsupported on Intel iGPU");
+
+        LodSettings.gpuVendor.set(0); // Auto-Detect
+        assertTrue(LezyVideoSettingsHelper.isHwAccelUnsupported(), "VP9 should be flagged unsupported on Auto-Detect");
+
         LodSettings.videoCodec.set(0); // H.264
-        assertFalse(LezyVideoSettingsHelper.isHwAccelUnsupported(), "H.264 should be supported on AMF");
+        assertFalse(LezyVideoSettingsHelper.isHwAccelUnsupported(), "H.264 should be supported on GPU");
 
         LodSettings.videoCodec.set(2); // VP9
         LodSettings.hardwareAcceleration.set(false); // Hardware accel OFF
