@@ -36,9 +36,7 @@ Not every replay model is drawn every frame — only the ones closest to the cam
 
 Many thanks to ElgatoPro300, who made BBS CML, the source of this feature.
 
-<p align="center"><a href="https://youtu.be/tbHc5Atulu8"><img src="docs/camera-effects-demo.jpg" alt="Screen effect clips preview" width="640"></a></p>
-
-<p align="center"><sub>Click the image to play the demo clip on YouTube (5 seconds, with audio).</sub></p>
+https://github.com/user-attachments/assets/169defa4-20fe-452a-8dac-c3a78e5c6c52
 
 - **Cinematic Effect** — one clip bundling the whole vintage camera look: film flicker, random scratches, desaturation, framing/letterbox, film grain, and optics (fisheye, chromatic aberration, VHS glitch, radial blur). Every effect has its own parameters and they combine freely.
 - **Color Grade** — pure color grading (saturation, hue, brightness, contrast, lift, gamma, gain) plus a flat overlay tint.
