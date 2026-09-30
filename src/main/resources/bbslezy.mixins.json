@@ -18,7 +18,8 @@
         "MultiLinkThreadMixin",
         "UIFormUndoHandlerMixin",
         "VideoRecorderMixin",
-        "UIFilmRecorderMixin"
+        "UIFilmRecorderMixin",
+        "UISliderTrackpadMixin"
     ],
     "injectors": {
         "defaultRequire": 0
