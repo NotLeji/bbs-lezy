@@ -58,9 +58,9 @@ Thanks again to ElgatoPro300 :D
 
 - **Video CQP** — atur kualitas/kompresi (0–51, default 18).
 - **Video Codec** — pilih `h264` (default, kompatibilitas maksimum), `h265` (HEVC, kompresi lebih baik), atau `vp9` (WebM).
-- **Hardware Acceleration (GPU)** — pakai encoder GPU (NVIDIA NVENC, AMD AMF di Windows / VA-API di Linux, Intel VA-API / QSV) buat render jauh lebih cepat dan beban CPU lebih ringan. Default: **nyala**. Ada opsi **Auto-Detect GPU** atau pilih vendor tertentu.
+- **Hardware Acceleration (GPU)** — pakai encoder GPU (NVIDIA NVENC, AMD AMF di Windows / VA-API di Linux, Intel QSV dengan fallback VA-API di Linux) buat render jauh lebih cepat dan beban CPU lebih ringan. Default: **nyala**. Ada opsi **Auto-Detect GPU** atau pilih vendor tertentu.
 - **Peringatan codec GPU** — kalau codec yang dipilih (mis. VP9) atau GPU / build ffmpeg tidak mendukung hardware encoder tersebut, muncul dialog yang nawarin encode pakai CPU untuk export itu saja.
-- **Perbaikan Linux (QoL)** — slider terbatas membungkus kursor di tepi jendela pada Linux/XWayland seperti trackpad biasa, export video Linux otomatis mendeteksi dan memakai VA-API/QSV/NVENC sesuai render node, serta menyalakan/reload shaderpack Iris di dalam editor BBS menjadwalkan reload bersih saat editor ditutup.
+- **Perbaikan Linux (QoL)** — slider terbatas membungkus kursor di tepi jendela pada Linux/XWayland seperti trackpad biasa, export video Linux otomatis mendeteksi dan memakai NVENC, Intel QSV (fallback ke VA-API bila QSV tidak terdeteksi), atau AMD VA-API sesuai render node, serta menyalakan/reload shaderpack Iris di dalam editor BBS menjadwalkan reload bersih saat editor ditutup.
 
 ## Dokumentasi
 

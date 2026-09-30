@@ -205,7 +205,7 @@ class LezyVideoSettingsHelperTest
     }
 
     @Test
-    void testLinuxIntelVaapiPreferredOverQsv()
+    void testLinuxIntelQsvPreferredOverVaapi()
     {
         String defaultParams = "-f rawvideo -pix_fmt bgr24 -s %WIDTH%x%HEIGHT% -r %FPS% -i - -vf %FILTERS% -c:v libx264 -preset ultrafast -tune zerolatency -qp 18 -pix_fmt yuv420p %NAME%.mp4";
 
@@ -222,16 +222,17 @@ class LezyVideoSettingsHelperTest
         LodSettings.videoCodec.set(0);
         LodSettings.videoCqp.set(20);
 
-        String vaapiResult = LezyVideoSettingsHelper.apply(defaultParams);
-        assertTrue(vaapiResult.contains("-c:v h264_vaapi"), "Intel on Linux should prefer VA-API when available");
-        assertEquals("Intel (VA-API/QSV)", LezyVideoSettingsHelper.getGpuName());
-
-        LezyEncoderProbe.vaapiH264 = false;
         String qsvResult = LezyVideoSettingsHelper.apply(defaultParams);
-        assertTrue(qsvResult.contains("-c:v h264_qsv"), "Intel on Linux should fall back to QSV when VA-API unavailable");
+        assertTrue(qsvResult.contains("-c:v h264_qsv"), "Intel on Linux should prefer QSV when available");
         assertTrue(qsvResult.contains("-qsv_device /dev/dri/renderD128"), "QSV should specify -qsv_device");
         assertTrue(qsvResult.contains("-global_quality 20"), "QSV should use -global_quality");
         assertTrue(qsvResult.contains("-pix_fmt yuv420p"), "QSV should keep -pix_fmt yuv420p");
+        assertEquals("Intel (QSV/VA-API)", LezyVideoSettingsHelper.getGpuName());
+
+        LezyEncoderProbe.qsvH264 = false;
+        String vaapiResult = LezyVideoSettingsHelper.apply(defaultParams);
+        assertTrue(vaapiResult.contains("-c:v h264_vaapi"), "Intel on Linux should fall back to VA-API when QSV unavailable");
+        assertTrue(vaapiResult.contains("-vaapi_device /dev/dri/renderD128"), "VA-API should specify -vaapi_device");
     }
 
     @Test

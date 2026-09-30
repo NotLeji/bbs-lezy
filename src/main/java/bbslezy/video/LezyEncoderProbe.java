@@ -83,24 +83,7 @@ public class LezyEncoderProbe
 
             List<String> nodes = findCandidateRenderNodes(glVendor);
 
-            if (encoders.contains("h264_vaapi") || encoders.contains("hevc_vaapi"))
-            {
-                for (String node : nodes)
-                {
-                    boolean h264 = encoders.contains("h264_vaapi") && testDeviceEncode(ffmpeg, "-vaapi_device", node, "h264_vaapi", true);
-                    boolean hevc = encoders.contains("hevc_vaapi") && testDeviceEncode(ffmpeg, "-vaapi_device", node, "hevc_vaapi", true);
-
-                    if (h264 || hevc)
-                    {
-                        vaapiDevice = node;
-                        vaapiH264 = h264;
-                        vaapiHevc = hevc;
-                        break;
-                    }
-                }
-            }
-
-            if (!vaapiH264 && !vaapiHevc && (encoders.contains("h264_qsv") || encoders.contains("hevc_qsv")))
+            if (encoders.contains("h264_qsv") || encoders.contains("hevc_qsv"))
             {
                 for (String node : nodes)
                 {
@@ -117,6 +100,22 @@ public class LezyEncoderProbe
                 }
             }
 
+            if (encoders.contains("h264_vaapi") || encoders.contains("hevc_vaapi"))
+            {
+                for (String node : nodes)
+                {
+                    boolean h264 = encoders.contains("h264_vaapi") && testDeviceEncode(ffmpeg, "-vaapi_device", node, "h264_vaapi", true);
+                    boolean hevc = encoders.contains("hevc_vaapi") && testDeviceEncode(ffmpeg, "-vaapi_device", node, "hevc_vaapi", true);
+
+                    if (h264 || hevc)
+                    {
+                        vaapiDevice = node;
+                        vaapiH264 = h264;
+                        vaapiHevc = hevc;
+                        break;
+                    }
+                }
+            }
             probeSucceeded = true;
             probeDone = true;
 

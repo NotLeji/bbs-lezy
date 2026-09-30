@@ -110,7 +110,7 @@ public class LezyVideoSettingsHelper
             {
                 case 1: return "NVIDIA (NVENC)";
                 case 2: return "AMD (VA-API)";
-                case 3: return "Intel (VA-API/QSV)";
+                case 3: return "Intel (QSV/VA-API)";
                 default: return "GPU";
             }
         }
@@ -213,13 +213,6 @@ public class LezyVideoSettingsHelper
 
         if (gpu == 3)
         {
-            boolean vaapiOk = codecMode == 1 ? LezyEncoderProbe.vaapiHevc : LezyEncoderProbe.vaapiH264;
-
-            if (vaapiOk)
-            {
-                return applyVaapiEncoding(params, codecMode, cqp);
-            }
-
             boolean qsvOk = codecMode == 1 ? LezyEncoderProbe.qsvHevc : LezyEncoderProbe.qsvH264;
 
             if (qsvOk)
@@ -227,7 +220,14 @@ public class LezyVideoSettingsHelper
                 return applyLinuxQsvEncoding(params, codecMode, cqp);
             }
 
-            LOG.info("encoder: CPU fallback (Intel VA-API/QSV unavailable for codec {})", codecMode);
+            boolean vaapiOk = codecMode == 1 ? LezyEncoderProbe.vaapiHevc : LezyEncoderProbe.vaapiH264;
+
+            if (vaapiOk)
+            {
+                return applyVaapiEncoding(params, codecMode, cqp);
+            }
+
+            LOG.info("encoder: CPU fallback (Intel QSV/VA-API unavailable for codec {})", codecMode);
             return applyCpuEncoding(params, codecMode, cqp);
         }
 
