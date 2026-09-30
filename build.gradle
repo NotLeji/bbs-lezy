@@ -57,6 +57,7 @@ test {
  * BBS's own build file: keep those short-lived sockets local to this checkout, which also
  * covers the integrated server the client starts. */
 tasks.named('runClient', JavaExec) {
+	useXvfb = false
 	if (System.getProperty('os.name').startsWith('Windows')) {
 		def socketDir = layout.projectDirectory.dir('.gradle/sockets').asFile
 		systemProperty 'jdk.net.unixdomain.tmpdir', socketDir.absolutePath
