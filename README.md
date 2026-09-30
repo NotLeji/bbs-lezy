@@ -58,8 +58,9 @@ Thanks again to ElgatoPro300.
 
 - **Video CQP** — controls quality/compression (0–51, default 18).
 - **Video Codec** — pick `h264` (default, maximum compatibility), `h265` (HEVC, better compression), or `vp9` (WebM).
-- **Hardware Acceleration (GPU)** — encode on the GPU (NVIDIA NVENC / AMD AMF / Intel QSV) for much faster exports and a lighter CPU load. Default: **on**. There is an **Auto-Detect** option or you can pick a specific vendor.
-- **GPU codec warning** — VP9 has no hardware encoder on any consumer GPU, so selecting it with hardware acceleration on pops up a dialog offering to fall back to CPU encoding for that one export.
+- **Hardware Acceleration (GPU)** — encode on the GPU (NVIDIA NVENC, AMD AMF on Windows / VA-API on Linux, Intel VA-API / QSV) for much faster exports and a lighter CPU load. Default: **on**. There is an **Auto-Detect** option or you can pick a specific vendor.
+- **GPU codec warning** — if the selected codec (such as VP9) or the active GPU / ffmpeg build lacks a working hardware encoder, a dialog offers to fall back to CPU encoding for that one export.
+- **Linux quality-of-life fixes** — bounded sliders wrap the cursor at the window edge on Linux/XWayland just like unbounded trackpads, Linux video export probes and uses VA-API/QSV/NVENC per render node, and loading/reloading an Iris shaderpack inside the BBS editor schedules a clean reload once the editor closes.
 
 ## Documentation
 
