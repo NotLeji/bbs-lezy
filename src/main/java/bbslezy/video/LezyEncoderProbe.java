@@ -38,7 +38,7 @@ public class LezyEncoderProbe
     static volatile boolean qsvHevc;
     static volatile String vaapiDevice;
     static volatile String qsvDevice;
-
+    static volatile int detectedNodeVendor;
     public static boolean isProbeDone()
     {
         return probeDone;
@@ -67,7 +67,7 @@ public class LezyEncoderProbe
     {
         try
         {
-            String ffmpeg = FFMpegUtils.getFFMPEG();
+            String ffmpeg = resolveFfmpeg();
             Set<String> encoders = queryEncoders(ffmpeg);
 
             if (encoders.isEmpty())
@@ -78,8 +78,8 @@ public class LezyEncoderProbe
                 return;
             }
 
-            nvencH264 = encoders.contains("h264_nvenc");
-            nvencHevc = encoders.contains("hevc_nvenc");
+            nvencH264 = encoders.contains("h264_nvenc") && testDeviceEncode(ffmpeg, null, null, "h264_nvenc", false);
+            nvencHevc = encoders.contains("hevc_nvenc") && testDeviceEncode(ffmpeg, null, null, "hevc_nvenc", false);
 
             List<String> nodes = findCandidateRenderNodes(glVendor);
 
@@ -131,6 +131,23 @@ public class LezyEncoderProbe
             probeDone = true;
             LOG.warn("ffmpeg encoder probe failed; keeping default heuristic", t);
         }
+    }
+
+    private static String resolveFfmpeg()
+    {
+        try
+        {
+            String path = FFMpegUtils.getFFMPEG();
+
+            if (path != null && !path.isEmpty())
+            {
+                return path;
+            }
+        }
+        catch (Throwable ignored)
+        {}
+
+        return "ffmpeg";
     }
 
     private static Set<String> queryEncoders(String ffmpeg) throws Exception
@@ -185,6 +202,11 @@ public class LezyEncoderProbe
             }
 
             int nodeVendor = readNodeVendor(file.getName());
+
+            if (detectedNodeVendor == 0 && nodeVendor != 0)
+            {
+                detectedNodeVendor = nodeVendor;
+            }
 
             if (preferredVendor != 0 && nodeVendor == preferredVendor)
             {
@@ -256,12 +278,16 @@ public class LezyEncoderProbe
             List<String> cmd = new ArrayList<>();
             cmd.add(ffmpeg);
             cmd.add("-hide_banner");
-            cmd.add(deviceFlag);
-            cmd.add(node);
+            if (deviceFlag != null && node != null)
+            {
+                cmd.add(deviceFlag);
+                cmd.add(node);
+            }
+
             cmd.add("-f");
             cmd.add("lavfi");
             cmd.add("-i");
-            cmd.add("nullsrc=size=64x64:rate=25");
+            cmd.add("nullsrc=size=128x128:rate=25");
             cmd.add("-t");
             cmd.add("0.5");
 
@@ -311,5 +337,6 @@ public class LezyEncoderProbe
         qsvHevc = false;
         vaapiDevice = null;
         qsvDevice = null;
+        detectedNodeVendor = 0;
     }
 }

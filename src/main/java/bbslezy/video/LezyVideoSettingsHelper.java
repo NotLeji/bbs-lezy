@@ -167,6 +167,10 @@ public class LezyVideoSettingsHelper
         }
         catch (Throwable ignored)
         {}
+        if (LezyOS.isLinuxLike() && LezyEncoderProbe.detectedNodeVendor != 0)
+        {
+            return LezyEncoderProbe.detectedNodeVendor;
+        }
 
         return 1; // Default to NVIDIA if cannot query OpenGL string
     }
