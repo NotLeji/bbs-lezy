@@ -20,7 +20,8 @@
         "VideoRecorderMixin",
         "UIFilmRecorderMixin",
         "UISliderTrackpadMixin",
-        "ShaderCurvesMixin"
+        "ShaderCurvesMixin",
+        "BBSRenderingMixin"
     ],
     "injectors": {
         "defaultRequire": 0

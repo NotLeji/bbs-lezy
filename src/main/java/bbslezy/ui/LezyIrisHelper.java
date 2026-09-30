@@ -1,20 +1,25 @@
 package bbslezy.ui;
 
-import mchorse.bbs_mod.ui.framework.UIScreen;
 import mchorse.bbs_mod.utils.iris.IrisUtils;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.Framebuffer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public class LezyIrisHelper
 {
     private static final Logger LOG = LogManager.getLogger("bbslezy");
 
-    private static volatile boolean pendingShaderReload;
-
+    private static volatile boolean reflectionInitialized;
+    private static Method getPipelineManagerMethod;
+    private static Method getPipelineNullableMethod;
+    private static Field renderTargetsField;
+    private static Method getDepthTextureMethod;
+    private static Field cachedDepthBufferVersionField;
     /**
      * Toggle shaders on/off via reflection to avoid compile dependency on Iris.
      * Replicates Iris toggle keybind logic.
@@ -43,27 +48,109 @@ public class LezyIrisHelper
         }
     }
 
+    public static void syncPipelineDepthTarget()
+    {
+        if (!FabricLoader.getInstance().isModLoaded("iris"))
+        {
+            return;
+        }
+
+        try
+        {
+            Framebuffer fb = MinecraftClient.getInstance().getFramebuffer();
+
+            if (fb == null || !initReflection())
+            {
+                return;
+            }
+
+            Object pipelineManager = getPipelineManagerMethod.invoke(null);
+
+            if (pipelineManager == null)
+            {
+                return;
+            }
+
+            Object pipeline = getPipelineNullableMethod.invoke(pipelineManager);
+
+            if (pipeline == null || !renderTargetsField.getDeclaringClass().isInstance(pipeline))
+            {
+                return;
+            }
+
+            Object renderTargets = renderTargetsField.get(pipeline);
+
+            if (renderTargets == null)
+            {
+                return;
+            }
+
+            int irisDepthTex = (Integer) getDepthTextureMethod.invoke(renderTargets);
+            int activeDepthTex = fb.getDepthAttachment();
+
+            if (activeDepthTex > 0 && irisDepthTex != activeDepthTex)
+            {
+                cachedDepthBufferVersionField.setInt(renderTargets, -1);
+            }
+        }
+        catch (Throwable ignored)
+        {}
+    }
+
+    private static boolean initReflection()
+    {
+        if (reflectionInitialized)
+        {
+            return cachedDepthBufferVersionField != null;
+        }
+
+        synchronized (LezyIrisHelper.class)
+        {
+            if (reflectionInitialized)
+            {
+                return cachedDepthBufferVersionField != null;
+            }
+
+            try
+            {
+                Class<?> irisClass = Class.forName("net.irisshaders.iris.Iris");
+                Class<?> pipelineManagerClass = Class.forName("net.irisshaders.iris.pipeline.PipelineManager");
+                Class<?> irisPipelineClass = Class.forName("net.irisshaders.iris.pipeline.IrisRenderingPipeline");
+                Class<?> renderTargetsClass = Class.forName("net.irisshaders.iris.targets.RenderTargets");
+
+                getPipelineManagerMethod = irisClass.getMethod("getPipelineManager");
+                getPipelineNullableMethod = pipelineManagerClass.getMethod("getPipelineNullable");
+
+                Field rtField = irisPipelineClass.getDeclaredField("renderTargets");
+                rtField.setAccessible(true);
+                renderTargetsField = rtField;
+
+                getDepthTextureMethod = renderTargetsClass.getMethod("getDepthTexture");
+
+                Field versionField = renderTargetsClass.getDeclaredField("cachedDepthBufferVersion");
+                versionField.setAccessible(true);
+                cachedDepthBufferVersionField = versionField;
+            }
+            catch (Throwable t)
+            {
+                LOG.warn("failed to initialize Iris depth target reflection", t);
+            }
+
+            reflectionInitialized = true;
+            return cachedDepthBufferVersionField != null;
+        }
+    }
+
     public static void onShaderpackLoaded()
     {
         try
         {
-            if (!IrisUtils.isShaderPackEnabled())
-            {
-                return;
-            }
-
-            if (UIScreen.getCurrentMenu() == null)
-            {
-                return;
-            }
-
-            pendingShaderReload = true;
-            LOG.info("shaderpack loaded while a BBS editor UI is open; clean reload deferred until it closes");
-
             MinecraftClient.getInstance().execute(() ->
             {
                 try
                 {
+                    syncPipelineDepthTarget();
+
                     if (!IrisUtils.isRenderingOffscreen())
                     {
                         IrisUtils.setMainBound(true);
@@ -71,7 +158,7 @@ public class LezyIrisHelper
                 }
                 catch (Throwable t)
                 {
-                    LOG.warn("failed to reconcile iris main-bound state", t);
+                    LOG.warn("failed to reconcile iris state after shaderpack load", t);
                 }
             });
         }
@@ -83,28 +170,6 @@ public class LezyIrisHelper
 
     public static void tick()
     {
-        if (!pendingShaderReload || UIScreen.getCurrentMenu() != null)
-        {
-            return;
-        }
-
-        pendingShaderReload = false;
-
-        if (!FabricLoader.getInstance().isModLoaded("iris"))
-        {
-            return;
-        }
-
-        try
-        {
-            Class<?> irisClass = Class.forName("net.irisshaders.iris.Iris");
-
-            irisClass.getMethod("reload").invoke(null);
-            LOG.info("deferred clean shader reload after BBS editor closed");
-        }
-        catch (Throwable t)
-        {
-            LOG.warn("deferred shader reload failed", t);
-        }
+        syncPipelineDepthTarget();
     }
 }
