@@ -17,9 +17,11 @@ import bbslezy.ui.forms.editors.panels.UIIllusionFormPanel;
 import bbslezy.ui.framework.elements.input.keyframes.factories.UIIllusionKeyframeFactory;
 import bbslezy.ui.framework.elements.input.keyframes.factories.UILensRadiusSettingsKeyframeFactory;
 import bbslezy.utils.keyframes.factories.IllusionKeyframeFactory;
+import bbslezy.ui.LezyIrisHelper;
 import bbslezy.utils.keyframes.factories.LensRadiusSettingsKeyframeFactory;
 import bbslezy.video.LezyEncoderProbe;
 import mchorse.bbs_mod.api.client.events.FormRenderEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import mchorse.bbs_mod.api.client.events.RegisterClipPanelsEvent;
 import mchorse.bbs_mod.film.replays.tracks.TrackStyle;
 import mchorse.bbs_mod.api.client.events.RegisterFormPanelsEvent;
@@ -127,6 +129,7 @@ public class BBSLodClient implements BBSAddonMod
     {
         LodEngine.register();
         LezyEncoderProbe.startProbeAsync();
+        ClientTickEvents.END_CLIENT_TICK.register((client) -> LezyIrisHelper.tick());
         UIKeyframeFactory.register(LensRadiusSettingsKeyframeFactory.INSTANCE, UILensRadiusSettingsKeyframeFactory::new);
         TrackStyle.register("illusion", Icons.POSE, Colors.DEEP_PINK);
         TrackStyle.register("illusion_transform", Icons.ALL_DIRECTIONS, 0xdd66ff);

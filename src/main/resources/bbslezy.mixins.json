@@ -19,7 +19,8 @@
         "UIFormUndoHandlerMixin",
         "VideoRecorderMixin",
         "UIFilmRecorderMixin",
-        "UISliderTrackpadMixin"
+        "UISliderTrackpadMixin",
+        "ShaderCurvesMixin"
     ],
     "injectors": {
         "defaultRequire": 0
