@@ -244,10 +244,7 @@ public class LezyVideoSettingsHelper
             return applyCpuEncoding(params, codecMode, cqp);
         }
 
-        params = params.replaceAll("-preset \\S+", "");
-        params = params.replaceAll("-tune \\S+", "");
-        params = params.replaceAll("-qp \\d+", "");
-        params = params.replaceAll("-crf \\d+", "");
+        params = stripCpuTuningParams(params);
         params = params.replaceAll("-pix_fmt (?!bgr24)\\S+", "");
 
         params = params.replace("-vf %FILTERS%", "-vaapi_device " + device + " -vf %FILTERS%,format=nv12,hwupload");
@@ -273,10 +270,7 @@ public class LezyVideoSettingsHelper
             return applyCpuEncoding(params, codecMode, cqp);
         }
 
-        params = params.replaceAll("-preset \\S+", "");
-        params = params.replaceAll("-tune \\S+", "");
-        params = params.replaceAll("-qp \\d+", "");
-        params = params.replaceAll("-crf \\d+", "");
+        params = stripCpuTuningParams(params);
 
         params = params.replace("-vf %FILTERS%", "-qsv_device " + device + " -vf %FILTERS%");
 
@@ -293,11 +287,7 @@ public class LezyVideoSettingsHelper
 
     private static String applyGpuEncoding(String params, int codecMode, int gpu, int cqp)
     {
-        /* Remove CPU-specific tuning params that break hardware encoders */
-        params = params.replaceAll("-preset \\S+", "");
-        params = params.replaceAll("-tune \\S+", "");
-        params = params.replaceAll("-qp \\d+", "");
-        params = params.replaceAll("-crf \\d+", "");
+        params = stripCpuTuningParams(params);
 
         String encoderArgs;
 
@@ -353,6 +343,15 @@ public class LezyVideoSettingsHelper
         params = params.replaceAll("-c:v \\S+", encoderArgs);
 
         return params.replaceAll("\\s+", " ").trim();
+    }
+
+    private static String stripCpuTuningParams(String params)
+    {
+        return params
+            .replaceAll("-preset \\S+", "")
+            .replaceAll("-tune \\S+", "")
+            .replaceAll("-qp \\d+", "")
+            .replaceAll("-crf \\d+", "");
     }
 
     private static String applyCpuEncoding(String params, int codecMode, int cqp)

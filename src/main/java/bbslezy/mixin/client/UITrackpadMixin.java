@@ -23,59 +23,21 @@ public abstract class UITrackpadMixin extends UINumericInput<UITrackpad>
     @Inject(method = "render(Lmchorse/bbs_mod/ui/framework/UIContext;)V", at = @At("HEAD"))
     private void bbslezy$beforeRender(UIContext context, CallbackInfo ci)
     {
-        if (LezyOS.isWindows())
-        {
-            return;
-        }
-
-        try
-        {
-            boolean active = this.isDraggingTime() && Window.isMouseButtonPressed(0);
-
-            if (active)
-            {
-                this.bbslezy$holdingCursor = true;
-                Window.setCursorHidden(this, true);
-            }
-            else if (this.bbslezy$holdingCursor)
-            {
-                this.bbslezy$holdingCursor = false;
-                Window.setCursorHidden(this, false);
-            }
-        }
-        catch (Throwable ignored)
-        {}
+        this.bbslezy$holdingCursor = LezyOS.updateCursorHold(this, this.bbslezy$holdingCursor, this.isDraggingTime() && Window.isMouseButtonPressed(0));
     }
 
     @Inject(method = "subMouseClicked(Lmchorse/bbs_mod/ui/framework/UIContext;)Z", at = @At("RETURN"))
     private void bbslezy$afterMouseClicked(UIContext context, CallbackInfoReturnable<Boolean> cir)
     {
-        if (!this.dragging && this.bbslezy$holdingCursor)
+        if (!this.dragging)
         {
-            this.bbslezy$holdingCursor = false;
-
-            try
-            {
-                Window.setCursorHidden(this, false);
-            }
-            catch (Throwable ignored)
-            {}
+            this.bbslezy$holdingCursor = LezyOS.updateCursorHold(this, this.bbslezy$holdingCursor, false);
         }
     }
 
     @Inject(method = "subMouseReleased(Lmchorse/bbs_mod/ui/framework/UIContext;)Z", at = @At("RETURN"))
     private void bbslezy$afterMouseReleased(UIContext context, CallbackInfoReturnable<Boolean> cir)
     {
-        if (this.bbslezy$holdingCursor)
-        {
-            this.bbslezy$holdingCursor = false;
-
-            try
-            {
-                Window.setCursorHidden(this, false);
-            }
-            catch (Throwable ignored)
-            {}
-        }
+        this.bbslezy$holdingCursor = LezyOS.updateCursorHold(this, this.bbslezy$holdingCursor, false);
     }
 }

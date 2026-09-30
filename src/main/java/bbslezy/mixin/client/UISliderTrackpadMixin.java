@@ -26,44 +26,13 @@ public abstract class UISliderTrackpadMixin
     @Inject(method = "render(Lmchorse/bbs_mod/ui/framework/UIContext;)V", at = @At("HEAD"))
     private void bbslezy$beforeRender(UIContext context, CallbackInfo ci)
     {
-        if (LezyOS.isWindows())
-        {
-            return;
-        }
-
-        try
-        {
-            boolean active = this.dragging && Window.isMouseButtonPressed(0);
-
-            if (active)
-            {
-                this.bbslezy$holdingCursor = true;
-                Window.setCursorHidden(this, true);
-            }
-            else if (this.bbslezy$holdingCursor)
-            {
-                this.bbslezy$holdingCursor = false;
-                Window.setCursorHidden(this, false);
-            }
-        }
-        catch (Throwable ignored)
-        {}
+        this.bbslezy$holdingCursor = LezyOS.updateCursorHold(this, this.bbslezy$holdingCursor, this.dragging && Window.isMouseButtonPressed(0));
     }
 
     @Inject(method = "stopDragging()V", at = @At("TAIL"))
     private void bbslezy$onStopDragging(CallbackInfo ci)
     {
-        if (this.bbslezy$holdingCursor)
-        {
-            this.bbslezy$holdingCursor = false;
-
-            try
-            {
-                Window.setCursorHidden(this, false);
-            }
-            catch (Throwable ignored)
-            {}
-        }
+        this.bbslezy$holdingCursor = LezyOS.updateCursorHold(this, this.bbslezy$holdingCursor, false);
     }
 
     @Inject(method = "render(Lmchorse/bbs_mod/ui/framework/UIContext;)V", at = @At("TAIL"))
