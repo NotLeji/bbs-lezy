@@ -1,10 +1,15 @@
 package bbslezy.video;
 
+import bbslezy.utils.LezyOS;
 import bbslod.LodSettings;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL11;
 
 public class LezyVideoSettingsHelper
 {
+    private static final Logger LOG = LogManager.getLogger("bbslezy");
+
     public static volatile boolean forceCpuOnce = false;
 
     public static String apply(String params)
@@ -25,6 +30,11 @@ public class LezyVideoSettingsHelper
         {
             forceCpuOnce = false;
             return applyCpuEncoding(params, codecMode, cqp);
+        }
+
+        if (LezyOS.isLinuxLike() && LezyEncoderProbe.isProbeDone() && LezyEncoderProbe.probeSucceeded)
+        {
+            return applyLinuxEncoding(params, codecMode, detectedGpu, cqp);
         }
 
         return applyGpuEncoding(params, codecMode, detectedGpu, cqp);
@@ -52,6 +62,40 @@ public class LezyVideoSettingsHelper
             return true;
         }
 
+        if (LezyOS.isLinuxLike() && LezyEncoderProbe.isProbeDone() && LezyEncoderProbe.probeSucceeded)
+        {
+            int gpuMode = LodSettings.gpuVendor != null ? LodSettings.gpuVendor.get() : 0;
+            int detectedGpu = detectGpu(gpuMode);
+
+            if (!linuxEncoderAvailableFor(detectedGpu, codecMode))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean linuxEncoderAvailableFor(int gpu, int codecMode)
+    {
+        if (gpu == 1)
+        {
+            return codecMode == 1 ? LezyEncoderProbe.nvencHevc : LezyEncoderProbe.nvencH264;
+        }
+        else if (gpu == 2)
+        {
+            return codecMode == 1 ? LezyEncoderProbe.vaapiHevc : LezyEncoderProbe.vaapiH264;
+        }
+        else if (gpu == 3)
+        {
+            if (codecMode == 1)
+            {
+                return LezyEncoderProbe.vaapiHevc || LezyEncoderProbe.qsvHevc;
+            }
+
+            return LezyEncoderProbe.vaapiH264 || LezyEncoderProbe.qsvH264;
+        }
+
         return false;
     }
 
@@ -59,6 +103,17 @@ public class LezyVideoSettingsHelper
     {
         int gpuMode = LodSettings.gpuVendor != null ? LodSettings.gpuVendor.get() : 0;
         int detectedGpu = detectGpu(gpuMode);
+
+        if (LezyOS.isLinuxLike() && LezyEncoderProbe.isProbeDone() && LezyEncoderProbe.probeSucceeded)
+        {
+            switch (detectedGpu)
+            {
+                case 1: return "NVIDIA (NVENC)";
+                case 2: return "AMD (VA-API)";
+                case 3: return "Intel (VA-API/QSV)";
+                default: return "GPU";
+            }
+        }
 
         switch (detectedGpu)
         {
@@ -81,7 +136,7 @@ public class LezyVideoSettingsHelper
         }
     }
 
-    private static int detectGpu(int gpuMode)
+    static int detectGpu(int gpuMode)
     {
         if (gpuMode != 0)
         {
@@ -114,6 +169,122 @@ public class LezyVideoSettingsHelper
         {}
 
         return 1; // Default to NVIDIA if cannot query OpenGL string
+    }
+
+    private static String applyLinuxEncoding(String params, int codecMode, int gpu, int cqp)
+    {
+        if (codecMode == 2)
+        {
+            return applyGpuEncoding(params, codecMode, gpu, cqp);
+        }
+
+        if (gpu == 1)
+        {
+            boolean ok = codecMode == 1 ? LezyEncoderProbe.nvencHevc : LezyEncoderProbe.nvencH264;
+
+            if (!ok)
+            {
+                LOG.info("encoder: CPU fallback (NVIDIA NVENC unavailable for codec {})", codecMode);
+                return applyCpuEncoding(params, codecMode, cqp);
+            }
+
+            String enc = codecMode == 1 ? "hevc_nvenc" : "h264_nvenc";
+            LOG.info("encoder: {} (probe=linux)", enc);
+
+            return applyGpuEncoding(params, codecMode, 1, cqp);
+        }
+
+        if (gpu == 2)
+        {
+            boolean ok = codecMode == 1 ? LezyEncoderProbe.vaapiHevc : LezyEncoderProbe.vaapiH264;
+
+            if (!ok)
+            {
+                LOG.info("encoder: CPU fallback (AMD VA-API unavailable for codec {})", codecMode);
+                return applyCpuEncoding(params, codecMode, cqp);
+            }
+
+            return applyVaapiEncoding(params, codecMode, cqp);
+        }
+
+        if (gpu == 3)
+        {
+            boolean vaapiOk = codecMode == 1 ? LezyEncoderProbe.vaapiHevc : LezyEncoderProbe.vaapiH264;
+
+            if (vaapiOk)
+            {
+                return applyVaapiEncoding(params, codecMode, cqp);
+            }
+
+            boolean qsvOk = codecMode == 1 ? LezyEncoderProbe.qsvHevc : LezyEncoderProbe.qsvH264;
+
+            if (qsvOk)
+            {
+                return applyLinuxQsvEncoding(params, codecMode, cqp);
+            }
+
+            LOG.info("encoder: CPU fallback (Intel VA-API/QSV unavailable for codec {})", codecMode);
+            return applyCpuEncoding(params, codecMode, cqp);
+        }
+
+        return applyCpuEncoding(params, codecMode, cqp);
+    }
+
+    private static String applyVaapiEncoding(String params, int codecMode, int cqp)
+    {
+        String device = LezyEncoderProbe.vaapiDevice;
+
+        if (device == null || device.isEmpty() || !params.contains("-vf %FILTERS%"))
+        {
+            LOG.info("encoder: CPU fallback (VA-API missing device or -vf %FILTERS% token)");
+            return applyCpuEncoding(params, codecMode, cqp);
+        }
+
+        params = params.replaceAll("-preset \\S+", "");
+        params = params.replaceAll("-tune \\S+", "");
+        params = params.replaceAll("-qp \\d+", "");
+        params = params.replaceAll("-crf \\d+", "");
+        params = params.replaceAll("-pix_fmt (?!bgr24)\\S+", "");
+
+        params = params.replace("-vf %FILTERS%", "-vaapi_device " + device + " -vf %FILTERS%,format=nv12,hwupload");
+
+        String encoder = codecMode == 1 ? "hevc_vaapi" : "h264_vaapi";
+        String encoderArgs = codecMode == 1
+            ? "-c:v hevc_vaapi -qp " + cqp + " -tag:v hvc1"
+            : "-c:v h264_vaapi -qp " + cqp;
+
+        params = params.replaceAll("-c:v \\S+", encoderArgs);
+        LOG.info("encoder: {} device={} (probe=linux)", encoder, device);
+
+        return params.replaceAll("\\s+", " ").trim();
+    }
+
+    private static String applyLinuxQsvEncoding(String params, int codecMode, int cqp)
+    {
+        String device = LezyEncoderProbe.qsvDevice;
+
+        if (device == null || device.isEmpty() || !params.contains("-vf %FILTERS%"))
+        {
+            LOG.info("encoder: CPU fallback (QSV missing device or -vf %FILTERS% token)");
+            return applyCpuEncoding(params, codecMode, cqp);
+        }
+
+        params = params.replaceAll("-preset \\S+", "");
+        params = params.replaceAll("-tune \\S+", "");
+        params = params.replaceAll("-qp \\d+", "");
+        params = params.replaceAll("-crf \\d+", "");
+
+        params = params.replace("-vf %FILTERS%", "-qsv_device " + device + " -vf %FILTERS%");
+
+        String encoder = codecMode == 1 ? "hevc_qsv" : "h264_qsv";
+        String encoderArgs = codecMode == 1
+            ? "-c:v hevc_qsv -global_quality " + cqp + " -tag:v hvc1"
+            : "-c:v h264_qsv -global_quality " + cqp;
+
+        params = params.replaceAll("-c:v \\S+", encoderArgs);
+        LOG.info("encoder: {} device={} (probe=linux)", encoder, device);
+
+        return params.replaceAll("\\s+", " ").trim();
     }
 
     private static String applyGpuEncoding(String params, int codecMode, int gpu, int cqp)

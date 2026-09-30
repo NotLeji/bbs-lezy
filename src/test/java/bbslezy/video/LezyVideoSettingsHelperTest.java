@@ -1,8 +1,10 @@
 package bbslezy.video;
 
+import bbslezy.utils.LezyOS;
 import bbslod.LodSettings;
 import mchorse.bbs_mod.settings.values.numeric.ValueBoolean;
 import mchorse.bbs_mod.settings.values.numeric.ValueInt;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -16,6 +18,14 @@ class LezyVideoSettingsHelperTest
         LodSettings.videoCodec = new ValueInt("video_codec", 0, 0, 2);
         LodSettings.hardwareAcceleration = new ValueBoolean("hardware_acceleration", true);
         LodSettings.gpuVendor = new ValueInt("gpu_vendor", 0, 0, 3);
+    }
+
+    @AfterEach
+    void resetSeam()
+    {
+        LezyOS.osName = () -> System.getProperty("os.name", "");
+        LezyEncoderProbe.resetForTests();
+        LezyVideoSettingsHelper.forceCpuOnce = false;
     }
 
     @Test
@@ -165,5 +175,141 @@ class LezyVideoSettingsHelperTest
 
         LodSettings.videoCodec.set(2);
         assertEquals("VP9 (WebM)", LezyVideoSettingsHelper.getCodecName());
+    }
+
+    @Test
+    void testLinuxAmdUsesVaapi()
+    {
+        String defaultParams = "-f rawvideo -pix_fmt bgr24 -s %WIDTH%x%HEIGHT% -r %FPS% -i - -vf %FILTERS% -c:v libx264 -preset ultrafast -tune zerolatency -qp 18 -pix_fmt yuv420p %NAME%.mp4";
+
+        LezyOS.osName = () -> "Linux";
+        LezyEncoderProbe.probeDone = true;
+        LezyEncoderProbe.probeSucceeded = true;
+        LezyEncoderProbe.vaapiH264 = true;
+        LezyEncoderProbe.vaapiDevice = "/dev/dri/renderD129";
+
+        LodSettings.hardwareAcceleration.set(true);
+        LodSettings.gpuVendor.set(2);
+        LodSettings.videoCodec.set(0);
+        LodSettings.videoCqp.set(18);
+
+        String result = LezyVideoSettingsHelper.apply(defaultParams);
+
+        assertTrue(result.contains("-vaapi_device /dev/dri/renderD129"), "Should inject -vaapi_device");
+        assertTrue(result.contains("-c:v h264_vaapi"), "Should use h264_vaapi");
+        assertTrue(result.contains("-qp 18"), "Should use -qp 18");
+        assertTrue(result.contains("-vf %FILTERS%,format=nv12,hwupload"), "Should append format=nv12,hwupload to -vf");
+        assertTrue(result.contains("-pix_fmt bgr24"), "Must preserve input -pix_fmt bgr24");
+        assertFalse(result.contains("-pix_fmt yuv420p"), "Should strip output -pix_fmt yuv420p");
+        assertEquals("AMD (VA-API)", LezyVideoSettingsHelper.getGpuName());
+    }
+
+    @Test
+    void testLinuxIntelVaapiPreferredOverQsv()
+    {
+        String defaultParams = "-f rawvideo -pix_fmt bgr24 -s %WIDTH%x%HEIGHT% -r %FPS% -i - -vf %FILTERS% -c:v libx264 -preset ultrafast -tune zerolatency -qp 18 -pix_fmt yuv420p %NAME%.mp4";
+
+        LezyOS.osName = () -> "Linux";
+        LezyEncoderProbe.probeDone = true;
+        LezyEncoderProbe.probeSucceeded = true;
+        LezyEncoderProbe.vaapiH264 = true;
+        LezyEncoderProbe.vaapiDevice = "/dev/dri/renderD128";
+        LezyEncoderProbe.qsvH264 = true;
+        LezyEncoderProbe.qsvDevice = "/dev/dri/renderD128";
+
+        LodSettings.hardwareAcceleration.set(true);
+        LodSettings.gpuVendor.set(3);
+        LodSettings.videoCodec.set(0);
+        LodSettings.videoCqp.set(20);
+
+        String vaapiResult = LezyVideoSettingsHelper.apply(defaultParams);
+        assertTrue(vaapiResult.contains("-c:v h264_vaapi"), "Intel on Linux should prefer VA-API when available");
+        assertEquals("Intel (VA-API/QSV)", LezyVideoSettingsHelper.getGpuName());
+
+        LezyEncoderProbe.vaapiH264 = false;
+        String qsvResult = LezyVideoSettingsHelper.apply(defaultParams);
+        assertTrue(qsvResult.contains("-c:v h264_qsv"), "Intel on Linux should fall back to QSV when VA-API unavailable");
+        assertTrue(qsvResult.contains("-qsv_device /dev/dri/renderD128"), "QSV should specify -qsv_device");
+        assertTrue(qsvResult.contains("-global_quality 20"), "QSV should use -global_quality");
+        assertTrue(qsvResult.contains("-pix_fmt yuv420p"), "QSV should keep -pix_fmt yuv420p");
+    }
+
+    @Test
+    void testLinuxNvidiaSameEncoder()
+    {
+        String defaultParams = "-f rawvideo -pix_fmt bgr24 -s %WIDTH%x%HEIGHT% -r %FPS% -i - -vf %FILTERS% -c:v libx264 -preset ultrafast -tune zerolatency -qp 18 -pix_fmt yuv420p %NAME%.mp4";
+
+        LezyOS.osName = () -> "Linux";
+        LezyEncoderProbe.probeDone = true;
+        LezyEncoderProbe.probeSucceeded = true;
+        LezyEncoderProbe.nvencH264 = true;
+
+        LodSettings.hardwareAcceleration.set(true);
+        LodSettings.gpuVendor.set(1);
+        LodSettings.videoCodec.set(0);
+        LodSettings.videoCqp.set(18);
+
+        String result = LezyVideoSettingsHelper.apply(defaultParams);
+        assertTrue(result.contains("-c:v h264_nvenc"), "Linux NVIDIA should use h264_nvenc");
+        assertFalse(result.contains("-vaapi_device"), "Linux NVIDIA should not inject -vaapi_device");
+    }
+
+    @Test
+    void testLinuxEncoderMissingFallsBackToCpu()
+    {
+        String defaultParams = "-f rawvideo -pix_fmt bgr24 -s %WIDTH%x%HEIGHT% -r %FPS% -i - -vf %FILTERS% -c:v libx264 -preset ultrafast -tune zerolatency -qp 18 -pix_fmt yuv420p %NAME%.mp4";
+
+        LezyOS.osName = () -> "Linux";
+        LezyEncoderProbe.probeDone = true;
+        LezyEncoderProbe.probeSucceeded = true;
+
+        LodSettings.hardwareAcceleration.set(true);
+        LodSettings.gpuVendor.set(3);
+        LodSettings.videoCodec.set(0);
+        LodSettings.videoCqp.set(19);
+
+        assertTrue(LezyVideoSettingsHelper.isHwAccelUnsupported(), "Missing Linux GPU encoder should flag unsupported");
+
+        String result = LezyVideoSettingsHelper.apply(defaultParams);
+        assertTrue(result.contains("-c:v libx264"), "Missing Linux GPU encoder should fall back to CPU libx264");
+        assertTrue(result.contains("-qp 19"), "Should apply CQP to CPU fallback");
+    }
+
+    @Test
+    void testLinuxVaapiRequiresFiltersToken()
+    {
+        String customParamsWithoutFilters = "-f rawvideo -pix_fmt bgr24 -s %WIDTH%x%HEIGHT% -r %FPS% -i - -c:v libx264 -qp 18 %NAME%.mp4";
+
+        LezyOS.osName = () -> "Linux";
+        LezyEncoderProbe.probeDone = true;
+        LezyEncoderProbe.probeSucceeded = true;
+        LezyEncoderProbe.vaapiH264 = true;
+        LezyEncoderProbe.vaapiDevice = "/dev/dri/renderD128";
+
+        LodSettings.hardwareAcceleration.set(true);
+        LodSettings.gpuVendor.set(2);
+        LodSettings.videoCodec.set(0);
+        LodSettings.videoCqp.set(18);
+
+        String result = LezyVideoSettingsHelper.apply(customParamsWithoutFilters);
+        assertTrue(result.contains("-c:v libx264"), "VA-API without -vf %FILTERS% token should fall back to CPU");
+    }
+
+    @Test
+    void testWindowsAmfUnchanged()
+    {
+        String defaultParams = "-f rawvideo -pix_fmt bgr24 -s %WIDTH%x%HEIGHT% -r %FPS% -i - -vf %FILTERS% -c:v libx264 -preset ultrafast -tune zerolatency -qp 18 -pix_fmt yuv420p %NAME%.mp4";
+
+        LezyOS.osName = () -> "Windows 10";
+        LezyEncoderProbe.probeDone = true;
+        LezyEncoderProbe.probeSucceeded = true;
+
+        LodSettings.hardwareAcceleration.set(true);
+        LodSettings.gpuVendor.set(2);
+        LodSettings.videoCodec.set(0);
+        LodSettings.videoCqp.set(22);
+
+        String result = LezyVideoSettingsHelper.apply(defaultParams);
+        assertTrue(result.contains("-c:v h264_amf"), "Windows AMD should keep h264_amf");
     }
 }
