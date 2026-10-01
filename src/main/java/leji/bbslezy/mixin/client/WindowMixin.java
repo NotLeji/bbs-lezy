@@ -36,12 +36,7 @@ public abstract class WindowMixin
     {
         try
         {
-            long handle = Window.getWindow();
-
-            if (GLFW.glfwGetInputMode(handle, GLFW.GLFW_CURSOR) == GLFW.GLFW_CURSOR_DISABLED)
-            {
-                syncMinecraftMouse(x, y);
-            }
+            syncMinecraftMouse(x, y);
         }
         catch (Throwable ignored)
         {}

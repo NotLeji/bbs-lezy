@@ -1,6 +1,5 @@
 package leji.bbslezy.mixin.client;
 
-import leji.bbslezy.utils.LezyOS;
 import mchorse.bbs_mod.ui.framework.elements.input.UITrackpad;
 import mchorse.bbs_mod.utils.Timer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -11,22 +10,16 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class UITrackpadMixin
 {
     /**
-     * Edge-wrapping relies on Window.moveCursor() warping the physical mouse to the opposite
-     * window edge. On Linux (Wayland / XWayland compositors like KDE KWin), normal-mode pointer
-     * warping is blocked by compositor security policies. When moveCursor fails silently, the
-     * mouse remains at the edge while BBS infinitely accumulates +width every frame into shiftX,
-     * instantly blasting the value to 7000+.
-     *
-     * Only allow edge-wrapping on Windows where SetCursorPos actually warps the hardware pointer.
+     * Extend edge-wrap cooldown from 30ms to 150ms. On Linux (XWayland / Wayland), the
+     * X11 event round-trip after Window.moveCursor() can take more than 30ms. The default
+     * 30ms timer expires before the event finishes, causing BBS to think the cursor is
+     * still stuck at the edge and repeatedly add width to shiftX, blasting the value to 7000+.
+     * Combined with synchronous mouse position syncing in WindowMixin, a 150ms cooldown
+     * gives the cursor time to wrap cleanly without multiple triggers.
      */
-    @Redirect(method = "render(Lmchorse/bbs_mod/ui/framework/UIContext;)V", at = @At(value = "INVOKE", target = "Lmchorse/bbs_mod/utils/Timer;isTime()Z"))
-    private boolean bbslezy$wrapOnlyOnWindows(Timer timer)
+    @Redirect(method = "render(Lmchorse/bbs_mod/ui/framework/UIContext;)V", at = @At(value = "INVOKE", target = "Lmchorse/bbs_mod/utils/Timer;mark()V"))
+    private void bbslezy$extendedCooldownOnWrap(Timer timer)
     {
-        if (!LezyOS.isWindows())
-        {
-            return false;
-        }
-
-        return timer.isTime();
+        timer.mark(150L);
     }
 }
