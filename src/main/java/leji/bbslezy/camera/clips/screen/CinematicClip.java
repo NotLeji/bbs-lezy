@@ -201,7 +201,7 @@ public class CinematicClip extends CameraClip
         this.colorEffect.reset();
 
         /* 1. Film Grain */
-        float gStr = (this.grainStrength.isEmpty() ? 0F : (float) (double) this.grainStrength.interpolate(t)) * 0.25F;
+        float gStr = (this.grainStrength.isEmpty() ? 0F : (float) (double) this.grainStrength.interpolate(t)) * 0.03F;
 
         if (gStr != 0F)
         {
@@ -226,19 +226,19 @@ public class CinematicClip extends CameraClip
         float abCenterY = interpolateOrDefault(this.aberrationCenterY, t, DEFAULT_ABERRATION_CENTER_Y);
         float abGreen = interpolateOrDefault(this.aberrationGreen, t, DEFAULT_ABERRATION_GREEN);
         float abSpectrum = interpolateOrDefault(this.aberrationSpectrum, t, DEFAULT_ABERRATION_SPECTRUM);
-        float vh = (this.vhs.isEmpty() ? 0F : (float) (double) this.vhs.interpolate(t)) * 0.25F;
-        float ld = (this.lensDistortion.isEmpty() ? 0F : (float) (double) this.lensDistortion.interpolate(t)) * 0.25F;
+        float vh = (this.vhs.isEmpty() ? 0F : (float) (double) this.vhs.interpolate(t)) * 0.15F;
+        float ld = (this.lensDistortion.isEmpty() ? 0F : (float) (double) this.lensDistortion.interpolate(t)) * 0.20F;
         float ldf = this.lensDistanceFactor.isEmpty() ? (float) DEFAULT_LENS_DISTANCE_FACTOR : (float) (double) this.lensDistanceFactor.interpolate(t);
         LensRadiusSettings radiusSettings = this.lensRadius.isEmpty()
             ? DEFAULT_LENS_RADIUS_SETTINGS
             : this.lensRadius.interpolate(t);
         float lh = this.lensHardness.isEmpty() ? (float) DEFAULT_LENS_HARDNESS : (float) (double) this.lensHardness.interpolate(t);
         float ls = this.lensSharpen.isEmpty() ? (float) DEFAULT_LENS_SHARPEN : (float) (double) this.lensSharpen.interpolate(t);
-        float vt = (this.vintage.isEmpty() ? 0F : (float) (double) this.vintage.interpolate(t)) * 0.25F;
-        float rb = (this.radialBlur.isEmpty() ? 0F : (float) (double) this.radialBlur.interpolate(t)) * 0.25F;
-        float rn = (this.rain.isEmpty() ? 0F : (float) (double) this.rain.interpolate(t)) * 0.25F;
-        float ds = (this.dust.isEmpty() ? 0F : (float) (double) this.dust.interpolate(t)) * 0.25F;
-        float ll = (this.lightLeak.isEmpty() ? 0F : (float) (double) this.lightLeak.interpolate(t)) * 0.25F;
+        float vt = (this.vintage.isEmpty() ? 0F : (float) (double) this.vintage.interpolate(t)) * 0.10F;
+        float rb = (this.radialBlur.isEmpty() ? 0F : (float) (double) this.radialBlur.interpolate(t)) * 0.08F;
+        float rn = (this.rain.isEmpty() ? 0F : (float) (double) this.rain.interpolate(t)) * 0.10F;
+        float ds = (this.dust.isEmpty() ? 0F : (float) (double) this.dust.interpolate(t)) * 0.10F;
+        float ll = (this.lightLeak.isEmpty() ? 0F : (float) (double) this.lightLeak.interpolate(t)) * 0.10F;
         float hs = (this.heatStrength.isEmpty() ? 0F : (float) (double) this.heatStrength.interpolate(t)) * 0.25F;
         float hsp = (this.heatSpeed.isEmpty() ? 1F : (float) (double) this.heatSpeed.interpolate(t)) * 0.25F;
         float hsc = (this.heatScale.isEmpty() ? 1F : (float) (double) this.heatScale.interpolate(t)) * 0.25F;
@@ -291,7 +291,7 @@ public class CinematicClip extends CameraClip
             this.colorEffect.lensHardness = hardness;
             this.colorEffect.lensCenterX = lensCX;
             this.colorEffect.lensCenterY = lensCY;
-            this.colorEffect.lensSharpen = ls * factor;
+            this.colorEffect.lensSharpen = ls * 0.20F * factor;
             this.colorEffect.vintage = vt * factor;
             this.colorEffect.radialBlur = rb * factor;
             this.colorEffect.radialBlurCenterX = rbCX;

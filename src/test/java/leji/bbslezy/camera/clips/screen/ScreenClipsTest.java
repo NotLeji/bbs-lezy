@@ -95,9 +95,9 @@ class ScreenClipsTest
 
         ColorEffect e = effects.get(0);
 
-        /* -1 * 0.25 strength scaling; lens sharpen has no 0.25 scaling */
+        /* -1 * 0.25 strength scaling; lens sharpen scaled by 0.20 */
         assertEquals(-0.25F, e.aberration, 1e-4F);
-        assertEquals(-1F, e.lensSharpen, 1e-4F);
+        assertEquals(-0.20F, e.lensSharpen, 1e-4F);
         assertEquals(2F, e.aberrationDirectional, 1e-4F, "Directional must not be clamped to 1");
         assertEquals(1.5F, e.aberrationCenterX, 1e-4F, "Centers must accept offscreen values");
         assertEquals(0.8F, e.lensCenterX, 1e-4F);

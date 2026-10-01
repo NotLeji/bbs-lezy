@@ -445,7 +445,7 @@ public class ColorGradeRenderer
                     float scratchX = hash(vec2(floor(distortedUV.x * 250.0), floor(u_time * 16.0)));
                     if (scratchX > 0.993)
                     {
-                        rgb *= mix(1.0, 0.45, u_vintage);
+                        rgb *= mix(1.0, 0.45, clamp(u_vintage, -1.0, 1.0));
                     }
                 }
 

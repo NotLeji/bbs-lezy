@@ -4,6 +4,9 @@ import mchorse.bbs_mod.ui.framework.elements.buttons.UIIcon;
 import mchorse.bbs_mod.ui.textures.UITextureBrowser;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.utils.resources.PlayerSkins;
+import mchorse.bbs_mod.ui.UIKeys;
+import mchorse.bbs_mod.ui.framework.elements.overlay.UIOverlay;
+import mchorse.bbs_mod.ui.framework.elements.overlay.UIPromptOverlayPanel;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -33,7 +36,7 @@ public abstract class UITextureBrowserMixin
 
         try
         {
-            self.bar.add(new UIIcon(Icons.SEARCH, (b) ->
+            UIIcon skinButton = new UIIcon(Icons.SEARCH, (b) ->
             {
                 String nickname = self.search.getText().trim();
 
@@ -45,7 +48,32 @@ public abstract class UITextureBrowserMixin
                 {
                     this.promptPlayerSkin();
                 }
-            }));
+            });
+            skinButton.tooltip(UIKeys.TEXTURES_PLAYER_SKIN);
+            self.bar.addAfter(self.everywhere, skinButton);
+        }
+        catch (Throwable ignored)
+        {}
+    }
+
+    @Inject(method = "promptPlayerSkin", at = @At("HEAD"), cancellable = true)
+    private void bbslezy$customPromptPlayerSkin(CallbackInfo ci)
+    {
+        UITextureBrowser self = (UITextureBrowser) (Object) this;
+
+        try
+        {
+            UIPromptOverlayPanel panel = new UIPromptOverlayPanel(
+                UIKeys.TEXTURES_PLAYER_SKIN_TITLE,
+                UIKeys.TEXTURES_PLAYER_SKIN_DESCRIPTION,
+                (nickname) -> this.fetchPlayerSkin(nickname.trim(), false)
+            );
+
+            panel.message.relative(panel.content).x(0.5F).y(12).w(0.88F).anchorX(0.5F);
+            panel.message.textAnchorX(0.5F);
+
+            UIOverlay.addOverlay(self.getContext(), panel);
+            ci.cancel();
         }
         catch (Throwable ignored)
         {}
