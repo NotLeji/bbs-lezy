@@ -22,11 +22,8 @@
         "UIFormUndoHandlerMixin",
         "VideoRecorderMixin",
         "UIFilmRecorderMixin",
-        "UITrackpadMixin",
-        "WindowMixin",
         "ShaderCurvesMixin",
-        "BBSRenderingMixin",
-        "MouseAccessor"
+        "BBSRenderingMixin"
     ],
     "injectors": {
         "defaultRequire": 0

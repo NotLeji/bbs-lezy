@@ -1,6 +1,5 @@
 package leji.bbslezy.utils;
 
-
 import java.util.function.Supplier;
 
 public class LezyOS
