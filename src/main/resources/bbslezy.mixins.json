@@ -25,7 +25,8 @@
         "UITrackpadMixin",
         "WindowMixin",
         "ShaderCurvesMixin",
-        "BBSRenderingMixin"
+        "BBSRenderingMixin",
+        "MouseAccessor"
     ],
     "injectors": {
         "defaultRequire": 0

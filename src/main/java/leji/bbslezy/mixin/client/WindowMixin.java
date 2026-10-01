@@ -1,5 +1,7 @@
 package leji.bbslezy.mixin.client;
 
+import leji.bbslezy.utils.LezyLinuxCursor;
+import leji.bbslezy.utils.LezyOS;
 import mchorse.bbs_mod.graphics.window.Window;
 import net.minecraft.client.MinecraftClient;
 import org.lwjgl.glfw.GLFW;
@@ -21,9 +23,6 @@ public abstract class WindowMixin
     @Final
     private static Set<Object> cursorHolders;
 
-    private static volatile boolean bbslezy$mouseXFieldResolved;
-    private static Field bbslezy$mouseXField;
-    private static Field bbslezy$mouseYField;
 
     /**
      * On Wayland, {@code glfwSetCursorPos} only updates GLFW's virtual cursor
@@ -36,6 +35,18 @@ public abstract class WindowMixin
     {
         try
         {
+            MinecraftClient mc = MinecraftClient.getInstance();
+
+            if (mc != null && mc.mouse != null && !LezyOS.isWindows())
+            {
+                int currentX = (int) mc.mouse.getX();
+                int currentY = (int) mc.mouse.getY();
+                int dx = x - currentX;
+                int dy = y - currentY;
+
+                LezyLinuxCursor.warpRelative(dx, dy);
+            }
+
             syncMinecraftMouse(x, y);
         }
         catch (Throwable ignored)
@@ -80,46 +91,12 @@ public abstract class WindowMixin
             return;
         }
 
-        if (!bbslezy$mouseXFieldResolved)
-        {
-            synchronized (WindowMixin.class)
-            {
-                if (!bbslezy$mouseXFieldResolved)
-                {
-                    try
-                    {
-                        for (Field f : mc.mouse.getClass().getDeclaredFields())
-                        {
-                            if (f.getType() == double.class)
-                            {
-                                f.setAccessible(true);
-
-                                if (bbslezy$mouseXField == null)
-                                {
-                                    bbslezy$mouseXField = f;
-                                }
-                                else if (bbslezy$mouseYField == null)
-                                {
-                                    bbslezy$mouseYField = f;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    catch (Throwable ignored)
-                    {}
-
-                    bbslezy$mouseXFieldResolved = true;
-                }
-            }
-        }
-
         try
         {
-            if (bbslezy$mouseXField != null && bbslezy$mouseYField != null)
+            if (mc.mouse instanceof MouseAccessor accessor)
             {
-                bbslezy$mouseXField.setDouble(mc.mouse, x);
-                bbslezy$mouseYField.setDouble(mc.mouse, y);
+                accessor.bbslezy$setX(x);
+                accessor.bbslezy$setY(y);
             }
         }
         catch (Throwable ignored)
