@@ -38,6 +38,8 @@ public abstract class UITrackpadMixin extends UINumericInput<UITrackpad>
     @Inject(method = "subMouseReleased(Lmchorse/bbs_mod/ui/framework/UIContext;)Z", at = @At("RETURN"))
     private void bbslezy$afterMouseReleased(UIContext context, CallbackInfoReturnable<Boolean> cir)
     {
-        this.bbslezy$holdingCursor = LezyOS.updateCursorHold(this, this.bbslezy$holdingCursor, false);
+        boolean was = this.bbslezy$holdingCursor;
+
+        this.bbslezy$holdingCursor = LezyOS.releaseCursorHold(this, was, context);
     }
 }

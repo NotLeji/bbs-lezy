@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = UISliderTrackpad.class, remap = false)
 public abstract class UISliderTrackpadMixin
@@ -29,10 +30,12 @@ public abstract class UISliderTrackpadMixin
         this.bbslezy$holdingCursor = LezyOS.updateCursorHold(this, this.bbslezy$holdingCursor, this.dragging && Window.isMouseButtonPressed(0));
     }
 
-    @Inject(method = "stopDragging()V", at = @At("TAIL"))
-    private void bbslezy$onStopDragging(CallbackInfo ci)
+    @Inject(method = "subMouseReleased(Lmchorse/bbs_mod/ui/framework/UIContext;)Z", at = @At("RETURN"))
+    private void bbslezy$afterMouseReleased(UIContext context, CallbackInfoReturnable<Boolean> cir)
     {
-        this.bbslezy$holdingCursor = LezyOS.updateCursorHold(this, this.bbslezy$holdingCursor, false);
+        boolean was = this.bbslezy$holdingCursor;
+
+        this.bbslezy$holdingCursor = LezyOS.releaseCursorHold(this, was, context);
     }
 
     @Inject(method = "render(Lmchorse/bbs_mod/ui/framework/UIContext;)V", at = @At("TAIL"))
