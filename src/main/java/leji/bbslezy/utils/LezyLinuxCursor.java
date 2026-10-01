@@ -6,7 +6,6 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 import mchorse.bbs_mod.graphics.window.Window;
-import net.minecraft.client.MinecraftClient;
 import org.lwjgl.glfw.GLFWNativeX11;
 
 public class LezyLinuxCursor
@@ -47,9 +46,9 @@ public class LezyLinuxCursor
 
     /**
      * Warps cursor to window-relative coordinates (x, y) on Linux via X11 root window.
-     * On Wayland/XWayland, calling XWarpPointer with dest_w = client_window is rejected
-     * or dropped by compositors (like KWin). Translating the coordinates to desktop root
-     * and warping via dest_w = RootWindow physically and reliably moves the pointer.
+     * Translating the coordinates to desktop root and warping via dest_w = RootWindow
+     * physically moves the hardware cursor to restore it to the initial click position
+     * when value scrubbing finishes (like Premiere Pro / DaVinci Resolve).
      */
     public static boolean warpWindow(int x, int y)
     {
@@ -86,10 +85,12 @@ public class LezyLinuxCursor
                 }
             }
         }
-        catch (Throwable t)
+        catch (UnsatisfiedLinkError | NoClassDefFoundError t)
         {
             x11Available = false;
         }
+        catch (Throwable ignored)
+        {}
 
         return false;
     }
