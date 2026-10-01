@@ -22,6 +22,7 @@
         "UIFormUndoHandlerMixin",
         "VideoRecorderMixin",
         "UIFilmRecorderMixin",
+        "UITrackpadMixin",
         "WindowMixin",
         "ShaderCurvesMixin",
         "BBSRenderingMixin"
