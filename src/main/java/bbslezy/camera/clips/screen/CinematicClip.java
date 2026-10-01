@@ -35,6 +35,12 @@ public class CinematicClip extends CameraClip
     public static final double DEFAULT_LENS_HARDNESS = 1D;
     public static final double DEFAULT_LENS_SHARPEN = 1D;
     public static final double DEFAULT_LENS_DISTANCE_FACTOR = 0D;
+    public static final double DEFAULT_LENS_CENTER_X = 0.5D;
+    public static final double DEFAULT_LENS_CENTER_Y = 0.5D;
+    public static final double DEFAULT_RADIAL_BLUR_CENTER_X = 0.5D;
+    public static final double DEFAULT_RADIAL_BLUR_CENTER_Y = 0.5D;
+    public static final double DEFAULT_LIGHT_LEAK_CENTER_X = 0.0D;
+    public static final double DEFAULT_LIGHT_LEAK_CENTER_Y = 0.4D;
 
     /* Vintage & Retro */
     public final KeyframeChannel<Double> vintage = new KeyframeChannel<>("vintage", KeyframeFactories.DOUBLE);
@@ -50,7 +56,11 @@ public class CinematicClip extends CameraClip
     public final KeyframeChannel<LensRadiusSettings> lensRadius = new KeyframeChannel<>("lens_radius", LensRadiusSettingsKeyframeFactory.INSTANCE);
     public final KeyframeChannel<Double> lensHardness = new KeyframeChannel<>("lens_hardness", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> lensSharpen = new KeyframeChannel<>("lens_sharpen", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> lensCenterX = new KeyframeChannel<>("lens_center_x", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> lensCenterY = new KeyframeChannel<>("lens_center_y", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> radialBlur = new KeyframeChannel<>("radialBlur", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> radialBlurCenterX = new KeyframeChannel<>("radial_blur_center_x", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> radialBlurCenterY = new KeyframeChannel<>("radial_blur_center_y", KeyframeFactories.DOUBLE);
 
     /* Chromatic Aberration */
     public final KeyframeChannel<Double> aberration = new KeyframeChannel<>("aberration", KeyframeFactories.DOUBLE);
@@ -68,6 +78,8 @@ public class CinematicClip extends CameraClip
     public final KeyframeChannel<Double> rain = new KeyframeChannel<>("rain", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> dust = new KeyframeChannel<>("dust", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> lightLeak = new KeyframeChannel<>("lightLeak", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> lightLeakCenterX = new KeyframeChannel<>("light_leak_center_x", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> lightLeakCenterY = new KeyframeChannel<>("light_leak_center_y", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> heatStrength = new KeyframeChannel<>("heat_strength", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> heatSpeed = new KeyframeChannel<>("heat_speed", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> heatScale = new KeyframeChannel<>("heat_scale", KeyframeFactories.DOUBLE);
@@ -99,7 +111,11 @@ public class CinematicClip extends CameraClip
             this.lensRadius,
             this.lensHardness,
             this.lensSharpen,
+            this.lensCenterX,
+            this.lensCenterY,
             this.radialBlur,
+            this.radialBlurCenterX,
+            this.radialBlurCenterY,
 
             /* Aberration */
             this.aberration,
@@ -117,6 +133,8 @@ public class CinematicClip extends CameraClip
             this.rain,
             this.dust,
             this.lightLeak,
+            this.lightLeakCenterX,
+            this.lightLeakCenterY,
             this.heatStrength,
             this.heatSpeed,
             this.heatScale,
@@ -185,7 +203,7 @@ public class CinematicClip extends CameraClip
         /* 1. Film Grain */
         float gStr = (this.grainStrength.isEmpty() ? 0F : (float) (double) this.grainStrength.interpolate(t)) * 0.25F;
 
-        if (gStr > 0F)
+        if (gStr != 0F)
         {
             float gSize = this.grainSize.isEmpty() ? 1F : (float) (double) this.grainSize.interpolate(t) * 0.25F;
 
@@ -224,6 +242,12 @@ public class CinematicClip extends CameraClip
         float hs = (this.heatStrength.isEmpty() ? 0F : (float) (double) this.heatStrength.interpolate(t)) * 0.25F;
         float hsp = (this.heatSpeed.isEmpty() ? 1F : (float) (double) this.heatSpeed.interpolate(t)) * 0.25F;
         float hsc = (this.heatScale.isEmpty() ? 1F : (float) (double) this.heatScale.interpolate(t)) * 0.25F;
+        float lensCX = interpolateOrDefault(this.lensCenterX, t, DEFAULT_LENS_CENTER_X);
+        float lensCY = interpolateOrDefault(this.lensCenterY, t, DEFAULT_LENS_CENTER_Y);
+        float rbCX = interpolateOrDefault(this.radialBlurCenterX, t, DEFAULT_RADIAL_BLUR_CENTER_X);
+        float rbCY = interpolateOrDefault(this.radialBlurCenterY, t, DEFAULT_RADIAL_BLUR_CENTER_Y);
+        float llCX = interpolateOrDefault(this.lightLeakCenterX, t, DEFAULT_LIGHT_LEAK_CENTER_X);
+        float llCY = interpolateOrDefault(this.lightLeakCenterY, t, DEFAULT_LIGHT_LEAK_CENTER_Y);
 
         float lens = ld * factor;
         float radiusX = Math.max(0F, radiusSettings == null ? DEFAULT_LENS_RADIUS : radiusSettings.x);
@@ -252,25 +276,31 @@ public class CinematicClip extends CameraClip
             this.colorEffect.hasCinematic = true;
             this.colorEffect.aberration = ab * factor;
             this.colorEffect.aberrationAngle = abAngle;
-            this.colorEffect.aberrationDirectional = MathUtils.clamp(abDirectional, 0F, 1F);
+            this.colorEffect.aberrationDirectional = abDirectional;
             this.colorEffect.aberrationRadius = Math.max(0F, abRadius);
             this.colorEffect.aberrationHardness = MathUtils.clamp(abHardness, 0F, 1F);
             this.colorEffect.aberrationBalance = MathUtils.clamp(abBalance, -1F, 1F);
-            this.colorEffect.aberrationCenterX = MathUtils.clamp(abCenterX, 0F, 1F);
-            this.colorEffect.aberrationCenterY = MathUtils.clamp(abCenterY, 0F, 1F);
-            this.colorEffect.aberrationGreen = Math.max(0F, abGreen);
-            this.colorEffect.aberrationSpectrum = MathUtils.clamp(abSpectrum, 0F, 1F);
+            this.colorEffect.aberrationCenterX = abCenterX;
+            this.colorEffect.aberrationCenterY = abCenterY;
+            this.colorEffect.aberrationGreen = abGreen;
+            this.colorEffect.aberrationSpectrum = abSpectrum;
             this.colorEffect.vhs = vh * factor;
             this.colorEffect.lensDistortion = lens;
             this.colorEffect.lensRadiusX = radiusX;
             this.colorEffect.lensRadiusY = radiusY;
             this.colorEffect.lensHardness = hardness;
-            this.colorEffect.lensSharpen = Math.max(0F, ls) * factor;
+            this.colorEffect.lensCenterX = lensCX;
+            this.colorEffect.lensCenterY = lensCY;
+            this.colorEffect.lensSharpen = ls * factor;
             this.colorEffect.vintage = vt * factor;
             this.colorEffect.radialBlur = rb * factor;
+            this.colorEffect.radialBlurCenterX = rbCX;
+            this.colorEffect.radialBlurCenterY = rbCY;
             this.colorEffect.rain = rn * factor;
             this.colorEffect.dust = ds * factor;
             this.colorEffect.lightLeak = ll * factor;
+            this.colorEffect.lightLeakCenterX = llCX;
+            this.colorEffect.lightLeakCenterY = llCY;
             this.colorEffect.heatStrength = hs * factor;
             this.colorEffect.heatSpeed = hsp * factor;
             this.colorEffect.heatScale = hsc * factor;

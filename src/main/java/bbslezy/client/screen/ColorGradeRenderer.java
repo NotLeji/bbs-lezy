@@ -95,6 +95,9 @@ public class ColorGradeRenderer
             uniform float u_heatSpeed;
             uniform float u_heatScale;
             uniform float u_time;
+            uniform vec2 u_lensCenter;
+            uniform vec2 u_radialBlurCenter;
+            uniform vec2 u_lightLeakCenter;
 
             /* --- HSL helpers --- */
 
@@ -175,7 +178,7 @@ public class ColorGradeRenderer
                 float lensMask = 0.0;
                 if (abs(u_lensDistortion) > 0.001 && (u_lensRadiusX > 0.001 || u_lensRadiusY > 0.001))
                 {
-                    vec2 uvOffset = v_uv - vec2(0.5);
+                    vec2 uvOffset = v_uv - u_lensCenter;
                     float k = u_lensDistortion;
                     float cornerRadius = 0.70710678;
                     float radiusX = max(u_lensRadiusX * cornerRadius, 1.0e-6);
@@ -217,7 +220,7 @@ public class ColorGradeRenderer
                             raw *= 0.5 / box;
                         }
 
-                        warpedUV = raw + vec2(0.5);
+                        warpedUV = raw + u_lensCenter;
                     }
                     else
                     {
@@ -234,7 +237,7 @@ public class ColorGradeRenderer
                             raw *= 0.5 / box;
                         }
 
-                        warpedUV = raw + vec2(0.5);
+                        warpedUV = raw + u_lensCenter;
                     }
 
                     distortedUV = mix(passthroughUV, warpedUV, clamp(lensMask, 0.0, 1.0));
@@ -243,7 +246,7 @@ public class ColorGradeRenderer
                 vec2 sampleUV = distortedUV + u_distort;
 
                 /* VHS Horizontal Glitch displacement before sampling */
-                if (u_vhs > 0.001)
+                if (abs(u_vhs) > 0.001)
                 {
                     float glitchNoise = hash(vec2(floor(sampleUV.y * 80.0), floor(u_time * 12.0)));
                     if (glitchNoise > 0.95 - (u_vhs * 0.05))
@@ -255,7 +258,7 @@ public class ColorGradeRenderer
                 distortedUV = sampleUV;
 
                 /* Lens Dirt & Rain Overlay (Procedural raindrops and static spots refraction) */
-                if (u_rain > 0.001)
+                if (abs(u_rain) > 0.001)
                 {
                     // Falling rain droplets grid
                     vec2 rainUV = distortedUV * vec2(8.0, 4.5);
@@ -291,7 +294,7 @@ public class ColorGradeRenderer
                 }
 
                 /* Heat distortion waves (Mine-imator style) */
-                if (u_heatStrength > 0.001)
+                if (abs(u_heatStrength) > 0.001)
                 {
                     float heatTime = u_time * u_heatSpeed;
                     vec2 distortCoord = distortedUV * u_heatScale + vec2(0.0, heatTime * 0.1);
@@ -305,14 +308,18 @@ public class ColorGradeRenderer
                 vec2 uvRed = distortedUV;
                 vec2 uvGreen = distortedUV;
                 vec2 uvBlue = distortedUV;
-                if (u_aberration > 0.001)
+                if (abs(u_aberration) > 0.001)
                 {
                     vec2 delta = distortedUV - u_aberrationCenter;
                     float dist = length(delta);
                     vec2 radialDir = dist > 1.0e-6 ? delta / dist : vec2(1.0, 0.0);
                     float angle = radians(u_aberrationAngle);
-                    vec2 linearDir = vec2(cos(angle), sin(angle));
-                    vec2 splitDir = mix(radialDir, linearDir, clamp(u_aberrationDirectional, 0.0, 1.0));
+                    float rotCa = cos(angle);
+                    float rotSa = sin(angle);
+                    vec2 linearDir = vec2(1.0, 0.0);
+                    vec2 splitDir = mix(radialDir, linearDir, u_aberrationDirectional);
+                    splitDir = vec2(splitDir.x * rotCa - splitDir.y * rotSa,
+                                    splitDir.x * rotSa + splitDir.y * rotCa);
                     float splitLen = length(splitDir);
 
                     splitDir = splitLen > 1.0e-6 ? splitDir / splitLen : radialDir;
@@ -340,13 +347,13 @@ public class ColorGradeRenderer
                     float balance = clamp(u_aberrationBalance, -1.0, 1.0);
                     float redScale = max(0.0, 1.0 + balance);
                     float blueScale = max(0.0, 1.0 - balance);
-                    float spectrum = clamp(u_aberrationSpectrum, 0.0, 1.0);
-                    float green = max(0.0, u_aberrationGreen);
-                    float greenAmount = max(green, spectrum * 0.5);
+                    float spectrum = u_aberrationSpectrum;
+                    float green = u_aberrationGreen;
+                    float greenAmount = abs(green) > 1.0e-6 ? green : spectrum * 0.5;
                     vec2 perp = vec2(-splitDir.y, splitDir.x);
                     vec2 redDir = normalize(mix(splitDir, splitDir + perp * 0.5, spectrum));
                     vec2 blueDir = normalize(mix(-splitDir, -splitDir + perp * 0.5, spectrum));
-                    vec2 greenDir = greenAmount > 1.0e-6 ? perp : vec2(0.0);
+                    vec2 greenDir = abs(greenAmount) > 1.0e-6 ? perp : vec2(0.0);
 
                     uvRed += redDir * amount * redScale;
                     uvBlue += blueDir * amount * blueScale;
@@ -362,7 +369,7 @@ public class ColorGradeRenderer
                 vec3 rgb = vec3(r, g, b);
 
                 /* Radial center sharpen for positive fisheye (soft center from FOV-widen). */
-                if (u_lensSharpen > 0.001 && u_lensDistortion > 0.001)
+                if (abs(u_lensSharpen) > 0.001 && abs(u_lensDistortion) > 0.001)
                 {
                     vec2 texel = 1.0 / vec2(textureSize(u_sampler, 0));
                     vec3 blur = texture(u_sampler, clamp(distortedUV + vec2(texel.x, 0.0), 0.0, 1.0)).rgb
@@ -371,15 +378,15 @@ public class ColorGradeRenderer
                         + texture(u_sampler, clamp(distortedUV - vec2(0.0, texel.y), 0.0, 1.0)).rgb;
                     blur *= 0.25;
                     vec3 sharp = rgb + (rgb - blur) * u_lensSharpen;
-                    float centerW = 1.0 - smoothstep(0.0, 0.85, length(v_uv - vec2(0.5)) / 0.70710678);
-                    float sharpenW = clamp(u_lensSharpen, 0.0, 2.0) * centerW * max(lensMask, 0.0);
+                    float centerW = 1.0 - smoothstep(0.0, 0.85, length(v_uv - u_lensCenter) / 0.70710678);
+                    float sharpenW = clamp(abs(u_lensSharpen), 0.0, 2.0) * centerW * max(lensMask, 0.0);
                     rgb = mix(rgb, sharp, clamp(sharpenW, 0.0, 1.0));
                 }
 
                 /* Radial Action Blur */
-                if (u_radialBlur > 0.001)
+                if (abs(u_radialBlur) > 0.001)
                 {
-                    vec2 blurDir = (distortedUV - vec2(0.5)) * u_radialBlur * 0.12;
+                    vec2 blurDir = (distortedUV - u_radialBlurCenter) * u_radialBlur * 0.12;
                     vec3 blurRGB = vec3(0.0);
                     blurRGB += texture(u_sampler, clamp(distortedUV - blurDir * 2.0, 0.0, 1.0)).rgb;
                     blurRGB += texture(u_sampler, clamp(distortedUV - blurDir, 0.0, 1.0)).rgb;
@@ -421,7 +428,7 @@ public class ColorGradeRenderer
                 }
 
                 /* 6 — Film grain */
-                if (u_grainStr > 0.001)
+                if (abs(u_grainStr) > 0.001)
                 {
                     vec2 texSize = vec2(textureSize(u_sampler, 0));
                     vec2 grainUV = floor(v_uv * texSize / max(1.0, u_grainSize));
@@ -430,7 +437,7 @@ public class ColorGradeRenderer
                 }
 
                 /* Vintage Film Flicker & Scratches */
-                if (u_vintage > 0.001)
+                if (abs(u_vintage) > 0.001)
                 {
                     float flicker = sin(u_time * 73.0) * cos(u_time * 59.0) * 0.07 * u_vintage;
                     rgb += vec3(flicker);
@@ -443,7 +450,7 @@ public class ColorGradeRenderer
                 }
 
                 /* 7 — VHS Scanlines and Static noise */
-                if (u_vhs > 0.001)
+                if (abs(u_vhs) > 0.001)
                 {
                     float scanline = sin(distortedUV.y * 300.0 - u_time * 15.0) * 0.08 * u_vhs;
                     rgb -= vec3(scanline);
@@ -453,21 +460,22 @@ public class ColorGradeRenderer
                 }
 
                 /* 8 — Cinematic Light Leak Flare */
-                if (u_lightLeak > 0.001)
+                if (abs(u_lightLeak) > 0.001)
                 {
-                    float leakGrad = smoothstep(1.2, 0.0, length(distortedUV - vec2(0.0, 0.4)));
+                    float leakGrad = smoothstep(1.2, 0.0, length(distortedUV - u_lightLeakCenter));
                     float leakPulse = 0.65 + 0.35 * sin(u_time * 1.8 + cos(u_time * 1.2));
                     vec3 leakColor = vec3(0.95, 0.48, 0.12) * leakGrad * leakPulse * u_lightLeak;
 
-                    float blueGrad = smoothstep(1.5, 0.0, length(distortedUV - vec2(1.0, 0.7)));
+                    float blueGrad = smoothstep(1.5, 0.0, length(distortedUV - (u_lightLeakCenter + vec2(1.0, 0.3))));
                     vec3 blueColor = vec3(0.12, 0.35, 0.95) * blueGrad * (0.8 + 0.2 * cos(u_time * 0.9)) * u_lightLeak * 0.45;
 
                     rgb += leakColor + blueColor;
                 }
 
                 /* 9 — Projector Dust & Specks (60s tape/projector) */
-                if (u_dust > 0.001)
+                if (abs(u_dust) > 0.001)
                 {
+                    /* Negative dust mirrors positive: spawn probability has no meaningful inverse. */
                     float dustTime = floor(u_time * 12.0);
 
                     for (int i = 0; i < 3; i++)
@@ -478,7 +486,7 @@ public class ColorGradeRenderer
                         );
 
                         float spawnProb = hash(vec2(dustTime, float(i) * 7.9));
-                        if (spawnProb < u_dust)
+                        if (spawnProb < abs(u_dust))
                         {
                             vec2 diff = distortedUV - randPos;
                             diff.x *= 1.77;
@@ -499,7 +507,7 @@ public class ColorGradeRenderer
                                 // Type A: Rounded / Irregular Speck (soot flake)
                                 float angle = atan(rotatedDiff.y, rotatedDiff.x);
                                 float deform = 1.0 + 0.4 * sin(angle * 4.0) + 0.3 * cos(angle * 7.0 + 0.8);
-                                float rLimit = 0.008 * u_dust * deform;
+                                float rLimit = 0.008 * abs(u_dust) * deform;
                                 if (length(rotatedDiff) < rLimit)
                                 {
                                     rgb = mix(rgb, vec3(1.0), 0.95);
@@ -508,8 +516,8 @@ public class ColorGradeRenderer
                             else if (typeDecider < 0.66)
                             {
                                 // Type B: Thread / Curved Lint Hair
-                                float hairLength = 0.022 * u_dust;
-                                float hairThickness = 0.0010 * u_dust;
+                                float hairLength = 0.022 * abs(u_dust);
+                                float hairThickness = 0.0010 * abs(u_dust);
                                 float bend = sin(rotatedDiff.x * 180.0) * 0.005;
                                 if (abs(rotatedDiff.x) < hairLength && abs(rotatedDiff.y - bend) < hairThickness)
                                 {
@@ -522,7 +530,7 @@ public class ColorGradeRenderer
                                 vec2 stretched = vec2(rotatedDiff.x * 2.8, rotatedDiff.y);
                                 float angle = atan(stretched.y, stretched.x);
                                 float deform = 1.0 + 0.35 * sin(angle * 3.0);
-                                float rLimit = 0.012 * u_dust * deform;
+                                float rLimit = 0.012 * abs(u_dust) * deform;
                                 if (length(stretched) < rLimit)
                                 {
                                     rgb = mix(rgb, vec3(1.0), 0.95);
@@ -536,7 +544,7 @@ public class ColorGradeRenderer
             }
             """;
 
-    private static final int SHADER_VERSION = 21;
+    private static final int SHADER_VERSION = 22;
     private static int loadedShaderVersion;
     private static boolean initialized;
     private static boolean failed;
@@ -575,11 +583,14 @@ public class ColorGradeRenderer
     private static int uLensRadiusY;
     private static int uLensHardness;
     private static int uLensSharpen;
+    private static int uLensCenter;
     private static int uVintage;
     private static int uRadialBlur;
+    private static int uRadialBlurCenter;
     private static int uRain;
     private static int uDust;
     private static int uLightLeak;
+    private static int uLightLeakCenter;
     private static int uHeatStrength;
     private static int uHeatSpeed;
     private static int uHeatScale;
@@ -750,12 +761,18 @@ public class ColorGradeRenderer
         float heatSpeed = 0F;
         float heatScale = 0F;
         float time = 0F;
+        float lensCenterX = 0.5F;
+        float lensCenterY = 0.5F;
+        float radialBlurCenterX = 0.5F;
+        float radialBlurCenterY = 0.5F;
+        float lightLeakCenterX = 0.0F;
+        float lightLeakCenterY = 0.4F;
 
         for (ColorEffect e : effects)
         {
             if (e.hasCinematic)
             {
-                if (e.aberration > aberration)
+                if (Math.abs(e.aberration) > Math.abs(aberration))
                 {
                     aberration = e.aberration;
                     aberrationAngle = e.aberrationAngle;
@@ -769,7 +786,7 @@ public class ColorGradeRenderer
                     aberrationSpectrum = e.aberrationSpectrum;
                 }
 
-                vhs = Math.max(vhs, e.vhs);
+                if (Math.abs(e.vhs) > Math.abs(vhs)) vhs = e.vhs;
                 lensDistortion += e.lensDistortion;
 
                 if (Math.abs(e.lensDistortion) > 1.0e-6F)
@@ -777,16 +794,28 @@ public class ColorGradeRenderer
                     lensRadiusX = e.lensRadiusX;
                     lensRadiusY = e.lensRadiusY;
                     lensHardness = e.lensHardness;
-                    lensSharpen = Math.max(lensSharpen, e.lensSharpen);
+                    lensCenterX = e.lensCenterX;
+                    lensCenterY = e.lensCenterY;
+                    if (Math.abs(e.lensSharpen) > Math.abs(lensSharpen)) lensSharpen = e.lensSharpen;
                 }
-                vintage = Math.max(vintage, e.vintage);
-                radialBlur = Math.max(radialBlur, e.radialBlur);
-                rain = Math.max(rain, e.rain);
-                dust = Math.max(dust, e.dust);
-                lightLeak = Math.max(lightLeak, e.lightLeak);
-                heatStrength = Math.max(heatStrength, e.heatStrength);
-                heatSpeed = Math.max(heatSpeed, e.heatSpeed);
-                heatScale = Math.max(heatScale, e.heatScale);
+                if (Math.abs(e.vintage) > Math.abs(vintage)) vintage = e.vintage;
+                if (Math.abs(e.radialBlur) > Math.abs(radialBlur))
+                {
+                    radialBlur = e.radialBlur;
+                    radialBlurCenterX = e.radialBlurCenterX;
+                    radialBlurCenterY = e.radialBlurCenterY;
+                }
+                if (Math.abs(e.rain) > Math.abs(rain)) rain = e.rain;
+                if (Math.abs(e.dust) > Math.abs(dust)) dust = e.dust;
+                if (Math.abs(e.lightLeak) > Math.abs(lightLeak))
+                {
+                    lightLeak = e.lightLeak;
+                    lightLeakCenterX = e.lightLeakCenterX;
+                    lightLeakCenterY = e.lightLeakCenterY;
+                }
+                if (Math.abs(e.heatStrength) > Math.abs(heatStrength)) heatStrength = e.heatStrength;
+                if (Math.abs(e.heatSpeed) > Math.abs(heatSpeed)) heatSpeed = e.heatSpeed;
+                if (Math.abs(e.heatScale) > Math.abs(heatScale)) heatScale = e.heatScale;
                 time = e.time;
             }
         }
@@ -821,10 +850,7 @@ public class ColorGradeRenderer
         GL20.glUniform2f(uDistort, distortX, distortY);
         GL20.glUniform1f(uAberration, aberration);
         GL20.glUniform1f(uAberrationAngle, aberrationAngle);
-        GL20.glUniform1f(
-            uAberrationDirectional,
-            Math.max(0F, Math.min(1F, aberrationDirectional))
-        );
+        GL20.glUniform1f(uAberrationDirectional, aberrationDirectional);
         GL20.glUniform1f(uAberrationRadius, Math.max(0F, aberrationRadius));
         GL20.glUniform1f(
             uAberrationHardness,
@@ -834,27 +860,23 @@ public class ColorGradeRenderer
             uAberrationBalance,
             Math.max(-1F, Math.min(1F, aberrationBalance))
         );
-        GL20.glUniform2f(
-            uAberrationCenter,
-            Math.max(0F, Math.min(1F, aberrationCenterX)),
-            Math.max(0F, Math.min(1F, aberrationCenterY))
-        );
-        GL20.glUniform1f(uAberrationGreen, Math.max(0F, aberrationGreen));
-        GL20.glUniform1f(
-            uAberrationSpectrum,
-            Math.max(0F, Math.min(1F, aberrationSpectrum))
-        );
+        GL20.glUniform2f(uAberrationCenter, aberrationCenterX, aberrationCenterY);
+        GL20.glUniform1f(uAberrationGreen, aberrationGreen);
+        GL20.glUniform1f(uAberrationSpectrum, aberrationSpectrum);
         GL20.glUniform1f(uVHS, vhs);
         GL20.glUniform1f(uLensDistortion, lensDistortion);
         GL20.glUniform1f(uLensRadiusX, Math.max(0F, lensRadiusX));
         GL20.glUniform1f(uLensRadiusY, Math.max(0F, lensRadiusY));
         GL20.glUniform1f(uLensHardness, Math.max(0F, Math.min(1F, lensHardness)));
-        GL20.glUniform1f(uLensSharpen, Math.max(0F, lensSharpen));
+        GL20.glUniform1f(uLensSharpen, lensSharpen);
+        GL20.glUniform2f(uLensCenter, lensCenterX, lensCenterY);
         GL20.glUniform1f(uVintage, vintage);
         GL20.glUniform1f(uRadialBlur, radialBlur);
+        GL20.glUniform2f(uRadialBlurCenter, radialBlurCenterX, radialBlurCenterY);
         GL20.glUniform1f(uRain, rain);
         GL20.glUniform1f(uDust, dust);
         GL20.glUniform1f(uLightLeak, lightLeak);
+        GL20.glUniform2f(uLightLeakCenter, lightLeakCenterX, lightLeakCenterY);
         GL20.glUniform1f(uHeatStrength, heatStrength * 0.006F);
         GL20.glUniform1f(uHeatSpeed, 0.5F + heatSpeed * 2.0F);
         GL20.glUniform1f(uHeatScale, 2.0F + heatScale * 35.0F);
@@ -989,11 +1011,14 @@ public class ColorGradeRenderer
         uLensRadiusY = GL20.glGetUniformLocation(program, "u_lensRadiusY");
         uLensHardness = GL20.glGetUniformLocation(program, "u_lensHardness");
         uLensSharpen = GL20.glGetUniformLocation(program, "u_lensSharpen");
+        uLensCenter = GL20.glGetUniformLocation(program, "u_lensCenter");
         uVintage = GL20.glGetUniformLocation(program, "u_vintage");
         uRadialBlur = GL20.glGetUniformLocation(program, "u_radialBlur");
+        uRadialBlurCenter = GL20.glGetUniformLocation(program, "u_radialBlurCenter");
         uRain = GL20.glGetUniformLocation(program, "u_rain");
         uDust = GL20.glGetUniformLocation(program, "u_dust");
         uLightLeak = GL20.glGetUniformLocation(program, "u_lightLeak");
+        uLightLeakCenter = GL20.glGetUniformLocation(program, "u_lightLeakCenter");
         uHeatStrength = GL20.glGetUniformLocation(program, "u_heatStrength");
         uHeatSpeed = GL20.glGetUniformLocation(program, "u_heatSpeed");
         uHeatScale = GL20.glGetUniformLocation(program, "u_heatScale");
