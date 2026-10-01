@@ -24,8 +24,6 @@
         "UIFilmRecorderMixin",
         "UISliderTrackpadMixin",
         "UITrackpadMixin",
-        "WindowMixin",
-        "MouseAccessor",
         "ShaderCurvesMixin",
         "BBSRenderingMixin"
     ],

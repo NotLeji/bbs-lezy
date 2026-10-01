@@ -1,126 +1,125 @@
 package leji.bbslezy.mixin.client;
 
-import leji.bbslezy.utils.LezyLinuxCursor;
+import leji.bbslezy.ui.LezyEdgeTravel;
 import leji.bbslezy.utils.LezyOS;
-import mchorse.bbs_mod.graphics.window.Window;
 import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.framework.elements.input.UINumericInput;
 import mchorse.bbs_mod.ui.framework.elements.input.UITrackpad;
-import net.minecraft.client.MinecraftClient;
+import mchorse.bbs_mod.utils.Timer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Linux Premiere Pro / DaVinci Resolve style scrubber for UITrackpad:
- * Cursor is hidden while scrubbing values and allows infinite drag across
- * boundaries, then reappears right back at the click position upon release.
+ * Linux Edge Continuous Travel for UITrackpad:
+ * Prevents KWin/Wayland pointer wrap bugs and 7000 value runaways by disabling
+ * BBS's physical cursor-wrapping on Linux. Instead, when the cursor is held at
+ * the edge of the window, values smoothly scroll continuously without cursor warping.
  * Windows remains 100% vanilla.
  */
 @Mixin(value = UITrackpad.class, remap = false)
 public abstract class UITrackpadMixin extends UINumericInput<UITrackpad>
 {
     @Shadow
-    private boolean dragging;
+    private int shiftX;
 
     @Shadow
     private int initialX;
 
     @Shadow
-    private int shiftX;
+    private double lastValue;
 
-    private boolean bbslezy$isHolding;
-    private int bbslezy$origWinX;
-    private int bbslezy$origWinY;
-    private int bbslezy$lastMouseX;
-    private int bbslezy$accumulatedDx;
+    private long bbslezy$edgeStart;
 
     /**
-     * Disable BBS's physical edge-wrapping moveCursor calls on Linux, preventing
-     * teleportation feedback loops and runaway 7000 value jumps.
+     * Disable BBS's physical cursor-wrapping timer block on Linux.
+     * On Windows, returns original timer state so vanilla edge-wrapping runs.
      */
-    @Redirect(method = "render(Lmchorse/bbs_mod/ui/framework/UIContext;)V", at = @At(value = "INVOKE", target = "Lmchorse/bbs_mod/graphics/window/Window;moveCursor(II)V"))
-    private void bbslezy$noMoveCursorOnLinux(int x, int y)
+    @Redirect(
+        method = "render(Lmchorse/bbs_mod/ui/framework/UIContext;)V",
+        at = @At(value = "INVOKE", target = "Lmchorse/bbs_mod/utils/Timer;isTime()Z")
+    )
+    private boolean bbslezy$redirectIsTime(Timer timer)
     {
         if (LezyOS.isWindows())
         {
-            Window.moveCursor(x, y);
+            return timer.isTime();
         }
+
+        return false;
     }
 
-    @Inject(method = "render(Lmchorse/bbs_mod/ui/framework/UIContext;)V", at = @At("HEAD"))
-    private void bbslezy$beforeRender(UIContext context, CallbackInfo ci)
+    /**
+     * Edge continuous travel on Linux: smoothly increment or decrement shiftX
+     * while the mouse is held against the window boundary.
+     */
+    @Inject(method = "render(Lmchorse/bbs_mod/ui/framework/UIContext;)V", at = @At("TAIL"))
+    private void bbslezy$afterRender(UIContext context, CallbackInfo ci)
     {
         if (LezyOS.isWindows())
         {
             return;
         }
 
-        boolean active = this.isDraggingTime() && Window.isMouseButtonPressed(0);
+        boolean dragging = this.isDraggingTime();
 
-        if (active)
+        if (!dragging)
         {
-            if (!this.bbslezy$isHolding)
+            this.bbslezy$edgeStart = 0;
+
+            return;
+        }
+
+        int mouseX = context.globalX(context.mouseX);
+        int dir = LezyEdgeTravel.getEdgeDirection(mouseX, context.menu.width);
+
+        if (dir != 0)
+        {
+            long now = System.currentTimeMillis();
+
+            if (this.bbslezy$edgeStart == 0)
             {
-                this.bbslezy$isHolding = true;
-                MinecraftClient mc = MinecraftClient.getInstance();
-                this.bbslezy$origWinX = (int) mc.mouse.getX();
-                this.bbslezy$origWinY = (int) mc.mouse.getY();
-                this.bbslezy$lastMouseX = context.mouseX;
-                this.bbslezy$accumulatedDx = 0;
-
-                Window.setCursorHidden(this, true);
+                this.bbslezy$edgeStart = now;
             }
-            else
+
+            int step = LezyEdgeTravel.computeStep(dir, now - this.bbslezy$edgeStart);
+
+            this.shiftX += step;
+        }
+        else
+        {
+            this.bbslezy$edgeStart = 0;
+        }
+
+        if (this.isFocused())
+        {
+            context.unfocus();
+        }
+
+        int dx = (this.shiftX + context.mouseX) - this.initialX;
+
+        if (dx != 0)
+        {
+            double value = this.getValueModifier();
+            double diff = (Math.abs(dx) - 3) * value;
+            double newValue = this.lastValue + (dx < 0 ? -diff : diff);
+
+            newValue = diff < 0 ? this.lastValue : newValue;
+
+            if (this.value != this.normalize(newValue))
             {
-                int delta = context.mouseX - this.bbslezy$lastMouseX;
-                this.bbslezy$lastMouseX = context.mouseX;
-                this.bbslezy$accumulatedDx += delta;
-
-                this.shiftX = this.bbslezy$accumulatedDx;
-                this.initialX = context.mouseX;
+                if (this.delayedInput)
+                {
+                    this.setValue(newValue);
+                }
+                else
+                {
+                    this.setValueAndNotify(newValue);
+                }
             }
-        }
-        else if (this.bbslezy$isHolding)
-        {
-            this.bbslezy$stopHolding();
-        }
-    }
-
-    @Inject(method = "subMouseReleased(Lmchorse/bbs_mod/ui/framework/UIContext;)Z", at = @At("RETURN"))
-    private void bbslezy$afterMouseReleased(UIContext context, CallbackInfoReturnable<Boolean> cir)
-    {
-        if (this.bbslezy$isHolding)
-        {
-            this.bbslezy$stopHolding();
-        }
-    }
-
-    @Inject(method = "subMouseClicked(Lmchorse/bbs_mod/ui/framework/UIContext;)Z", at = @At("RETURN"))
-    private void bbslezy$afterMouseClicked(UIContext context, CallbackInfoReturnable<Boolean> cir)
-    {
-        if (!this.dragging && this.bbslezy$isHolding)
-        {
-            this.bbslezy$stopHolding();
-        }
-    }
-
-    private void bbslezy$stopHolding()
-    {
-        this.bbslezy$isHolding = false;
-        Window.setCursorHidden(this, false);
-
-        LezyLinuxCursor.warpWindow(this.bbslezy$origWinX, this.bbslezy$origWinY);
-
-        MinecraftClient mc = MinecraftClient.getInstance();
-        if (mc != null && mc.mouse instanceof MouseAccessor accessor)
-        {
-            accessor.bbslezy$setX(this.bbslezy$origWinX);
-            accessor.bbslezy$setY(this.bbslezy$origWinY);
         }
     }
 }

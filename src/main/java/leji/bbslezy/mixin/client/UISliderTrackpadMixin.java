@@ -1,23 +1,20 @@
 package leji.bbslezy.mixin.client;
 
-import leji.bbslezy.utils.LezyLinuxCursor;
+import leji.bbslezy.ui.LezyEdgeTravel;
 import leji.bbslezy.utils.LezyOS;
-import mchorse.bbs_mod.graphics.window.Window;
 import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.framework.elements.input.UISliderTrackpad;
-import net.minecraft.client.MinecraftClient;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Linux Premiere Pro / DaVinci Resolve style scrubber for UISliderTrackpad:
- * Cursor is hidden while sliding values and allows infinite drag across
- * boundaries, then reappears right back at the click position upon release.
+ * Linux Edge Continuous Travel for UISliderTrackpad:
+ * Allows continuous value scrubbing when dragging against the window edge
+ * without requiring physical cursor warping.
  * Windows remains 100% vanilla.
  */
 @Mixin(value = UISliderTrackpad.class, remap = false)
@@ -26,46 +23,38 @@ public abstract class UISliderTrackpadMixin
     @Shadow
     protected boolean dragging;
 
-    @Shadow
-    protected int initialX;
-
-    private boolean bbslezy$isHolding;
-    private int bbslezy$origWinX;
-    private int bbslezy$origWinY;
-    private int bbslezy$lastMouseX;
-    private int bbslezy$accumulatedDx;
+    private int bbslezy$edgeOffset;
+    private long bbslezy$edgeStart;
 
     @Inject(method = "render(Lmchorse/bbs_mod/ui/framework/UIContext;)V", at = @At("HEAD"))
     private void bbslezy$beforeRender(UIContext context, CallbackInfo ci)
     {
-        if (LezyOS.isWindows())
+        if (LezyOS.isWindows() || !this.dragging)
         {
+            this.bbslezy$edgeStart = 0;
+
             return;
         }
 
-        if (this.dragging && Window.isMouseButtonPressed(0))
-        {
-            if (!this.bbslezy$isHolding)
-            {
-                this.bbslezy$isHolding = true;
-                MinecraftClient mc = MinecraftClient.getInstance();
-                this.bbslezy$origWinX = (int) mc.mouse.getX();
-                this.bbslezy$origWinY = (int) mc.mouse.getY();
-                this.bbslezy$lastMouseX = context.mouseX;
-                this.bbslezy$accumulatedDx = 0;
+        int mouseX = context.globalX(context.mouseX);
+        int dir = LezyEdgeTravel.getEdgeDirection(mouseX, context.menu.width);
 
-                Window.setCursorHidden(this, true);
-            }
-            else
-            {
-                int delta = context.mouseX - this.bbslezy$lastMouseX;
-                this.bbslezy$lastMouseX = context.mouseX;
-                this.bbslezy$accumulatedDx += delta;
-            }
-        }
-        else if (this.bbslezy$isHolding)
+        if (dir != 0)
         {
-            this.bbslezy$stopHolding();
+            long now = System.currentTimeMillis();
+
+            if (this.bbslezy$edgeStart == 0)
+            {
+                this.bbslezy$edgeStart = now;
+            }
+
+            int step = LezyEdgeTravel.computeStep(dir, now - this.bbslezy$edgeStart);
+
+            this.bbslezy$edgeOffset += step;
+        }
+        else
+        {
+            this.bbslezy$edgeStart = 0;
         }
     }
 
@@ -76,44 +65,25 @@ public abstract class UISliderTrackpadMixin
     )
     private int bbslezy$modifyMouseX(int mouseX)
     {
-        if (LezyOS.isWindows() || !this.bbslezy$isHolding)
+        if (LezyOS.isWindows())
         {
             return mouseX;
         }
 
-        return this.initialX + this.bbslezy$accumulatedDx;
+        return mouseX + this.bbslezy$edgeOffset;
     }
 
-    @Inject(method = "subMouseReleased(Lmchorse/bbs_mod/ui/framework/UIContext;)Z", at = @At("RETURN"))
-    private void bbslezy$afterMouseReleased(UIContext context, CallbackInfoReturnable<Boolean> cir)
+    @Inject(method = "stopDragging()V", at = @At("HEAD"))
+    private void bbslezy$onStopDragging(CallbackInfo ci)
     {
-        if (this.bbslezy$isHolding)
-        {
-            this.bbslezy$stopHolding();
-        }
+        this.bbslezy$edgeOffset = 0;
+        this.bbslezy$edgeStart = 0;
     }
 
     @Inject(method = "cancelDragging()V", at = @At("HEAD"))
     private void bbslezy$onCancelDragging(CallbackInfo ci)
     {
-        if (this.bbslezy$isHolding)
-        {
-            this.bbslezy$stopHolding();
-        }
-    }
-
-    private void bbslezy$stopHolding()
-    {
-        this.bbslezy$isHolding = false;
-        Window.setCursorHidden(this, false);
-
-        LezyLinuxCursor.warpWindow(this.bbslezy$origWinX, this.bbslezy$origWinY);
-
-        MinecraftClient mc = MinecraftClient.getInstance();
-        if (mc != null && mc.mouse instanceof MouseAccessor accessor)
-        {
-            accessor.bbslezy$setX(this.bbslezy$origWinX);
-            accessor.bbslezy$setY(this.bbslezy$origWinY);
-        }
+        this.bbslezy$edgeOffset = 0;
+        this.bbslezy$edgeStart = 0;
     }
 }
