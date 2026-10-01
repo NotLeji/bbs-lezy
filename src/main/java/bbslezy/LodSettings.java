@@ -1,4 +1,4 @@
-package bbslod;
+package bbslezy;
 
 import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.settings.SettingsBuilder;

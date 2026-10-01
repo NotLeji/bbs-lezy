@@ -1,6 +1,6 @@
 package bbslezy.mixin.client;
 
-import bbslod.LodSettings;
+import bbslezy.LodSettings;
 import mchorse.bbs_mod.ui.framework.UIScreen;
 import mchorse.bbs_mod.ui.utils.UIUtils;
 import org.spongepowered.asm.mixin.Mixin;

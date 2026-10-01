@@ -1,4 +1,4 @@
-package bbslod;
+package bbslezy;
 
 import mchorse.bbs_mod.api.client.events.FilmEvents;
 import mchorse.bbs_mod.api.client.events.FormRenderEvents;

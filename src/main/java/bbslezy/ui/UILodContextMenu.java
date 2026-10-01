@@ -1,6 +1,6 @@
 package bbslezy.ui;
 
-import bbslod.LodSettings;
+import bbslezy.LodSettings;
 import mchorse.bbs_mod.l10n.L10n;
 import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;

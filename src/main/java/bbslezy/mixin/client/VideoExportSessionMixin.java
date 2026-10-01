@@ -1,7 +1,7 @@
 package bbslezy.mixin.client;
 
 import bbslezy.audio.LezyAudioMuxer;
-import bbslod.LodSettings;
+import bbslezy.LodSettings;
 import mchorse.bbs_mod.audio.Wave;
 import mchorse.bbs_mod.film.VideoExportSession;
 import mchorse.bbs_mod.utils.VideoMuxer;

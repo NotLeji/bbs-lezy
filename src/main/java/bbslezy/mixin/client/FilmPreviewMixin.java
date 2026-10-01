@@ -5,7 +5,7 @@ import bbslezy.video.LezyVideoSettingsHelper;
 import bbslezy.ui.UILodContextMenu;
 import mchorse.bbs_mod.ui.framework.elements.overlay.UIOverlay;
 import java.util.function.Consumer;
-import bbslod.LodSettings;
+import bbslezy.LodSettings;
 import mchorse.bbs_mod.l10n.L10n;
 import mchorse.bbs_mod.ui.film.UIFilmPreview;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIIcon;

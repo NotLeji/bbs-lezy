@@ -1,4 +1,4 @@
-package bbslod;
+package bbslezy;
 
 import mchorse.bbs_mod.api.BBSAddonMod;
 import mchorse.bbs_mod.api.BBSApi;

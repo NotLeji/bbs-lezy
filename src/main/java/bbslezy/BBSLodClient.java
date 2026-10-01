@@ -1,4 +1,4 @@
-package bbslod;
+package bbslezy;
 
 import bbslezy.actions.LezyDamageActionClip;
 import bbslezy.client.screen.LezyFrameOverlays;

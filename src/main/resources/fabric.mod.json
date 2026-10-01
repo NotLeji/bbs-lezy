@@ -11,8 +11,8 @@
 		"bbslezy.mixins.json"
 	],
 	"entrypoints": {
-		"bbs-addon": ["bbslod.BBSLod"],
-		"bbs-client-addon": ["bbslod.BBSLodClient"]
+		"bbs-addon": ["bbslezy.BBSLod"],
+		"bbs-client-addon": ["bbslezy.BBSLodClient"]
 	},
 	"depends": {
 		"fabricloader": ">=0.16.14",

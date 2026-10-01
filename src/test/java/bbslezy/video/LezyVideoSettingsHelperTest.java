@@ -1,7 +1,7 @@
 package bbslezy.video;
 
 import bbslezy.utils.LezyOS;
-import bbslod.LodSettings;
+import bbslezy.LodSettings;
 import mchorse.bbs_mod.settings.values.numeric.ValueBoolean;
 import mchorse.bbs_mod.settings.values.numeric.ValueInt;
 import org.junit.jupiter.api.AfterEach;

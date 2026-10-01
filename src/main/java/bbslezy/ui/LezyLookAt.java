@@ -1,6 +1,6 @@
 package bbslezy.ui;
 
-import bbslod.LodSettings;
+import bbslezy.LodSettings;
 import mchorse.bbs_mod.ui.film.controller.UIFilmController;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import java.util.Map;

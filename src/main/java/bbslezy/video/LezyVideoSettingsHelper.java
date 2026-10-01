@@ -1,7 +1,7 @@
 package bbslezy.video;
 
 import bbslezy.utils.LezyOS;
-import bbslod.LodSettings;
+import bbslezy.LodSettings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL11;
