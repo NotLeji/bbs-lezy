@@ -1,0 +1,48 @@
+package bbslezy.mixin.client;
+
+import bbslezy.ui.LezyReplayActions;
+import mchorse.bbs_mod.l10n.L10n;
+import mchorse.bbs_mod.ui.film.UIFilmPanel;
+import mchorse.bbs_mod.ui.utils.context.ContextMenuManager;
+import mchorse.bbs_mod.ui.utils.icons.Icons;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+/**
+ * "Reset Replay" in the camera editor's timeline right-click menu, mirroring BBS's own
+ * additions to the same clips context (see UIFilmPanel's constructor).
+ */
+@Mixin(value = UIFilmPanel.class, remap = false)
+public abstract class UIFilmPanelMixin
+{
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void bbslezy$addCameraEditorReset(CallbackInfo ci)
+    {
+        UIFilmPanel self = (UIFilmPanel) (Object) this;
+
+        try
+        {
+            self.cameraEditor.clips.context((ContextMenuManager menu) ->
+            {
+                if (self.getData() == null)
+                {
+                    return;
+                }
+
+                menu.action(Icons.REFRESH, L10n.lang("bbslezy.ui.replays.reset_replay"), () ->
+                {
+                    try
+                    {
+                        LezyReplayActions.resetReplays(self);
+                    }
+                    catch (Throwable ignored)
+                    {}
+                });
+            });
+        }
+        catch (Throwable ignored)
+        {}
+    }
+}

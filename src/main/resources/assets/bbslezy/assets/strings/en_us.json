@@ -31,7 +31,7 @@
 	"bbslezy.ui.replays.select_same_model": "Select same model",
 	"bbslezy.ui.replays.duplicate_total": "Duplicate to total",
 	"bbslezy.ui.replays.duplicate_total_description": "Total number of replays across the selection, split evenly between the ones picked. Each picked replay gets its own category and counts as the first of its share.",
-	"bbslezy.ui.replays.reset_replay": "Reset replay actors",
+	"bbslezy.ui.replays.reset_replay": "Reset Replay",
 	"bbslezy.ui.replays.baking_progress": "Waiting for baking keyframe...",
 	"bbslezy.ui.replays.baking_progress_status": "Baking keyframes: %s (%s / %s)",
 	"bbslezy.ui.lod.tooltip": "BBS Lezy (LOD settings)",

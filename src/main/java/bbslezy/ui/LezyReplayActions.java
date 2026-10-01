@@ -7,6 +7,7 @@ import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.forms.ModelForm;
 import mchorse.bbs_mod.ui.film.replays.ReplayListEntry;
 import mchorse.bbs_mod.ui.film.replays.UIReplayList;
+
 import mchorse.bbs_mod.network.ClientNetwork;
 
 import java.util.ArrayList;
@@ -45,22 +46,29 @@ public class LezyReplayActions
      * Resets film actors and replays without having to exit and re-enter the film editor.
      * Respawn entities to clear death states or displaced actors.
      */
-    public static void resetReplays(UIReplayList list, UIFilmPanel panel)
+    public static void resetReplays(UIFilmPanel panel)
     {
-        if (panel != null)
+        if (panel == null)
         {
-            panel.notifyServer(ActionState.RESTART);
-            respawnCast(panel);
-
-            if (panel.getController() != null)
-            {
-                panel.getController().createEntities();
-            }
-
-            panel.setCursor(panel.getCursor());
+            return;
         }
 
-        list.refreshReplayList();
+        panel.notifyServer(ActionState.RESTART);
+        respawnCast(panel);
+
+        if (panel.getController() != null)
+        {
+            panel.getController().createEntities();
+        }
+
+        panel.setCursor(panel.getCursor());
+
+        try
+        {
+            panel.replayEditor.replaysList.replays.refreshReplayList();
+        }
+        catch (Throwable ignored)
+        {}
     }
 
     /**
