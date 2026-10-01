@@ -12,6 +12,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = Window.class, remap = false)
 public abstract class WindowMixin
 {
+    /**
+     * On Linux/XWayland, GLFW's own cursor positioning does not reliably move
+     * the hardware pointer (diagnostic evidence: vanilla UITrackpad wraps fired
+     * but the cursor visibly stayed stuck). Force the physical warp via X11 root
+     * window and sync Mouse.x/y so the next UI frame sees the wrapped position.
+     * Windows is untouched.
+     */
     @Inject(method = "moveCursor(II)V", at = @At("TAIL"))
     private static void bbslezy$afterMoveCursor(int x, int y, CallbackInfo ci)
     {

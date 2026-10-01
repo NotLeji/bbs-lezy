@@ -12,10 +12,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Edge-wrapping for UISliderTrackpad:
- * Vanilla BBS only implemented edge-wrapping on UITrackpad. Adding edge-wrapping
- * to UISliderTrackpad allows dragging sliders past the window edge to wrap seamlessly
- * to the opposite side of the screen like Windows trackpads, with continuous delta.
+ * Edge-wrapping for UISliderTrackpad, mirroring vanilla UITrackpad logic 1:1:
+ * identical trigger coordinates, identical targets, identical dx continuity
+ * adjustment. Fires on the same frame as updateDragging so the wrapped delta
+ * stays continuous.
  */
 @Mixin(value = UISliderTrackpad.class, remap = false)
 public abstract class UISliderTrackpadMixin
@@ -26,7 +26,7 @@ public abstract class UISliderTrackpadMixin
     @Shadow
     protected int initialX;
 
-    private final Timer bbslezy$wrapTimer = new Timer(150L);
+    private final Timer bbslezy$wrapTimer = new Timer(30L);
 
     @Inject(method = "render(Lmchorse/bbs_mod/ui/framework/UIContext;)V", at = @At("HEAD"))
     private void bbslezy$edgeWrap(UIContext context, CallbackInfo ci)
@@ -38,6 +38,7 @@ public abstract class UISliderTrackpadMixin
 
         MinecraftClient mc = MinecraftClient.getInstance();
         int ww = mc.getWindow().getWidth();
+
         double factor = Math.ceil(ww / (double) context.menu.width);
         int mouseX = context.globalX(context.mouseX);
 
@@ -53,7 +54,7 @@ public abstract class UISliderTrackpadMixin
 
                 Window.moveCursor(targetX, targetY);
                 this.initialX += (context.menu.width - borderPadding * 2);
-                this.bbslezy$wrapTimer.mark(150L);
+                this.bbslezy$wrapTimer.mark();
             }
             else if (mouseX >= context.menu.width - border)
             {
@@ -62,7 +63,7 @@ public abstract class UISliderTrackpadMixin
 
                 Window.moveCursor(targetX, targetY);
                 this.initialX -= (context.menu.width - borderPadding * 2);
-                this.bbslezy$wrapTimer.mark(150L);
+                this.bbslezy$wrapTimer.mark();
             }
         }
     }
