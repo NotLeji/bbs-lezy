@@ -49,7 +49,7 @@ class ScreenClipsTest
         assertInstanceOf(CinematicClip.class, clip.create());
         assertNotNull(clip.vintage, "CinematicClip must have vintage keyframe channel");
         assertNotNull(clip.grainStrength, "CinematicClip must have grain channel");
-        assertEquals(32, clip.channels.length, "Six position channels were added");
+        assertEquals(33, clip.channels.length, "Six position channels were added");
         assertNotNull(clip.lensCenterX);
         assertEquals("lens_center_x", clip.lensCenterX.getId());
         assertNotNull(clip.lightLeakCenterY);
@@ -77,6 +77,7 @@ class ScreenClipsTest
         clip.aberrationCenterX.insert(0, 1.5D);
         clip.lensCenterX.insert(0, 0.8D);
 
+        clip.pixelation.insert(0, 2D);
         ClipContext context = new ClipContext<CinematicClip, Position>()
         {
             @Override
@@ -101,6 +102,7 @@ class ScreenClipsTest
         assertEquals(2F, e.aberrationDirectional, 1e-4F, "Directional must not be clamped to 1");
         assertEquals(1.5F, e.aberrationCenterX, 1e-4F, "Centers must accept offscreen values");
         assertEquals(0.8F, e.lensCenterX, 1e-4F);
+        assertEquals(2F, e.pixelation, 1e-4F);
     }
 
     @Test

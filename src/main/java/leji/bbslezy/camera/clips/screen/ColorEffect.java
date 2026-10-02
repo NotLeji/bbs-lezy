@@ -71,6 +71,7 @@ public class ColorEffect implements LayeredEffect
     public float heatSpeed;
     public float heatScale;
     public float time;
+    public float pixelation;
 
     public void reset()
     {
@@ -114,5 +115,6 @@ public class ColorEffect implements LayeredEffect
         this.heatSpeed = 0F;
         this.heatScale = 0F;
         this.time = 0F;
+        this.pixelation = 0F;
     }
 }

@@ -98,6 +98,7 @@ public class ColorGradeRenderer
             uniform vec2 u_lensCenter;
             uniform vec2 u_radialBlurCenter;
             uniform vec2 u_lightLeakCenter;
+            uniform float u_pixelation;
 
             /* --- HSL helpers --- */
 
@@ -302,6 +303,14 @@ public class ColorGradeRenderer
                     float noiseY = heatFbm(distortCoord + vec2(0.0, heatTime * 0.2));
                     vec2 heatOffset = (vec2(noiseX, noiseY) * 2.0 - 1.0) * u_heatStrength;
                     distortedUV = clamp(distortedUV + heatOffset, 0.0, 1.0);
+                }
+
+                /* Pixelation */
+                if (u_pixelation > 0.5)
+                {
+                    vec2 texSize = vec2(textureSize(u_sampler, 0));
+                    vec2 cells = texSize / vec2(u_pixelation);
+                    distortedUV = floor(distortedUV * cells) / cells;
                 }
 
                 /* Chromatic Aberration splitting */
@@ -544,7 +553,7 @@ public class ColorGradeRenderer
             }
             """;
 
-    private static final int SHADER_VERSION = 22;
+    private static final int SHADER_VERSION = 23;
     private static int loadedShaderVersion;
     private static boolean initialized;
     private static boolean failed;
@@ -595,6 +604,7 @@ public class ColorGradeRenderer
     private static int uHeatSpeed;
     private static int uHeatScale;
     private static int uTime;
+    private static int uPixelation;
 
     public static void apply(List<ColorEffect> effects, List<GrainEffect> grainEffects)
     {
@@ -761,6 +771,7 @@ public class ColorGradeRenderer
         float heatSpeed = 0F;
         float heatScale = 0F;
         float time = 0F;
+        float pixelation = 0F;
         float lensCenterX = 0.5F;
         float lensCenterY = 0.5F;
         float radialBlurCenterX = 0.5F;
@@ -816,6 +827,7 @@ public class ColorGradeRenderer
                 if (Math.abs(e.heatStrength) > Math.abs(heatStrength)) heatStrength = e.heatStrength;
                 if (Math.abs(e.heatSpeed) > Math.abs(heatSpeed)) heatSpeed = e.heatSpeed;
                 if (Math.abs(e.heatScale) > Math.abs(heatScale)) heatScale = e.heatScale;
+                if (Math.abs(e.pixelation) > Math.abs(pixelation)) pixelation = e.pixelation;
                 time = e.time;
             }
         }
@@ -881,6 +893,7 @@ public class ColorGradeRenderer
         GL20.glUniform1f(uHeatSpeed, 0.5F + heatSpeed * 2.0F);
         GL20.glUniform1f(uHeatScale, 2.0F + heatScale * 35.0F);
         GL20.glUniform1f(uTime, time);
+        GL20.glUniform1f(uPixelation, Math.max(0F, pixelation * 16F));
 
         GL30.glBindVertexArray(vao);
         GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 6);
@@ -1023,6 +1036,7 @@ public class ColorGradeRenderer
         uHeatSpeed = GL20.glGetUniformLocation(program, "u_heatSpeed");
         uHeatScale = GL20.glGetUniformLocation(program, "u_heatScale");
         uTime = GL20.glGetUniformLocation(program, "u_time");
+        uPixelation = GL20.glGetUniformLocation(program, "u_pixelation");
 
         /* Fullscreen quad VAO/VBO (NDC coords + UV) */
         vao = GL30.glGenVertexArrays();

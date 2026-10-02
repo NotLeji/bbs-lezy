@@ -46,6 +46,9 @@ public class CinematicClip extends CameraClip
     public final KeyframeChannel<Double> vintage = new KeyframeChannel<>("vintage", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> vhs = new KeyframeChannel<>("vhs", KeyframeFactories.DOUBLE);
 
+    /* Pixelation */
+    public final KeyframeChannel<Double> pixelation = new KeyframeChannel<>("pixelation", KeyframeFactories.DOUBLE);
+
     /* Film Grain */
     public final KeyframeChannel<Double> grainStrength = new KeyframeChannel<>("grain_strength", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> grainSize = new KeyframeChannel<>("grain_size", KeyframeFactories.DOUBLE);
@@ -100,6 +103,7 @@ public class CinematicClip extends CameraClip
             /* Vintage & Retro */
             this.vintage,
             this.vhs,
+            this.pixelation,
 
             /* Film Grain */
             this.grainStrength,
@@ -242,6 +246,7 @@ public class CinematicClip extends CameraClip
         float hs = (this.heatStrength.isEmpty() ? 0F : (float) (double) this.heatStrength.interpolate(t)) * 0.25F;
         float hsp = (this.heatSpeed.isEmpty() ? 1F : (float) (double) this.heatSpeed.interpolate(t)) * 0.25F;
         float hsc = (this.heatScale.isEmpty() ? 1F : (float) (double) this.heatScale.interpolate(t)) * 0.25F;
+        float px = (this.pixelation.isEmpty() ? 0F : (float) (double) this.pixelation.interpolate(t));
         float lensCX = interpolateOrDefault(this.lensCenterX, t, DEFAULT_LENS_CENTER_X);
         float lensCY = interpolateOrDefault(this.lensCenterY, t, DEFAULT_LENS_CENTER_Y);
         float rbCX = interpolateOrDefault(this.radialBlurCenterX, t, DEFAULT_RADIAL_BLUR_CENTER_X);
@@ -271,7 +276,7 @@ public class CinematicClip extends CameraClip
             }
         }
 
-        if (ab != 0F || vh != 0F || ld != 0F || vt != 0F || rb != 0F || rn != 0F || ds != 0F || ll != 0F || hs != 0F)
+        if (ab != 0F || vh != 0F || ld != 0F || vt != 0F || rb != 0F || rn != 0F || ds != 0F || ll != 0F || hs != 0F || px != 0F)
         {
             this.colorEffect.hasCinematic = true;
             this.colorEffect.aberration = ab * factor;
@@ -304,6 +309,7 @@ public class CinematicClip extends CameraClip
             this.colorEffect.heatStrength = hs * factor;
             this.colorEffect.heatSpeed = hsp * factor;
             this.colorEffect.heatScale = hsc * factor;
+            this.colorEffect.pixelation = px * factor;
             this.colorEffect.time = t / 20.0F;
             this.colorEffect.layer = this.layer.get();
             this.colorEffect.renderOrder = context.count;
