@@ -1,7 +1,5 @@
 package leji.bbslezy.mixin.client;
 
-import leji.bbslezy.ui.LezyInfiniteDrag;
-import leji.bbslezy.utils.LezyLinuxCursor;
 import leji.bbslezy.utils.LezyOS;
 import mchorse.bbs_mod.graphics.window.Window;
 import mchorse.bbs_mod.ui.framework.UIContext;
@@ -9,19 +7,10 @@ import mchorse.bbs_mod.ui.framework.elements.input.UISliderTrackpad;
 import net.minecraft.client.MinecraftClient;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * DaVinci Resolve-style infinite drag for UISliderTrackpad on Linux: while
- * dragging, the cursor is hidden (GLFW_CURSOR_DISABLED = unbounded travel)
- * and the value follows accumulated raw pointer motion; on release the cursor
- * reappears at the original click position. Windows stays 100% vanilla.
- */
 @Mixin(value = UISliderTrackpad.class, remap = false)
 public abstract class UISliderTrackpadMixin
 {
@@ -31,127 +20,57 @@ public abstract class UISliderTrackpadMixin
     @Shadow
     protected int initialX;
 
-    @Unique
-    private final LezyInfiniteDrag bbslezy$drag = new LezyInfiniteDrag();
-
-    @Unique
-    private static final Object bbslezy$HOLDER = new Object();
-
-    @Unique
-    private int bbslezy$origPhysX;
-
-    @Unique
-    private int bbslezy$origPhysY;
-
-    @Unique
-    private double bbslezy$factor = 1.0;
-
-    @Unique
-    private boolean bbslezy$hiding;
+    private long bbslezy$lastWarp;
+    private boolean bbslezy$holdingCursor;
 
     @Inject(method = "render(Lmchorse/bbs_mod/ui/framework/UIContext;)V", at = @At("HEAD"))
-    private void bbslezy$trackDragState(UIContext context, CallbackInfo ci)
+    private void bbslezy$beforeRender(UIContext context, CallbackInfo ci)
     {
-        if (LezyOS.isWindows())
+        this.bbslezy$holdingCursor = LezyOS.updateCursorHold(this, this.bbslezy$holdingCursor, this.dragging && Window.isMouseButtonPressed(0));
+    }
+
+    @Inject(method = "stopDragging()V", at = @At("TAIL"))
+    private void bbslezy$onStopDragging(CallbackInfo ci)
+    {
+        this.bbslezy$holdingCursor = LezyOS.updateCursorHold(this, this.bbslezy$holdingCursor, false);
+    }
+
+    @Inject(method = "render(Lmchorse/bbs_mod/ui/framework/UIContext;)V", at = @At("TAIL"))
+    private void bbslezy$warpCursorAtEdges(UIContext context, CallbackInfo ci)
+    {
+        if (!this.dragging || LezyOS.isWindows())
         {
             return;
         }
 
-        boolean active = this.dragging && Window.isMouseButtonPressed(0);
-
-        if (active && !this.bbslezy$hiding)
-        {
-            MinecraftClient mc = MinecraftClient.getInstance();
-
-            this.bbslezy$origPhysX = (int) mc.mouse.getX();
-            this.bbslezy$origPhysY = (int) mc.mouse.getY();
-            this.bbslezy$drag.begin(mc.mouse.getX());
-            this.bbslezy$factor = Math.ceil(mc.getWindow().getWidth() / (double) context.menu.width);
-            this.bbslezy$hiding = true;
-        }
-
-        if (this.bbslezy$hiding)
-        {
-            if (!active)
-            {
-                this.bbslezy$restore();
-            }
-            else
-            {
-                Window.setCursorHidden(bbslezy$HOLDER, true);
-            }
-        }
-    }
-
-    /**
-     * Replace the edge-clamped mouseX with origin + accumulated raw motion in
-     * menu units, so getDraggedValue travels infinitely. Windows untouched.
-     */
-    @ModifyArg(
-        method = "render(Lmchorse/bbs_mod/ui/framework/UIContext;)V",
-        at = @At(value = "INVOKE", target = "Lmchorse/bbs_mod/ui/framework/elements/input/UISliderTrackpad;updateDragging(I)V"),
-        index = 0
-    )
-    private int bbslezy$replaceMouseX(int mouseX)
-    {
-        if (LezyOS.isWindows() || !this.bbslezy$hiding)
-        {
-            return mouseX;
-        }
-
-        MinecraftClient mc = MinecraftClient.getInstance();
-
-        this.bbslezy$drag.feed(mc.mouse.getX());
-
-        int rawDx = this.bbslezy$drag.getAccumulatedDx();
-
-        return this.initialX + (int) (rawDx / this.bbslezy$factor);
-    }
-
-    @Inject(method = "stopDragging()V", at = @At("HEAD"))
-    private void bbslezy$restoreOnStop(CallbackInfo ci)
-    {
-        if (!LezyOS.isWindows() && this.bbslezy$hiding)
-        {
-            this.bbslezy$restore();
-        }
-    }
-
-    @Inject(method = "cancelDragging()V", at = @At("HEAD"))
-    private void bbslezy$restoreOnCancel(CallbackInfo ci)
-    {
-        if (!LezyOS.isWindows() && this.bbslezy$hiding)
-        {
-            this.bbslezy$restore();
-        }
-    }
-
-    @Inject(method = "subMouseReleased(Lmchorse/bbs_mod/ui/framework/UIContext;)Z", at = @At("HEAD"))
-    private void bbslezy$restoreOnRelease(UIContext context, CallbackInfoReturnable<Boolean> cir)
-    {
-        if (!LezyOS.isWindows() && this.bbslezy$hiding)
-        {
-            this.bbslezy$restore();
-        }
-    }
-
-    @Unique
-    private void bbslezy$restore()
-    {
-        this.bbslezy$hiding = false;
-        this.bbslezy$drag.end();
-
         try
         {
-            Window.setCursorHidden(bbslezy$HOLDER, false);
-            LezyLinuxCursor.warpWindow(this.bbslezy$origPhysX, this.bbslezy$origPhysY);
+            long now = System.currentTimeMillis();
+
+            if (now - this.bbslezy$lastWarp < 30L)
+            {
+                return;
+            }
 
             MinecraftClient mc = MinecraftClient.getInstance();
+            int ww = mc.getWindow().getWidth();
+            double factor = Math.ceil(ww / (double) context.menu.width);
+            int mouseX = context.globalX(context.mouseX);
+            int border = 5;
+            int borderPadding = border + 1;
+            int jump = context.menu.width - borderPadding * 2;
 
-            if (mc != null && mc.mouse instanceof MouseAccessor accessor)
+            if (mouseX <= border)
             {
-                accessor.bbslezy$setX(this.bbslezy$origPhysX);
-                accessor.bbslezy$setY(this.bbslezy$origPhysY);
+                Window.moveCursor(ww - (int) (factor * borderPadding), (int) mc.mouse.getY());
+                this.initialX += jump;
+                this.bbslezy$lastWarp = now;
+            }
+            else if (mouseX >= context.menu.width - border)
+            {
+                Window.moveCursor((int) (factor * borderPadding), (int) mc.mouse.getY());
+                this.initialX -= jump;
+                this.bbslezy$lastWarp = now;
             }
         }
         catch (Throwable ignored)
