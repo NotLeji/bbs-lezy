@@ -20,6 +20,43 @@ public class LezyIrisHelper
     private static Field renderTargetsField;
     private static Method getDepthTextureMethod;
     private static Field cachedDepthBufferVersionField;
+    private static Method getIrisConfigMethod;
+    private static Method areShadersEnabledMethod;
+    private static Method toggleShadersMethod;
+
+    public static boolean areShadersEnabled()
+    {
+        if (!FabricLoader.getInstance().isModLoaded("iris"))
+        {
+            return false;
+        }
+
+        try
+        {
+            if (getIrisConfigMethod == null)
+            {
+                Class<?> irisClass = Class.forName("net.irisshaders.iris.Iris");
+                getIrisConfigMethod = irisClass.getMethod("getIrisConfig");
+            }
+
+            Object config = getIrisConfigMethod.invoke(null);
+            if (config == null)
+            {
+                return false;
+            }
+
+            if (areShadersEnabledMethod == null)
+            {
+                areShadersEnabledMethod = config.getClass().getMethod("areShadersEnabled");
+            }
+
+            return (Boolean) areShadersEnabledMethod.invoke(config);
+        }
+        catch (Throwable ignored)
+        {
+            return false;
+        }
+    }
     /**
      * Toggle shaders on/off via reflection to avoid compile dependency on Iris.
      * Replicates Iris toggle keybind logic.
@@ -33,14 +70,15 @@ public class LezyIrisHelper
 
         try
         {
-            Class<?> irisClass = Class.forName("net.irisshaders.iris.Iris");
-            Method getConfigMethod = irisClass.getMethod("getIrisConfig");
-            Object config = getConfigMethod.invoke(null);
-            Method areEnabledMethod = config.getClass().getMethod("areShadersEnabled");
-            boolean enabled = (Boolean) areEnabledMethod.invoke(config);
+            boolean enabled = areShadersEnabled();
 
-            Method toggleMethod = irisClass.getMethod("toggleShaders", MinecraftClient.class, boolean.class);
-            toggleMethod.invoke(null, MinecraftClient.getInstance(), !enabled);
+            if (toggleShadersMethod == null)
+            {
+                Class<?> irisClass = Class.forName("net.irisshaders.iris.Iris");
+                toggleShadersMethod = irisClass.getMethod("toggleShaders", MinecraftClient.class, boolean.class);
+            }
+
+            toggleShadersMethod.invoke(null, MinecraftClient.getInstance(), !enabled);
         }
         catch (Throwable ignored)
         {
