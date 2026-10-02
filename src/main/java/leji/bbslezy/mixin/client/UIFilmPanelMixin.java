@@ -1,6 +1,8 @@
 package leji.bbslezy.mixin.client;
 
 import leji.bbslezy.ui.LezyReplayActions;
+import leji.bbslezy.ui.LezyIrisHelper;
+import mchorse.bbs_mod.ui.framework.elements.buttons.UIIcon;
 import mchorse.bbs_mod.l10n.L10n;
 import mchorse.bbs_mod.ui.film.UIFilmPanel;
 import mchorse.bbs_mod.ui.utils.context.ContextMenuManager;
@@ -21,6 +23,18 @@ public abstract class UIFilmPanelMixin
     private void bbslezy$addCameraEditorReset(CallbackInfo ci)
     {
         UIFilmPanel self = (UIFilmPanel) (Object) this;
+
+        try
+        {
+            UIIcon shaderButton = new UIIcon(
+                () -> LezyIrisHelper.areShadersEnabled() ? Icons.SUN : Icons.LIGHT,
+                (b) -> LezyIrisHelper.toggleShaders()
+            );
+            shaderButton.tooltip(L10n.lang("bbslezy.ui.dashboard.shader_toggle"));
+            self.actions().layout(shaderButton, LezyIrisHelper::areShadersEnabled);
+        }
+        catch (Throwable ignored)
+        {}
 
         try
         {

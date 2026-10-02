@@ -5,8 +5,6 @@ import mchorse.bbs_mod.l10n.L10n;
 import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.ui.dashboard.UIDashboard;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
-import mchorse.bbs_mod.ui.framework.elements.buttons.UIIcon;
-import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.ui.utils.keys.KeyCombo;
 import mchorse.bbs_mod.ui.utils.keys.Keybind;
 import org.lwjgl.glfw.GLFW;
@@ -36,12 +34,6 @@ public abstract class UIDashboardMixin
 
             overlay.keys().register(toggleShaders, LezyIrisHelper::toggleShaders).category(UIKeys.DASHBOARD_CATEGORY);
 
-            UIIcon shaderButton = new UIIcon(
-                () -> LezyIrisHelper.areShadersEnabled() ? Icons.SUN : Icons.LIGHT,
-                (b) -> LezyIrisHelper.toggleShaders()
-            );
-            shaderButton.tooltip(L10n.lang("bbslezy.ui.dashboard.shader_toggle"));
-            self.getPanels().pin(shaderButton, L10n.lang("bbslezy.ui.dashboard.shader_toggle"));
         }
         catch (Throwable ignored)
         {
