@@ -84,5 +84,7 @@
 	"bbslezy.ui.forms.editors.general.illusion_gradual": "Gradual Transform",
 	"bbslezy.ui.forms.editors.general.illusion_gradual-tooltip": "Ramps the transform from 0 on the base model up to full on the last duplicate.",
 	"bbslezy.ui.forms.editors.general.illusion_gradual_invert": "Invert Gradual",
-	"bbslezy.ui.forms.editors.general.illusion_gradual_invert-tooltip": "Inverts the transform ramp."
+	"bbslezy.ui.forms.editors.general.illusion_gradual_invert-tooltip": "Inverts the transform ramp.",
+	"bbslezy.ui.audio.reverse": "Reverse audio",
+	"bbslezy.ui.audio.reverse.tooltip": "Play this clip's audio from the end of its duration backwards"
 }

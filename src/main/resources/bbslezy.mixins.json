@@ -26,7 +26,10 @@
         "UITrackpadMixin",
         "WindowMixin",
         "ShaderCurvesMixin",
-        "BBSRenderingMixin"
+        "BBSRenderingMixin",
+        "AudioClipMixin",
+        "UIAudioClipMixin",
+        "AudioRendererMixin"
     ],
     "injectors": {
         "defaultRequire": 0

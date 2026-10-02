@@ -42,6 +42,8 @@ import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 
 import java.util.Collections;
+import leji.bbslezy.audio.LezyAudioReverse;
+import mchorse.bbs_mod.api.client.events.FilmEvents;
 
 /**
  * The client half of the BBS Lezy addon, registered under {@code bbs-client-addon}.
@@ -134,5 +136,6 @@ public class BBSLodClient implements BBSAddonMod
         TrackStyle.register("illusion", Icons.POSE, Colors.DEEP_PINK);
         TrackStyle.register("illusion_transform", Icons.ALL_DIRECTIONS, 0xdd66ff);
         FormRenderEvents.AFTER.register(FormIllusionRenderer::render);
+        FilmEvents.SHUTDOWN.register((film) -> LezyAudioReverse.clear());
     }
 }

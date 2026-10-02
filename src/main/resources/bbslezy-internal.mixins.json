@@ -1,0 +1,11 @@
+{
+    "required": false,
+    "package": "mchorse.bbs_mod.camera.clips.misc",
+    "compatibilityLevel": "JAVA_17",
+    "client": [
+        "AudioClientClipMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 0
+    }
+}
