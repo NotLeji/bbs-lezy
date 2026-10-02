@@ -1,7 +1,9 @@
-package mchorse.bbs_mod.camera.clips.misc;
+package leji.bbslezy.mixin.client;
 
 import leji.bbslezy.audio.LezyAudioReverse;
 import mchorse.bbs_mod.audio.SoundBuffer;
+import mchorse.bbs_mod.camera.clips.misc.AudioClientClip;
+import mchorse.bbs_mod.camera.clips.misc.AudioClip;
 import mchorse.bbs_mod.camera.data.Position;
 import mchorse.bbs_mod.camera.utils.TimeUtils;
 import mchorse.bbs_mod.resources.Link;
@@ -11,9 +13,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.lang.reflect.Constructor;
+import java.util.Map;
+
 @Mixin(value = AudioClientClip.class, remap = false)
 public abstract class AudioClientClipMixin
 {
+    private static Constructor<?> bbslezy$playbackConstructor;
+
     @Inject(method = "applyClip", at = @At("HEAD"), cancellable = true)
     private void bbslezy$applyClip(ClipContext context, Position position, CallbackInfo ci)
     {
@@ -43,19 +50,38 @@ public abstract class AudioClientClipMixin
                 {
                     SoundBuffer rev = LezyAudioReverse.getReversed(link);
                     float tickTime = t / 20F;
+                    Map<Object, Object> playback = (Map) AudioClientClip.getPlayback(context);
 
-                    if (rev == null || context.relativeTick >= self.duration.get() || tickTime < 0F)
+                    if (bbslezy$playbackConstructor == null)
                     {
-                        AudioClientClip.getPlayback(context).put(self, new AudioClientClip.Playback(link, -1F, gain));
+                        for (Class<?> clazz : AudioClientClip.class.getDeclaredClasses())
+                        {
+                            if (clazz.getSimpleName().equals("Playback"))
+                            {
+                                bbslezy$playbackConstructor = clazz.getDeclaredConstructor(Link.class, float.class, float.class);
+                                bbslezy$playbackConstructor.setAccessible(true);
+                                break;
+                            }
+                        }
                     }
-                    else
-                    {
-                        float q = rev.getDuration()
-                            - TimeUtils.toSeconds(self.offset.get())
-                            - TimeUtils.toSeconds(self.duration.get())
-                            + tickTime;
 
-                        AudioClientClip.getPlayback(context).put(self, new AudioClientClip.Playback(link, Math.max(0F, q), gain));
+                    if (bbslezy$playbackConstructor != null)
+                    {
+                        if (rev == null || context.relativeTick >= self.duration.get() || tickTime < 0F)
+                        {
+                            Object pb = bbslezy$playbackConstructor.newInstance(link, -1F, gain);
+                            playback.put(self, pb);
+                        }
+                        else
+                        {
+                            float q = rev.getDuration()
+                                - TimeUtils.toSeconds(self.offset.get())
+                                - TimeUtils.toSeconds(self.duration.get())
+                                + tickTime;
+
+                            Object pb = bbslezy$playbackConstructor.newInstance(link, Math.max(0F, q), gain);
+                            playback.put(self, pb);
+                        }
                     }
                 }
             }

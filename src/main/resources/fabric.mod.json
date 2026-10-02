@@ -8,8 +8,7 @@
 	"environment": "*",
 	"icon": "assets/bbslezy/icon.png",
 	"mixins": [
-		"bbslezy.mixins.json",
-		"bbslezy-internal.mixins.json"
+		"bbslezy.mixins.json"
 	],
 	"entrypoints": {
 		"bbs-addon": ["leji.bbslezy.BBSLod"],

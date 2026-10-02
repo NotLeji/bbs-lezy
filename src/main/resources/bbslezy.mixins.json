@@ -29,6 +29,7 @@
         "BBSRenderingMixin",
         "AudioClipMixin",
         "UIAudioClipMixin",
+        "AudioClientClipMixin",
         "AudioRendererMixin"
     ],
     "injectors": {
