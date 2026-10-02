@@ -4,6 +4,7 @@ import leji.bbslezy.utils.keyframes.factories.LensRadiusSettingsKeyframeFactory;
 import mchorse.bbs_mod.camera.clips.CameraClip;
 import mchorse.bbs_mod.camera.data.Position;
 import mchorse.bbs_mod.data.types.BaseType;
+import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.utils.clips.ClipContext;
@@ -20,15 +21,8 @@ import java.util.List;
 
 public class CinematicClip extends CameraClip
 {
-    public static final double DEFAULT_ABERRATION_ANGLE = 0D;
-    public static final double DEFAULT_ABERRATION_DIRECTIONAL = 0D;
-    public static final double DEFAULT_ABERRATION_RADIUS = 1D;
-    public static final double DEFAULT_ABERRATION_HARDNESS = 1D;
-    public static final double DEFAULT_ABERRATION_BALANCE = 0D;
-    public static final double DEFAULT_ABERRATION_CENTER_X = 0.5D;
-    public static final double DEFAULT_ABERRATION_CENTER_Y = 0.5D;
-    public static final double DEFAULT_ABERRATION_GREEN = 0D;
-    public static final double DEFAULT_ABERRATION_SPECTRUM = 0D;
+    public static final double DEFAULT_CHROMATIC_CENTER_X = 0.5D;
+    public static final double DEFAULT_CHROMATIC_CENTER_Y = 0.5D;
 
     public static final float DEFAULT_LENS_RADIUS = 1F;
     public static final LensRadiusSettings DEFAULT_LENS_RADIUS_SETTINGS = new LensRadiusSettings(DEFAULT_LENS_RADIUS, DEFAULT_LENS_RADIUS);
@@ -66,16 +60,9 @@ public class CinematicClip extends CameraClip
     public final KeyframeChannel<Double> radialBlurCenterY = new KeyframeChannel<>("radial_blur_center_y", KeyframeFactories.DOUBLE);
 
     /* Chromatic Aberration */
-    public final KeyframeChannel<Double> aberration = new KeyframeChannel<>("aberration", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> aberrationAngle = new KeyframeChannel<>("aberration_angle", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> aberrationDirectional = new KeyframeChannel<>("aberration_directional", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> aberrationRadius = new KeyframeChannel<>("aberration_radius", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> aberrationHardness = new KeyframeChannel<>("aberration_hardness", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> aberrationBalance = new KeyframeChannel<>("aberration_balance", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> aberrationCenterX = new KeyframeChannel<>("aberration_center_x", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> aberrationCenterY = new KeyframeChannel<>("aberration_center_y", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> aberrationGreen = new KeyframeChannel<>("aberration_green", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel<Double> aberrationSpectrum = new KeyframeChannel<>("aberration_spectrum", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> chromaticAberration = new KeyframeChannel<>("chromatic_aberration", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> chromaticAberrationCenterX = new KeyframeChannel<>("chromatic_aberration_center_x", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> chromaticAberrationCenterY = new KeyframeChannel<>("chromatic_aberration_center_y", KeyframeFactories.DOUBLE);
 
     /* Atmosphere & Environment */
     public final KeyframeChannel<Double> rain = new KeyframeChannel<>("rain", KeyframeFactories.DOUBLE);
@@ -121,17 +108,10 @@ public class CinematicClip extends CameraClip
             this.radialBlurCenterX,
             this.radialBlurCenterY,
 
-            /* Aberration */
-            this.aberration,
-            this.aberrationAngle,
-            this.aberrationDirectional,
-            this.aberrationRadius,
-            this.aberrationHardness,
-            this.aberrationBalance,
-            this.aberrationCenterX,
-            this.aberrationCenterY,
-            this.aberrationGreen,
-            this.aberrationSpectrum,
+            /* Chromatic Aberration */
+            this.chromaticAberration,
+            this.chromaticAberrationCenterX,
+            this.chromaticAberrationCenterY,
 
             /* Atmosphere */
             this.rain,
@@ -153,8 +133,37 @@ public class CinematicClip extends CameraClip
     @Override
     public void fromData(BaseType data)
     {
+        this.migrateLegacyAberration(data);
         super.fromData(data);
         this.migrateLegacyDoubleLensRadius();
+    }
+
+    private void migrateLegacyAberration(BaseType data)
+    {
+        try
+        {
+            if (data instanceof MapType map)
+            {
+                if (!map.has("chromatic_aberration") && map.has("aberration"))
+                {
+                    map.put("chromatic_aberration", map.get("aberration"));
+                    map.remove("aberration");
+                }
+                if (!map.has("chromatic_aberration_center_x") && map.has("aberration_center_x"))
+                {
+                    map.put("chromatic_aberration_center_x", map.get("aberration_center_x"));
+                    map.remove("aberration_center_x");
+                }
+                if (!map.has("chromatic_aberration_center_y") && map.has("aberration_center_y"))
+                {
+                    map.put("chromatic_aberration_center_y", map.get("aberration_center_y"));
+                    map.remove("aberration_center_y");
+                }
+            }
+        }
+        catch (Throwable ignored)
+        {
+        }
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -220,16 +229,9 @@ public class CinematicClip extends CameraClip
         }
 
         /* 2. Cinematic Shader Effects */
-        float ab = (this.aberration.isEmpty() ? 0F : (float) (double) this.aberration.interpolate(t)) * 0.25F;
-        float abAngle = interpolateOrDefault(this.aberrationAngle, t, DEFAULT_ABERRATION_ANGLE);
-        float abDirectional = interpolateOrDefault(this.aberrationDirectional, t, DEFAULT_ABERRATION_DIRECTIONAL);
-        float abRadius = interpolateOrDefault(this.aberrationRadius, t, DEFAULT_ABERRATION_RADIUS);
-        float abHardness = interpolateOrDefault(this.aberrationHardness, t, DEFAULT_ABERRATION_HARDNESS);
-        float abBalance = interpolateOrDefault(this.aberrationBalance, t, DEFAULT_ABERRATION_BALANCE);
-        float abCenterX = interpolateOrDefault(this.aberrationCenterX, t, DEFAULT_ABERRATION_CENTER_X);
-        float abCenterY = interpolateOrDefault(this.aberrationCenterY, t, DEFAULT_ABERRATION_CENTER_Y);
-        float abGreen = interpolateOrDefault(this.aberrationGreen, t, DEFAULT_ABERRATION_GREEN);
-        float abSpectrum = interpolateOrDefault(this.aberrationSpectrum, t, DEFAULT_ABERRATION_SPECTRUM);
+        float ca = (this.chromaticAberration.isEmpty() ? 0F : (float) (double) this.chromaticAberration.interpolate(t)) * 0.05F;
+        float caCX = interpolateOrDefault(this.chromaticAberrationCenterX, t, DEFAULT_CHROMATIC_CENTER_X);
+        float caCY = interpolateOrDefault(this.chromaticAberrationCenterY, t, DEFAULT_CHROMATIC_CENTER_Y);
         float vh = (this.vhs.isEmpty() ? 0F : (float) (double) this.vhs.interpolate(t)) * 0.15F;
         float ld = (this.lensDistortion.isEmpty() ? 0F : (float) (double) this.lensDistortion.interpolate(t)) * 0.20F;
         float ldf = this.lensDistanceFactor.isEmpty() ? (float) DEFAULT_LENS_DISTANCE_FACTOR : (float) (double) this.lensDistanceFactor.interpolate(t);
@@ -276,19 +278,12 @@ public class CinematicClip extends CameraClip
             }
         }
 
-        if (ab != 0F || vh != 0F || ld != 0F || vt != 0F || rb != 0F || rn != 0F || ds != 0F || ll != 0F || hs != 0F || px != 0F)
+        if (ca != 0F || vh != 0F || ld != 0F || vt != 0F || rb != 0F || rn != 0F || ds != 0F || ll != 0F || hs != 0F || px != 0F)
         {
             this.colorEffect.hasCinematic = true;
-            this.colorEffect.aberration = ab * factor;
-            this.colorEffect.aberrationAngle = abAngle;
-            this.colorEffect.aberrationDirectional = abDirectional;
-            this.colorEffect.aberrationRadius = Math.max(0F, abRadius);
-            this.colorEffect.aberrationHardness = MathUtils.clamp(abHardness, 0F, 1F);
-            this.colorEffect.aberrationBalance = MathUtils.clamp(abBalance, -1F, 1F);
-            this.colorEffect.aberrationCenterX = abCenterX;
-            this.colorEffect.aberrationCenterY = abCenterY;
-            this.colorEffect.aberrationGreen = abGreen;
-            this.colorEffect.aberrationSpectrum = abSpectrum;
+            this.colorEffect.chromaticAberration = ca * factor;
+            this.colorEffect.chromaticAberrationCenterX = caCX;
+            this.colorEffect.chromaticAberrationCenterY = caCY;
             this.colorEffect.vhs = vh * factor;
             this.colorEffect.lensDistortion = lens;
             this.colorEffect.lensRadiusX = radiusX;

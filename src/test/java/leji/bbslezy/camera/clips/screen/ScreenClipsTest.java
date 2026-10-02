@@ -8,6 +8,7 @@ import mchorse.bbs_mod.utils.clips.Clip;
 import java.util.List;
 import mchorse.bbs_mod.utils.interps.Interpolations;
 import org.junit.jupiter.api.Test;
+import mchorse.bbs_mod.utils.keyframes.factories.KeyframeFactories;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ScreenClipsTest
@@ -49,7 +50,8 @@ class ScreenClipsTest
         assertInstanceOf(CinematicClip.class, clip.create());
         assertNotNull(clip.vintage, "CinematicClip must have vintage keyframe channel");
         assertNotNull(clip.grainStrength, "CinematicClip must have grain channel");
-        assertEquals(33, clip.channels.length, "Six position channels were added");
+        assertEquals(26, clip.channels.length, "Seven aberration channels removed");
+        assertEquals("chromatic_aberration", clip.chromaticAberration.getId());
         assertNotNull(clip.lensCenterX);
         assertEquals("lens_center_x", clip.lensCenterX.getId());
         assertNotNull(clip.lightLeakCenterY);
@@ -71,10 +73,9 @@ class ScreenClipsTest
     {
         CinematicClip clip = new CinematicClip();
 
-        clip.aberration.insert(0, -1D);
+        clip.chromaticAberration.insert(0, -1D);
         clip.lensSharpen.insert(0, -1D);
-        clip.aberrationDirectional.insert(0, 2D);
-        clip.aberrationCenterX.insert(0, 1.5D);
+        clip.chromaticAberrationCenterX.insert(0, 1.5D);
         clip.lensCenterX.insert(0, 0.8D);
 
         clip.pixelation.insert(0, 2D);
@@ -96,11 +97,10 @@ class ScreenClipsTest
 
         ColorEffect e = effects.get(0);
 
-        /* -1 * 0.25 strength scaling; lens sharpen scaled by 0.20 */
-        assertEquals(-0.25F, e.aberration, 1e-4F);
+        /* -1 * 0.05 strength scaling; lens sharpen scaled by 0.20 */
+        assertEquals(-0.05F, e.chromaticAberration, 1e-4F);
         assertEquals(-0.20F, e.lensSharpen, 1e-4F);
-        assertEquals(2F, e.aberrationDirectional, 1e-4F, "Directional must not be clamped to 1");
-        assertEquals(1.5F, e.aberrationCenterX, 1e-4F, "Centers must accept offscreen values");
+        assertEquals(1.5F, e.chromaticAberrationCenterX, 1e-4F, "Centers must accept offscreen values");
         assertEquals(0.8F, e.lensCenterX, 1e-4F);
         assertEquals(2F, e.pixelation, 1e-4F);
     }
@@ -110,7 +110,7 @@ class ScreenClipsTest
     {
         CinematicClip clip = new CinematicClip();
 
-        clip.aberration.insert(0, 1D);
+        clip.chromaticAberration.insert(0, 1D);
 
         ClipContext context = new ClipContext<CinematicClip, Position>()
         {
@@ -137,6 +137,29 @@ class ScreenClipsTest
         assertEquals(0.5F, e.radialBlurCenterY, 1e-4F);
         assertEquals(0.0F, e.lightLeakCenterX, 1e-4F);
         assertEquals(0.4F, e.lightLeakCenterY, 1e-4F);
+    }
+
+    @Test
+    void cinematicClip_legacyAberrationMigration()
+    {
+        KeyframeFactories.setup();
+        CinematicClip legacySource = new CinematicClip();
+        legacySource.chromaticAberration.insert(10F, 0.75D);
+        legacySource.chromaticAberrationCenterX.insert(15F, 0.25D);
+
+        mchorse.bbs_mod.data.types.MapType data = (mchorse.bbs_mod.data.types.MapType) legacySource.toData();
+        data.put("aberration", data.get("chromatic_aberration"));
+        data.remove("chromatic_aberration");
+        data.put("aberration_center_x", data.get("chromatic_aberration_center_x"));
+        data.remove("chromatic_aberration_center_x");
+
+        CinematicClip restored = new CinematicClip();
+        restored.fromData(data);
+
+        assertEquals(1, restored.chromaticAberration.getKeyframes().size());
+        assertEquals(0.75D, (Double) restored.chromaticAberration.get(0).getValue(), 1e-4);
+        assertEquals(1, restored.chromaticAberrationCenterX.getKeyframes().size());
+        assertEquals(0.25D, (Double) restored.chromaticAberrationCenterX.get(0).getValue(), 1e-4);
     }
 
     @Test
