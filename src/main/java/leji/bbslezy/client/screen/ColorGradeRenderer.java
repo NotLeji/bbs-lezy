@@ -92,6 +92,11 @@ public class ColorGradeRenderer
             uniform vec2 u_radialBlurCenter;
             uniform vec2 u_lightLeakCenter;
             uniform float u_pixelation;
+            /* Motion Blur & Trail */
+            uniform float u_motionBlur;
+            uniform float u_motionTrail;
+            uniform vec2 u_motionVelocity;
+            uniform sampler2D u_trailTex;
 
             /* --- HSL helpers --- */
 
@@ -353,6 +358,26 @@ public class ColorGradeRenderer
                     rgb = blurRGB / 5.0;
                 }
 
+                /* Motion Blur (Camera Velocity Directional Blur) */
+                if (abs(u_motionBlur) > 0.001 && length(u_motionVelocity) > 1.0e-5)
+                {
+                    vec2 vel = u_motionVelocity * u_motionBlur * 0.15;
+                    vec3 blur = rgb;
+                    const float SAMPLES[7] = float[7](-0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75);
+                    for (int i = 0; i < 7; i++)
+                    {
+                        blur += texture(u_sampler, clamp(distortedUV + vel * SAMPLES[i], 0.0, 1.0)).rgb;
+                    }
+                    rgb = blur / 8.0;
+                }
+
+                /* Motion Trail (Accumulation Buffer) */
+                if (abs(u_motionTrail) > 0.001)
+                {
+                    vec3 trail = texture(u_trailTex, v_uv).rgb;
+                    rgb = mix(rgb, trail, clamp(abs(u_motionTrail) * 0.85, 0.0, 0.90));
+                }
+
                 /* 1 — Lift / Gamma / Gain */
                 rgb = rgb * (vec3(1.0) + u_gain);
                 rgb = sign(rgb) * pow(max(abs(rgb), vec3(1e-4)), max(vec3(1e-4), vec3(1.0) / (vec3(1.0) + u_gamma)));
@@ -501,7 +526,7 @@ public class ColorGradeRenderer
             }
             """;
 
-    private static final int SHADER_VERSION = 24;
+    private static final int SHADER_VERSION = 27;
     private static int loadedShaderVersion;
     private static boolean initialized;
     private static boolean failed;
@@ -509,6 +534,13 @@ public class ColorGradeRenderer
     private static int vao;
     private static int vbo;
     private static Texture tempTex;
+    private static Texture trailTex;
+    private static int trailFbo;
+    private static int trailW;
+    private static int trailH;
+    private static float prevYaw;
+    private static float prevPitch;
+    private static boolean prevAnglesValid;
 
     private static int uSampler;
     private static int uVigStr;
@@ -546,6 +578,10 @@ public class ColorGradeRenderer
     private static int uHeatScale;
     private static int uTime;
     private static int uPixelation;
+    private static int uMotionBlur;
+    private static int uMotionTrail;
+    private static int uMotionVelocity;
+    private static int uTrailTex;
 
     public static void apply(List<ColorEffect> effects, List<GrainEffect> grainEffects)
     {
@@ -712,6 +748,8 @@ public class ColorGradeRenderer
         float radialBlurCenterY = 0.5F;
         float lightLeakCenterX = 0.0F;
         float lightLeakCenterY = 0.4F;
+        float motionBlur = 0F;
+        float motionTrail = 0F;
 
         for (ColorEffect e : effects)
         {
@@ -755,6 +793,8 @@ public class ColorGradeRenderer
                 if (Math.abs(e.heatSpeed) > Math.abs(heatSpeed)) heatSpeed = e.heatSpeed;
                 if (Math.abs(e.heatScale) > Math.abs(heatScale)) heatScale = e.heatScale;
                 if (Math.abs(e.pixelation) > Math.abs(pixelation)) pixelation = e.pixelation;
+                if (Math.abs(e.motionBlur) > Math.abs(motionBlur)) motionBlur = e.motionBlur;
+                if (Math.abs(e.motionTrail) > Math.abs(motionTrail)) motionTrail = e.motionTrail;
                 time = e.time;
             }
         }
@@ -808,6 +848,35 @@ public class ColorGradeRenderer
         GL20.glUniform1f(uHeatScale, 2.0F + heatScale * 35.0F);
         GL20.glUniform1f(uTime, time);
         GL20.glUniform1f(uPixelation, Math.max(0F, pixelation * 16F));
+        /* Camera velocity estimation for motion blur */
+        float curYaw = mc.gameRenderer.getCamera().getYaw();
+        float curPitch = mc.gameRenderer.getCamera().getPitch();
+        float velX = 0F;
+        float velY = 0F;
+
+        if (prevAnglesValid)
+        {
+            float dYaw = curYaw - prevYaw;
+            float dPitch = curPitch - prevPitch;
+            while (dYaw > 180F) dYaw -= 360F;
+            while (dYaw < -180F) dYaw += 360F;
+            velX = -dYaw * 0.02F;
+            velY = dPitch * 0.02F;
+        }
+        prevYaw = curYaw;
+        prevPitch = curPitch;
+        prevAnglesValid = true;
+
+        GL20.glUniform1f(uMotionBlur, motionBlur);
+        GL20.glUniform1f(uMotionTrail, motionTrail);
+        GL20.glUniform2f(uMotionVelocity, velX, velY);
+
+        /* Bind trail texture to unit 1 */
+        setupTrailBuffer(fbW, fbH);
+        GL13.glActiveTexture(GL13.GL_TEXTURE1);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, trailTex.id);
+        GL20.glUniform1i(uTrailTex, 1);
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
 
         GL30.glBindVertexArray(vao);
         GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 6);
@@ -815,6 +884,18 @@ public class ColorGradeRenderer
 
         GL20.glUseProgram(0);
         tempTex.unbind();
+        /* Update trail accumulation buffer if motion trail is active */
+        if (Math.abs(motionTrail) > 0.001F && trailFbo != 0)
+        {
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, fb.fbo);
+            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, trailFbo);
+            GL30.glBlitFramebuffer(0, 0, fbW, fbH, 0, 0, fbW, fbH, GL11.GL_COLOR_BUFFER_BIT, GL11.GL_LINEAR);
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+        }
+
+        GL13.glActiveTexture(GL13.GL_TEXTURE1);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
         fb.beginWrite(false);
@@ -944,6 +1025,10 @@ public class ColorGradeRenderer
         uHeatScale = GL20.glGetUniformLocation(program, "u_heatScale");
         uTime = GL20.glGetUniformLocation(program, "u_time");
         uPixelation = GL20.glGetUniformLocation(program, "u_pixelation");
+        uMotionBlur = GL20.glGetUniformLocation(program, "u_motionBlur");
+        uMotionTrail = GL20.glGetUniformLocation(program, "u_motionTrail");
+        uMotionVelocity = GL20.glGetUniformLocation(program, "u_motionVelocity");
+        uTrailTex = GL20.glGetUniformLocation(program, "u_trailTex");
 
         /* Fullscreen quad VAO/VBO (NDC coords + UV) */
         vao = GL30.glGenVertexArrays();
@@ -975,5 +1060,53 @@ public class ColorGradeRenderer
 
         GL30.glBindVertexArray(0);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+    }
+
+    private static void setupTrailBuffer(int w, int h)
+    {
+        if (trailTex == null)
+        {
+            trailTex = new Texture();
+            trailTex.setFormat(TextureFormat.RGB_U8);
+            trailTex.setFilter(GL11.GL_LINEAR);
+            trailTex.setWrap(GL12.GL_CLAMP_TO_EDGE);
+        }
+
+        if (trailFbo == 0 || trailW != w || trailH != h)
+        {
+            trailW = w;
+            trailH = h;
+            trailTex.setSize(w, h);
+            trailTex.bind();
+            GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGB8, w, h, 0, GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, (java.nio.ByteBuffer) null);
+            trailTex.unbind();
+
+            if (trailFbo == 0)
+            {
+                trailFbo = GL30.glGenFramebuffers();
+            }
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, trailFbo);
+            GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0, GL11.GL_TEXTURE_2D, trailTex.id, 0);
+            GL11.glClearColor(0F, 0F, 0F, 1F);
+            GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+        }
+    }
+
+    public static void clearTrail()
+    {
+        prevAnglesValid = false;
+        if (trailFbo != 0)
+        {
+            GL30.glDeleteFramebuffers(trailFbo);
+            trailFbo = 0;
+        }
+        if (trailTex != null)
+        {
+            trailTex.delete();
+            trailTex = null;
+        }
+        trailW = 0;
+        trailH = 0;
     }
 }

@@ -50,12 +50,16 @@ class ScreenClipsTest
         assertInstanceOf(CinematicClip.class, clip.create());
         assertNotNull(clip.vintage, "CinematicClip must have vintage keyframe channel");
         assertNotNull(clip.grainStrength, "CinematicClip must have grain channel");
-        assertEquals(26, clip.channels.length, "Seven aberration channels removed");
+        assertEquals(28, clip.channels.length, "26 base + 2 motion channels");
         assertEquals("chromatic_aberration", clip.chromaticAberration.getId());
         assertNotNull(clip.lensCenterX);
         assertEquals("lens_center_x", clip.lensCenterX.getId());
         assertNotNull(clip.lightLeakCenterY);
         assertEquals("light_leak_center_y", clip.lightLeakCenterY.getId());
+        assertNotNull(clip.motionBlur);
+        assertEquals("motion_blur", clip.motionBlur.getId());
+        assertNotNull(clip.motionTrail);
+        assertEquals("motion_trail", clip.motionTrail.getId());
     }
 
     @Test
@@ -79,6 +83,8 @@ class ScreenClipsTest
         clip.lensCenterX.insert(0, 0.8D);
 
         clip.pixelation.insert(0, 2D);
+        clip.motionBlur.insert(0, 5D);
+        clip.motionTrail.insert(0, 3D);
         ClipContext context = new ClipContext<CinematicClip, Position>()
         {
             @Override
@@ -103,6 +109,8 @@ class ScreenClipsTest
         assertEquals(1.5F, e.chromaticAberrationCenterX, 1e-4F, "Centers must accept offscreen values");
         assertEquals(0.8F, e.lensCenterX, 1e-4F);
         assertEquals(2F, e.pixelation, 1e-4F);
+        assertEquals(0.50F, e.motionBlur, 1e-4F);
+        assertEquals(0.30F, e.motionTrail, 1e-4F);
     }
 
     @Test

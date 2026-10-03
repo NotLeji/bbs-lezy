@@ -74,6 +74,10 @@ public class CinematicClip extends CameraClip
     public final KeyframeChannel<Double> heatSpeed = new KeyframeChannel<>("heat_speed", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> heatScale = new KeyframeChannel<>("heat_scale", KeyframeFactories.DOUBLE);
 
+    /* Motion */
+    public final KeyframeChannel<Double> motionBlur = new KeyframeChannel<>("motion_blur", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> motionTrail = new KeyframeChannel<>("motion_trail", KeyframeFactories.DOUBLE);
+
     public final KeyframeChannel[] channels;
 
     private ColorEffect colorEffect = new ColorEffect();
@@ -122,6 +126,10 @@ public class CinematicClip extends CameraClip
             this.heatStrength,
             this.heatSpeed,
             this.heatScale,
+
+            /* Motion */
+            this.motionBlur,
+            this.motionTrail,
         };
 
         for (KeyframeChannel channel : this.channels)
@@ -249,6 +257,8 @@ public class CinematicClip extends CameraClip
         float hsp = (this.heatSpeed.isEmpty() ? 1F : (float) (double) this.heatSpeed.interpolate(t)) * 0.25F;
         float hsc = (this.heatScale.isEmpty() ? 1F : (float) (double) this.heatScale.interpolate(t)) * 0.25F;
         float px = (this.pixelation.isEmpty() ? 0F : (float) (double) this.pixelation.interpolate(t));
+        float mb = (this.motionBlur.isEmpty() ? 0F : (float) (double) this.motionBlur.interpolate(t)) * 0.10F;
+        float mt = (this.motionTrail.isEmpty() ? 0F : (float) (double) this.motionTrail.interpolate(t)) * 0.10F;
         float lensCX = interpolateOrDefault(this.lensCenterX, t, DEFAULT_LENS_CENTER_X);
         float lensCY = interpolateOrDefault(this.lensCenterY, t, DEFAULT_LENS_CENTER_Y);
         float rbCX = interpolateOrDefault(this.radialBlurCenterX, t, DEFAULT_RADIAL_BLUR_CENTER_X);
@@ -278,7 +288,7 @@ public class CinematicClip extends CameraClip
             }
         }
 
-        if (ca != 0F || vh != 0F || ld != 0F || vt != 0F || rb != 0F || rn != 0F || ds != 0F || ll != 0F || hs != 0F || px != 0F)
+        if (ca != 0F || vh != 0F || ld != 0F || vt != 0F || rb != 0F || rn != 0F || ds != 0F || ll != 0F || hs != 0F || px != 0F || mb != 0F || mt != 0F)
         {
             this.colorEffect.hasCinematic = true;
             this.colorEffect.chromaticAberration = ca * factor;
@@ -305,6 +315,8 @@ public class CinematicClip extends CameraClip
             this.colorEffect.heatSpeed = hsp * factor;
             this.colorEffect.heatScale = hsc * factor;
             this.colorEffect.pixelation = px * factor;
+            this.colorEffect.motionBlur = mb * factor;
+            this.colorEffect.motionTrail = mt * factor;
             this.colorEffect.time = t / 20.0F;
             this.colorEffect.layer = this.layer.get();
             this.colorEffect.renderOrder = context.count;

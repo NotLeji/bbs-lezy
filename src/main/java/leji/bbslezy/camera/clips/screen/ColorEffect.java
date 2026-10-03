@@ -65,6 +65,8 @@ public class ColorEffect implements LayeredEffect
     public float heatScale;
     public float time;
     public float pixelation;
+    public float motionBlur;
+    public float motionTrail;
 
     public void reset()
     {
@@ -102,5 +104,7 @@ public class ColorEffect implements LayeredEffect
         this.heatScale = 0F;
         this.time = 0F;
         this.pixelation = 0F;
+        this.motionBlur = 0F;
+        this.motionTrail = 0F;
     }
 }

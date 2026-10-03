@@ -142,5 +142,6 @@ public class BBSLodClient implements BBSAddonMod
         TrackStyle.registerLabel("volume", IKey.constant("Volume"));
         FormRenderEvents.AFTER.register(FormIllusionRenderer::render);
         FilmEvents.SHUTDOWN.register((film) -> LezyAudioReverse.clear());
+        FilmEvents.SHUTDOWN.register((film) -> leji.bbslezy.client.screen.ColorGradeRenderer.clearTrail());
     }
 }
