@@ -3,7 +3,6 @@ package leji.bbslezy.mixin.client;
 import leji.bbslezy.audio.LezyAudioReverse;
 import mchorse.bbs_mod.camera.clips.misc.AudioClip;
 import mchorse.bbs_mod.l10n.L10n;
-import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.settings.values.numeric.ValueBoolean;
 import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.ui.film.UIClipsPanel;
@@ -14,7 +13,6 @@ import mchorse.bbs_mod.ui.film.utils.keyframes.UIFilmKeyframes;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIToggle;
 import mchorse.bbs_mod.ui.framework.elements.input.keyframes.UIKeyframeEditor;
-import mchorse.bbs_mod.ui.framework.elements.input.keyframes.UIKeyframeSheet;
 import mchorse.bbs_mod.utils.clips.Clips;
 import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
@@ -58,6 +56,7 @@ public abstract class UIAudioClipMixin<T extends AudioClip> extends UIClip<T>
 
             this.bbslezy$editKeyframes = new UIButton(UIKeys.GENERAL_EDIT, (b) ->
             {
+                this.bbslezy$populateSheets();
                 this.editor.embedView(this.bbslezy$keyframes);
                 this.bbslezy$keyframes.view.resetView();
                 this.bbslezy$keyframes.view.getGraph().clearSelection();
@@ -114,34 +113,19 @@ public abstract class UIAudioClipMixin<T extends AudioClip> extends UIClip<T>
         }
     }
 
-    @Inject(method = "fillData", at = @At("TAIL"))
-    private void bbslezy$fillData(CallbackInfo ci)
+    @Unique
+    private void bbslezy$populateSheets()
     {
         if (this.bbslezy$keyframes == null)
         {
             return;
         }
 
-        try
-        {
-            this.bbslezy$keyframes.view.removeAllSheets();
+        KeyframeChannel<Double> volumeChannel = LezyAudioReverse.getVolumeChannel(this.clip);
 
-            KeyframeChannel<Double> volumeChannel = LezyAudioReverse.getVolumeChannel(this.clip);
-
-            if (volumeChannel != null)
-            {
-                this.bbslezy$keyframes.view.addSheet(new UIKeyframeSheet(
-                    "volume",
-                    IKey.constant("Volume"),
-                    Colors.ACTIVE,
-                    volumeChannel,
-                    null
-                ));
-            }
-        }
-        catch (Throwable t)
+        if (volumeChannel != null)
         {
-            t.printStackTrace();
+            this.bbslezy$keyframes.setChannel(volumeChannel, Colors.ACTIVE);
         }
     }
 }
