@@ -92,6 +92,13 @@ public class ColorGradeRenderer
             uniform vec2 u_radialBlurCenter;
             uniform vec2 u_lightLeakCenter;
             uniform float u_pixelation;
+            /* Depth of Field */
+            uniform sampler2D u_depth;
+            uniform float u_dof;
+            uniform float u_dofFocus;
+            uniform float u_dofBlur;
+            uniform mat4 u_view;
+            uniform mat4 u_projection;
 
             /* --- HSL helpers --- */
 
@@ -353,6 +360,32 @@ public class ColorGradeRenderer
                     rgb = blurRGB / 5.0;
                 }
 
+                /* Depth of Field (physical blur based on camera depth map) */
+                if (u_dof > 0.001 && u_dofBlur > 0.001)
+                {
+                    float rawDepth = texture(u_depth, v_uv).r;
+                    if (rawDepth < 1.0)
+                    {
+                        vec3 ndc = vec3(v_uv * 2.0 - 1.0, rawDepth * 2.0 - 1.0);
+                        vec4 viewPos = inverse(u_projection * u_view) * vec4(ndc, 1.0);
+                        float viewZ = -viewPos.z / max(abs(viewPos.w), 1e-4);
+                        float coc = clamp(abs(viewZ - u_dofFocus) / max(viewZ, 0.1), 0.0, 1.0);
+                        float radius = coc * u_dofBlur * u_dof * 0.02;
+                        vec2 texel = 1.0 / vec2(textureSize(u_sampler, 0));
+                        vec3 blurred = vec3(0.0);
+                        const vec2 POISSON[8] = vec2[8](
+                            vec2(0.0, 0.0), vec2(0.5, 0.0), vec2(-0.5, 0.5), vec2(0.5, -0.5),
+                            vec2(-0.5, -0.5), vec2(0.75, 0.75), vec2(-0.75, 0.25), vec2(0.25, -0.75)
+                        );
+                        for (int i = 0; i < 8; i++)
+                        {
+                            blurred += texture(u_sampler, clamp(distortedUV + POISSON[i] * radius * texel * 100.0, 0.0, 1.0)).rgb;
+                        }
+                        blurred /= 8.0;
+                        rgb = mix(rgb, blurred, clamp(radius * 50.0, 0.0, 1.0));
+                    }
+                }
+
                 /* 1 — Lift / Gamma / Gain */
                 rgb = rgb * (vec3(1.0) + u_gain);
                 rgb = sign(rgb) * pow(max(abs(rgb), vec3(1e-4)), max(vec3(1e-4), vec3(1.0) / (vec3(1.0) + u_gamma)));
@@ -501,7 +534,7 @@ public class ColorGradeRenderer
             }
             """;
 
-    private static final int SHADER_VERSION = 24;
+    private static final int SHADER_VERSION = 26;
     private static int loadedShaderVersion;
     private static boolean initialized;
     private static boolean failed;
@@ -546,6 +579,13 @@ public class ColorGradeRenderer
     private static int uHeatScale;
     private static int uTime;
     private static int uPixelation;
+    private static int uDepth;
+    private static int uDof;
+    private static int uDofFocus;
+    private static int uDofBlur;
+    private static int uView;
+    private static int uProjection;
+    private static final FloatBuffer matrixBuffer = MemoryUtil.memAllocFloat(16);
 
     public static void apply(List<ColorEffect> effects, List<GrainEffect> grainEffects)
     {
@@ -706,6 +746,9 @@ public class ColorGradeRenderer
         float heatScale = 0F;
         float time = 0F;
         float pixelation = 0F;
+        float dof = 0F;
+        float dofFocus = 8.0F;
+        float dofBlur = 1.0F;
         float lensCenterX = 0.5F;
         float lensCenterY = 0.5F;
         float radialBlurCenterX = 0.5F;
@@ -755,6 +798,12 @@ public class ColorGradeRenderer
                 if (Math.abs(e.heatSpeed) > Math.abs(heatSpeed)) heatSpeed = e.heatSpeed;
                 if (Math.abs(e.heatScale) > Math.abs(heatScale)) heatScale = e.heatScale;
                 if (Math.abs(e.pixelation) > Math.abs(pixelation)) pixelation = e.pixelation;
+                if (Math.abs(e.dof) > Math.abs(dof))
+                {
+                    dof = e.dof;
+                    dofFocus = e.dofFocus;
+                    dofBlur = e.dofBlur;
+                }
                 time = e.time;
             }
         }
@@ -808,6 +857,34 @@ public class ColorGradeRenderer
         GL20.glUniform1f(uHeatScale, 2.0F + heatScale * 35.0F);
         GL20.glUniform1f(uTime, time);
         GL20.glUniform1f(uPixelation, Math.max(0F, pixelation * 16F));
+        int depthId = mc.getFramebuffer().getDepthAttachment();
+        boolean hasDepth = depthId > 0;
+
+        if (hasDepth)
+        {
+            GL13.glActiveTexture(GL13.GL_TEXTURE1);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, depthId);
+            GL20.glUniform1i(uDepth, 1);
+            GL20.glUniform1f(uDof, dof);
+            GL20.glUniform1f(uDofFocus, dofFocus);
+            GL20.glUniform1f(uDofBlur, dofBlur);
+
+            org.joml.Matrix4f viewMat = RenderSystem.getModelViewMatrix();
+            org.joml.Matrix4f projMat = RenderSystem.getProjectionMatrix();
+
+            matrixBuffer.clear();
+            viewMat.get(matrixBuffer);
+            GL20.glUniformMatrix4fv(uView, false, matrixBuffer);
+
+            matrixBuffer.clear();
+            projMat.get(matrixBuffer);
+            GL20.glUniformMatrix4fv(uProjection, false, matrixBuffer);
+        }
+        else
+        {
+            GL20.glUniform1f(uDof, 0F);
+            GL20.glUniform1f(uDofBlur, 0F);
+        }
 
         GL30.glBindVertexArray(vao);
         GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 6);
@@ -816,6 +893,12 @@ public class ColorGradeRenderer
         GL20.glUseProgram(0);
         tempTex.unbind();
         GL11.glEnable(GL11.GL_BLEND);
+        if (hasDepth)
+        {
+            GL13.glActiveTexture(GL13.GL_TEXTURE1);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+            GL13.glActiveTexture(GL13.GL_TEXTURE0);
+        }
         GL11.glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
         fb.beginWrite(false);
     }
@@ -944,6 +1027,12 @@ public class ColorGradeRenderer
         uHeatScale = GL20.glGetUniformLocation(program, "u_heatScale");
         uTime = GL20.glGetUniformLocation(program, "u_time");
         uPixelation = GL20.glGetUniformLocation(program, "u_pixelation");
+        uDepth = GL20.glGetUniformLocation(program, "u_depth");
+        uDof = GL20.glGetUniformLocation(program, "u_dof");
+        uDofFocus = GL20.glGetUniformLocation(program, "u_dofFocus");
+        uDofBlur = GL20.glGetUniformLocation(program, "u_dofBlur");
+        uView = GL20.glGetUniformLocation(program, "u_view");
+        uProjection = GL20.glGetUniformLocation(program, "u_projection");
 
         /* Fullscreen quad VAO/VBO (NDC coords + UV) */
         vao = GL30.glGenVertexArrays();

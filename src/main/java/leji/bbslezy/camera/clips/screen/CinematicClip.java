@@ -35,6 +35,8 @@ public class CinematicClip extends CameraClip
     public static final double DEFAULT_RADIAL_BLUR_CENTER_Y = 0.5D;
     public static final double DEFAULT_LIGHT_LEAK_CENTER_X = 0.0D;
     public static final double DEFAULT_LIGHT_LEAK_CENTER_Y = 0.4D;
+    public static final double DEFAULT_DOF_FOCUS = 8.0D;
+    public static final double DEFAULT_DOF_BLUR = 1.0D;
 
     /* Vintage & Retro */
     public final KeyframeChannel<Double> vintage = new KeyframeChannel<>("vintage", KeyframeFactories.DOUBLE);
@@ -63,6 +65,11 @@ public class CinematicClip extends CameraClip
     public final KeyframeChannel<Double> chromaticAberration = new KeyframeChannel<>("chromatic_aberration", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> chromaticAberrationCenterX = new KeyframeChannel<>("chromatic_aberration_center_x", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> chromaticAberrationCenterY = new KeyframeChannel<>("chromatic_aberration_center_y", KeyframeFactories.DOUBLE);
+
+    /* Depth of Field */
+    public final KeyframeChannel<Double> depthOfField = new KeyframeChannel<>("depth_of_field", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> dofFocus = new KeyframeChannel<>("dof_focus", KeyframeFactories.DOUBLE);
+    public final KeyframeChannel<Double> dofBlur = new KeyframeChannel<>("dof_blur", KeyframeFactories.DOUBLE);
 
     /* Atmosphere & Environment */
     public final KeyframeChannel<Double> rain = new KeyframeChannel<>("rain", KeyframeFactories.DOUBLE);
@@ -112,6 +119,11 @@ public class CinematicClip extends CameraClip
             this.chromaticAberration,
             this.chromaticAberrationCenterX,
             this.chromaticAberrationCenterY,
+
+            /* Depth of Field */
+            this.depthOfField,
+            this.dofFocus,
+            this.dofBlur,
 
             /* Atmosphere */
             this.rain,
@@ -249,6 +261,9 @@ public class CinematicClip extends CameraClip
         float hsp = (this.heatSpeed.isEmpty() ? 1F : (float) (double) this.heatSpeed.interpolate(t)) * 0.25F;
         float hsc = (this.heatScale.isEmpty() ? 1F : (float) (double) this.heatScale.interpolate(t)) * 0.25F;
         float px = (this.pixelation.isEmpty() ? 0F : (float) (double) this.pixelation.interpolate(t));
+        float dof = (this.depthOfField.isEmpty() ? 0F : (float) (double) this.depthOfField.interpolate(t)) * 0.10F;
+        float dofFoc = interpolateOrDefault(this.dofFocus, t, DEFAULT_DOF_FOCUS);
+        float dofBlr = interpolateOrDefault(this.dofBlur, t, DEFAULT_DOF_BLUR);
         float lensCX = interpolateOrDefault(this.lensCenterX, t, DEFAULT_LENS_CENTER_X);
         float lensCY = interpolateOrDefault(this.lensCenterY, t, DEFAULT_LENS_CENTER_Y);
         float rbCX = interpolateOrDefault(this.radialBlurCenterX, t, DEFAULT_RADIAL_BLUR_CENTER_X);
@@ -278,7 +293,7 @@ public class CinematicClip extends CameraClip
             }
         }
 
-        if (ca != 0F || vh != 0F || ld != 0F || vt != 0F || rb != 0F || rn != 0F || ds != 0F || ll != 0F || hs != 0F || px != 0F)
+        if (ca != 0F || vh != 0F || ld != 0F || vt != 0F || rb != 0F || rn != 0F || ds != 0F || ll != 0F || hs != 0F || px != 0F || dof != 0F)
         {
             this.colorEffect.hasCinematic = true;
             this.colorEffect.chromaticAberration = ca * factor;
@@ -308,6 +323,9 @@ public class CinematicClip extends CameraClip
             this.colorEffect.time = t / 20.0F;
             this.colorEffect.layer = this.layer.get();
             this.colorEffect.renderOrder = context.count;
+            this.colorEffect.dof = dof * factor;
+            this.colorEffect.dofFocus = dofFoc;
+            this.colorEffect.dofBlur = dofBlr;
 
             ColorClip.getEffects(context).add(this.colorEffect);
         }
