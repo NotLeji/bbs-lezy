@@ -74,6 +74,7 @@ Thanks again to ElgatoPro300 :D
 | BBS FS    | 2.7-1.20.1                               |
 | Sodium    | 0.5.8                                    |
 | Iris      | Opsional (untuk dukungan shader)         |
+| ffmpeg    | Kamu install sendiri (tidak dibundel)    |
 
 ### Install
 
@@ -120,6 +121,7 @@ Hasilnya ada di `build/libs/bbs-lezy-<versi>.jar`.
 - **Budget dihitung sebagai squared distance** — nggak ada `sqrt` dan nggak ada alokasi `Vec3d` per form, biar murah pas ribuan actor.
 - Form yang terkunci ke kamera (`anchor` punya target) nggak ikut di-cull, sama seperti behavior bawaan BBS.
 - Editor click tetap bisa select actor yang lagi di-cap — pass picking di-skip dari culling.
+- **ffmpeg tetap eksternal**: fitur audio/video manggil binary `ffmpeg` yang kamu sediakan sendiri (lewat `PATH` atau setting BBS) sebagai proses terpisah — nggak ada kode/binary ffmpeg yang di-link atau dibundel bareng mod ini.
 
 ## Credit
 
