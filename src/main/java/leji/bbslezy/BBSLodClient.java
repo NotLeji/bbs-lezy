@@ -28,6 +28,7 @@ import mchorse.bbs_mod.api.client.events.RegisterFormPanelsEvent;
 import mchorse.bbs_mod.api.client.events.RegisterFrameOverlaysEvent;
 import mchorse.bbs_mod.api.client.events.RegisterKeyframeEditorsEvent;
 import mchorse.bbs_mod.l10n.L10n;
+import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.ui.film.clips.actions.UIDamageActionClip;
 import mchorse.bbs_mod.ui.framework.elements.input.keyframes.factories.UIKeyframeFactory;
 import mchorse.bbs_mod.utils.colors.Colors;
@@ -135,6 +136,10 @@ public class BBSLodClient implements BBSAddonMod
         UIKeyframeFactory.register(LensRadiusSettingsKeyframeFactory.INSTANCE, UILensRadiusSettingsKeyframeFactory::new);
         TrackStyle.register("illusion", Icons.POSE, Colors.DEEP_PINK);
         TrackStyle.register("illusion_transform", Icons.ALL_DIRECTIONS, 0xdd66ff);
+        TrackStyle.register("bbslezy_volume", Icons.SOUND, Colors.ACTIVE);
+        TrackStyle.registerLabel("bbslezy_volume", IKey.constant("Volume"));
+        TrackStyle.register("volume", Icons.SOUND, Colors.ACTIVE);
+        TrackStyle.registerLabel("volume", IKey.constant("Volume"));
         FormRenderEvents.AFTER.register(FormIllusionRenderer::render);
         FilmEvents.SHUTDOWN.register((film) -> LezyAudioReverse.clear());
     }

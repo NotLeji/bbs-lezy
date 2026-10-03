@@ -3,6 +3,7 @@ package leji.bbslezy.mixin.client;
 import leji.bbslezy.audio.LezyAudioReverse;
 import mchorse.bbs_mod.camera.clips.misc.AudioClip;
 import mchorse.bbs_mod.l10n.L10n;
+import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.settings.values.numeric.ValueBoolean;
 import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.ui.film.UIClipsPanel;
@@ -13,6 +14,8 @@ import mchorse.bbs_mod.ui.film.utils.keyframes.UIFilmKeyframes;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIToggle;
 import mchorse.bbs_mod.ui.framework.elements.input.keyframes.UIKeyframeEditor;
+import mchorse.bbs_mod.ui.framework.elements.input.keyframes.UIKeyframeSheet;
+import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.utils.clips.Clips;
 import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
@@ -125,7 +128,17 @@ public abstract class UIAudioClipMixin<T extends AudioClip> extends UIClip<T>
 
         if (volumeChannel != null)
         {
-            this.bbslezy$keyframes.setChannel(volumeChannel, Colors.ACTIVE);
+            this.bbslezy$keyframes.view.removeAllSheets();
+            UIKeyframeSheet sheet = new UIKeyframeSheet(
+                "volume",
+                IKey.constant("Volume"),
+                Colors.ACTIVE,
+                volumeChannel,
+                null
+            );
+            sheet.icon(Icons.SOUND);
+            this.bbslezy$keyframes.view.addSheet(sheet);
+            this.bbslezy$keyframes.view.pickKeyframe(null);
         }
     }
 }
