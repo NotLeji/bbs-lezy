@@ -17,8 +17,36 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LezyAudioReverse
 {
     public static final String KEY_REVERSE = "bbslezy_reverse";
+    public static final String REVERSED_SOURCE = "bbslezy_rev";
 
     private static final Map<Link, SoundBuffer> REVERSED = new ConcurrentHashMap<>();
+
+    public static Link toReversedLink(Link link)
+    {
+        if (link == null)
+        {
+            return null;
+        }
+
+        return new Link(REVERSED_SOURCE, link.source + "/" + link.path);
+    }
+
+    public static Link fromReversedLink(Link link)
+    {
+        if (link == null || !REVERSED_SOURCE.equals(link.source))
+        {
+            return link;
+        }
+
+        int idx = link.path.indexOf('/');
+
+        if (idx < 0)
+        {
+            return Link.assets(link.path);
+        }
+
+        return new Link(link.path.substring(0, idx), link.path.substring(idx + 1));
+    }
 
     public static boolean isEnabled(AudioClip clip)
     {
@@ -73,7 +101,8 @@ public class LezyAudioReverse
         {
             try
             {
-                Wave wave = AudioReader.read(BBSMod.getProvider(), l);
+                Link originalLink = REVERSED_SOURCE.equals(l.source) ? fromReversedLink(l) : l;
+                Wave wave = AudioReader.read(BBSMod.getProvider(), originalLink);
 
                 if (wave != null)
                 {

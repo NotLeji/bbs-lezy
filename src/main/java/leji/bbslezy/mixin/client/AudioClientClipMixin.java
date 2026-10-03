@@ -48,7 +48,8 @@ public abstract class AudioClientClipMixin
 
                 if (link != null)
                 {
-                    SoundBuffer rev = LezyAudioReverse.getReversed(link);
+                    Link revLink = LezyAudioReverse.toReversedLink(link);
+                    SoundBuffer rev = LezyAudioReverse.getReversed(revLink);
                     float tickTime = t / 20F;
                     Map<Object, Object> playback = (Map) AudioClientClip.getPlayback(context);
 
@@ -69,7 +70,7 @@ public abstract class AudioClientClipMixin
                     {
                         if (rev == null || context.relativeTick >= self.duration.get() || tickTime < 0F)
                         {
-                            Object pb = bbslezy$playbackConstructor.newInstance(link, -1F, gain);
+                            Object pb = bbslezy$playbackConstructor.newInstance(revLink, -1F, gain);
                             playback.put(self, pb);
                         }
                         else
@@ -79,7 +80,7 @@ public abstract class AudioClientClipMixin
                                 - TimeUtils.toSeconds(self.duration.get())
                                 + tickTime;
 
-                            Object pb = bbslezy$playbackConstructor.newInstance(link, Math.max(0F, q), gain);
+                            Object pb = bbslezy$playbackConstructor.newInstance(revLink, Math.max(0F, q), gain);
                             playback.put(self, pb);
                         }
                     }

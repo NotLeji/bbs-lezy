@@ -30,6 +30,7 @@
         "AudioClipMixin",
         "UIAudioClipMixin",
         "AudioClientClipMixin",
+        "SoundManagerMixin",
         "AudioRendererMixin"
     ],
     "injectors": {
