@@ -65,9 +65,6 @@ public class ColorEffect implements LayeredEffect
     public float heatScale;
     public float time;
     public float pixelation;
-    public float dof;
-    public float dofFocus;
-    public float dofBlur;
 
     public void reset()
     {
@@ -105,8 +102,5 @@ public class ColorEffect implements LayeredEffect
         this.heatScale = 0F;
         this.time = 0F;
         this.pixelation = 0F;
-        this.dof = 0F;
-        this.dofFocus = 8.0F;
-        this.dofBlur = 1.0F;
     }
 }
