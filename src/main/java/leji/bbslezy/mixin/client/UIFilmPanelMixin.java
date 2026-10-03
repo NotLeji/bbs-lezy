@@ -59,4 +59,22 @@ public abstract class UIFilmPanelMixin
         catch (Throwable ignored)
         {}
     }
+
+    @Inject(method = "enterEditing", at = @At("TAIL"))
+    private void bbslezy$onEnterEditing(CallbackInfo ci)
+    {
+        leji.bbslezy.ui.LezyPreviewSnap.onEnter((UIFilmPanel) (Object) this);
+    }
+
+    @Inject(method = "leaveEditing", at = @At("TAIL"))
+    private void bbslezy$onLeaveEditing(CallbackInfo ci)
+    {
+        leji.bbslezy.ui.LezyPreviewSnap.onLeave((UIFilmPanel) (Object) this);
+    }
+
+    @Inject(method = "update", at = @At("RETURN"))
+    private void bbslezy$onUpdate(CallbackInfo ci)
+    {
+        leji.bbslezy.ui.LezyPreviewSnap.onUpdate((UIFilmPanel) (Object) this);
+    }
 }
