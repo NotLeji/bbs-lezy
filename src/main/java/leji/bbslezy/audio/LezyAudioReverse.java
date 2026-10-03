@@ -9,6 +9,7 @@ import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.settings.values.base.BaseValue;
 import mchorse.bbs_mod.settings.values.numeric.ValueBoolean;
 import mchorse.bbs_mod.settings.values.core.ValueGroup;
+import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -17,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class LezyAudioReverse
 {
     public static final String KEY_REVERSE = "bbslezy_reverse";
+    public static final String KEY_VOLUME_CHANNEL = "bbslezy_volume";
     public static final String REVERSED_SOURCE = "bbslezy_rev";
 
     private static final Map<Link, SoundBuffer> REVERSED = new ConcurrentHashMap<>();
@@ -46,6 +48,51 @@ public class LezyAudioReverse
         }
 
         return new Link(link.path.substring(0, idx), link.path.substring(idx + 1));
+    }
+
+    public static KeyframeChannel<Double> getVolumeChannel(AudioClip clip)
+    {
+        if (clip == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            BaseValue value = ((ValueGroup) (Object) clip).get(KEY_VOLUME_CHANNEL);
+
+            if (value instanceof KeyframeChannel<?> channel)
+            {
+                return (KeyframeChannel<Double>) channel;
+            }
+        }
+        catch (Throwable ignored)
+        {}
+
+        return null;
+    }
+
+    public static float computeGain(AudioClip clip, float tickTime)
+    {
+        if (clip == null)
+        {
+            return 1F;
+        }
+
+        float gain = clip.volume.get();
+
+        KeyframeChannel<Double> volumeChannel = getVolumeChannel(clip);
+
+        if (volumeChannel != null && !volumeChannel.isEmpty())
+        {
+            gain = (float) (double) volumeChannel.interpolate(tickTime);
+        }
+        else if (clip.envelope != null && clip.envelope.keyframes.get())
+        {
+            gain *= clip.envelope.factorEnabled(clip.duration.get(), tickTime);
+        }
+
+        return Math.max(0F, gain);
     }
 
     public static boolean isEnabled(AudioClip clip)
@@ -163,10 +210,13 @@ public class LezyAudioReverse
                 wave.data.clone()
             );
 
-            boolean keyed = clip.envelope != null && clip.envelope.keyframes.get();
+            KeyframeChannel<Double> volumeChannel = getVolumeChannel(clip);
+            boolean hasVolumeKeyframes = volumeChannel != null && !volumeChannel.isEmpty();
+            boolean hasEnvelopeKeyframes = clip.envelope != null && clip.envelope.keyframes.get();
+            boolean hasGainCurve = hasVolumeKeyframes || hasEnvelopeKeyframes;
             boolean reverse = isEnabled(clip);
 
-            if (keyed && work.getBytesPerSample() == 2)
+            if (hasGainCurve && work.getBytesPerSample() == 2)
             {
                 byte[] data = work.data;
                 int channels = work.numChannels;
@@ -177,13 +227,24 @@ public class LezyAudioReverse
                 for (int f = 0; f < totalFrames; f++)
                 {
                     float clipTick = f * 20F / (float) sampleRate;
-                    float envelopeGain = clip.envelope.factorEnabled(clip.duration.get(), clipTick);
+                    float gain;
+
+                    if (hasVolumeKeyframes)
+                    {
+                        gain = (float) (double) volumeChannel.interpolate(clipTick);
+                    }
+                    else
+                    {
+                        gain = clip.volume.get() * clip.envelope.factorEnabled(clip.duration.get(), clipTick);
+                    }
+
+                    gain = Math.max(0F, gain);
 
                     for (int ch = 0; ch < channels; ch++)
                     {
                         int byteIdx = f * frameBytes + ch * 2;
                         short sample = (short) ((data[byteIdx] & 0xFF) | (data[byteIdx + 1] << 8));
-                        int scaled = Math.round(sample * envelopeGain);
+                        int scaled = Math.round(sample * gain);
                         scaled = Math.max(-32768, Math.min(32767, scaled));
 
                         data[byteIdx] = (byte) (scaled & 0xFF);
@@ -200,7 +261,8 @@ public class LezyAudioReverse
                 finalShift = wave.getDuration() - shift - duration;
             }
 
-            finalWave.add(buffer, work, tick, finalShift, duration, baseGain);
+            float finalGain = hasGainCurve ? 1F : baseGain;
+            finalWave.add(buffer, work, tick, finalShift, duration, finalGain);
         }
         catch (Throwable t)
         {

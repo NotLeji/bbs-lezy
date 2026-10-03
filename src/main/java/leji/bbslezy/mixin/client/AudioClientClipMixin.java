@@ -8,6 +8,7 @@ import mchorse.bbs_mod.camera.data.Position;
 import mchorse.bbs_mod.camera.utils.TimeUtils;
 import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.utils.clips.ClipContext;
+import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -28,15 +29,17 @@ public abstract class AudioClientClipMixin
         {
             AudioClip self = (AudioClip) (Object) this;
             boolean reverse = LezyAudioReverse.isEnabled(self);
+            KeyframeChannel<Double> volumeChannel = LezyAudioReverse.getVolumeChannel(self);
+            boolean hasVolumeKeyframes = volumeChannel != null && !volumeChannel.isEmpty();
             boolean keyed = self.envelope != null && self.envelope.keyframes.get();
 
-            if (!reverse && !keyed)
+            if (!reverse && !hasVolumeKeyframes && !keyed)
             {
                 return;
             }
 
             float t = context.relativeTick + context.transition;
-            float gain = self.volume.get() * (keyed ? self.envelope.factorEnabled(self.duration.get(), t) : 1F);
+            float gain = LezyAudioReverse.computeGain(self, t);
 
             if (!reverse)
             {

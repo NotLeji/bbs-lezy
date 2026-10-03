@@ -86,5 +86,7 @@
 	"bbslezy.ui.forms.editors.general.illusion_gradual_invert": "Invert Gradual",
 	"bbslezy.ui.forms.editors.general.illusion_gradual_invert-tooltip": "Inverts the transform ramp.",
 	"bbslezy.ui.audio.reverse": "Reverse audio",
-	"bbslezy.ui.audio.reverse.tooltip": "Play this clip's audio from the end of its duration backwards"
+	"bbslezy.ui.audio.reverse.tooltip": "Play this clip's audio from the end of its duration backwards",
+	"bbslezy.ui.audio.keyframes": "Volume Keyframes",
+	"bbslezy.ui.audio.keyframes.tooltip": "Open dope sheet track editor to animate audio volume over time"
 }
