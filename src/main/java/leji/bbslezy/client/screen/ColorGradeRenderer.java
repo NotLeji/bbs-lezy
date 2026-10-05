@@ -2,6 +2,7 @@ package leji.bbslezy.client.screen;
 
 import leji.bbslezy.camera.clips.screen.ColorEffect;
 import leji.bbslezy.camera.clips.screen.GrainEffect;
+import leji.bbslezy.camera.clips.screen.HalftoneEffect;
 import mchorse.bbs_mod.graphics.texture.Texture;
 import mchorse.bbs_mod.graphics.texture.TextureFormat;
 import mchorse.bbs_mod.ui.framework.elements.utils.Batcher2D;
@@ -97,6 +98,14 @@ public class ColorGradeRenderer
             uniform float u_motionTrail;
             uniform vec2 u_motionVelocity;
             uniform sampler2D u_trailTex;
+            /* Halftone */
+            uniform int u_halftoneEnabled;
+            uniform int u_halftoneMode;
+            uniform vec3 u_halftoneInk;
+            uniform float u_halftoneCells;
+            uniform float u_halftoneHighlightThresh;
+            uniform float u_halftoneDotSoftness;
+            uniform float u_halftoneAngle;
 
             /* --- HSL helpers --- */
 
@@ -399,6 +408,48 @@ public class ColorGradeRenderer
                     rgb = hsl2rgb(hsl);
                 }
 
+                /* Halftone (Screen-tone) */
+                if (u_halftoneEnabled == 1 && u_halftoneCells > 0.0)
+                {
+                    vec2 texSize = vec2(textureSize(u_sampler, 0));
+                    float invAspect = texSize.y / texSize.x;
+                    vec2 centered = distortedUV - 0.5;
+                    vec2 aspectPos = vec2(centered.x, centered.y * invAspect);
+
+                    float rad = radians(u_halftoneAngle);
+                    float cosA = cos(rad);
+                    float sinA = sin(rad);
+                    vec2 rotPos = vec2(aspectPos.x * cosA - aspectPos.y * sinA, aspectPos.x * sinA + aspectPos.y * cosA);
+
+                    vec2 grid = rotPos * u_halftoneCells;
+                    vec2 cellIndex = floor(grid);
+                    vec2 local = fract(grid);
+
+                    vec2 cellCenterRot = (cellIndex + 0.5) / u_halftoneCells;
+                    vec2 unrotAspect = vec2(cellCenterRot.x * cosA + cellCenterRot.y * sinA, -cellCenterRot.x * sinA + cellCenterRot.y * cosA);
+                    vec2 sampleUV = clamp(vec2(unrotAspect.x, unrotAspect.y / invAspect) + 0.5, 0.0, 1.0);
+
+                    vec3 cellSample = texture(u_sampler, sampleUV).rgb;
+                    float lum = dot(cellSample, vec3(0.2126, 0.7152, 0.0722));
+
+                    float hThresh = max(0.01, u_halftoneHighlightThresh);
+                    float darkness = clamp((hThresh - lum) / hThresh, 0.0, 1.0);
+
+                    float r = 0.71 * sqrt(darkness);
+                    float dist = length(local - vec2(0.5));
+                    float softness = max(0.001, u_halftoneDotSoftness);
+                    float mask = smoothstep(r + softness, r - softness, dist);
+
+                    if (darkness <= 0.0001)
+                    {
+                        mask = 0.0;
+                    }
+
+                    vec3 paper = vec3(1.0);
+                    vec3 ink = (u_halftoneMode == 1) ? rgb : u_halftoneInk;
+                    rgb = mix(paper, ink, mask);
+                }
+
                 /* 5 — Vignette (radial, smooth) */
                 if (u_vigStr > 0.001)
                 {
@@ -526,7 +577,7 @@ public class ColorGradeRenderer
             }
             """;
 
-    private static final int SHADER_VERSION = 27;
+    private static final int SHADER_VERSION = 28;
     private static int loadedShaderVersion;
     private static boolean initialized;
     private static boolean failed;
@@ -582,14 +633,27 @@ public class ColorGradeRenderer
     private static int uMotionTrail;
     private static int uMotionVelocity;
     private static int uTrailTex;
+    private static int uHalftoneEnabled;
+    private static int uHalftoneMode;
+    private static int uHalftoneInk;
+    private static int uHalftoneCells;
+    private static int uHalftoneHighlightThresh;
+    private static int uHalftoneDotSoftness;
+    private static int uHalftoneAngle;
 
     public static void apply(List<ColorEffect> effects, List<GrainEffect> grainEffects)
+    {
+        apply(effects, grainEffects, List.of());
+    }
+
+    public static void apply(List<ColorEffect> effects, List<GrainEffect> grainEffects, List<HalftoneEffect> halftoneEffects)
     {
         boolean needVignette = false;
         boolean needGrade = false;
         boolean needGrain = false;
         boolean needDistort = false;
         boolean needCinematic = false;
+        boolean needHalftone = false;
 
         for (ColorEffect e : effects)
         {
@@ -604,7 +668,25 @@ public class ColorGradeRenderer
             if (e.strength > 0F) needGrain = true;
         }
 
-        if (!needVignette && !needGrade && !needGrain && !needDistort && !needCinematic)
+        int halftoneMode = HalftoneEffect.MODE_BW;
+        int halftoneInk = 0xff000000;
+        float halftoneCells = 130F;
+        float halftoneHighlightThresh = 0.85F;
+        float halftoneDotSoftness = 0.05F;
+        float halftoneAngle = 45F;
+
+        for (HalftoneEffect h : halftoneEffects)
+        {
+            needHalftone = true;
+            halftoneMode = h.mode;
+            halftoneInk = h.inkColor;
+            halftoneCells = h.cells;
+            halftoneHighlightThresh = h.highlightThreshold;
+            halftoneDotSoftness = h.dotSoftness;
+            halftoneAngle = h.angle;
+        }
+
+        if (!needVignette && !needGrade && !needGrain && !needDistort && !needCinematic && !needHalftone)
         {
             return;
         }
@@ -871,6 +953,20 @@ public class ColorGradeRenderer
         GL20.glUniform1f(uMotionTrail, motionTrail);
         GL20.glUniform2f(uMotionVelocity, velX, velY);
 
+
+        GL20.glUniform1i(uHalftoneEnabled, needHalftone ? 1 : 0);
+        if (needHalftone)
+        {
+            GL20.glUniform1i(uHalftoneMode, halftoneMode);
+            float inkR = ((halftoneInk >> 16) & 0xFF) / 255.0F;
+            float inkG = ((halftoneInk >> 8) & 0xFF) / 255.0F;
+            float inkB = (halftoneInk & 0xFF) / 255.0F;
+            GL20.glUniform3f(uHalftoneInk, inkR, inkG, inkB);
+            GL20.glUniform1f(uHalftoneCells, halftoneCells);
+            GL20.glUniform1f(uHalftoneHighlightThresh, halftoneHighlightThresh);
+            GL20.glUniform1f(uHalftoneDotSoftness, halftoneDotSoftness);
+            GL20.glUniform1f(uHalftoneAngle, halftoneAngle);
+        }
         /* Bind trail texture to unit 1 */
         setupTrailBuffer(fbW, fbH);
         GL13.glActiveTexture(GL13.GL_TEXTURE1);
@@ -1029,6 +1125,13 @@ public class ColorGradeRenderer
         uMotionTrail = GL20.glGetUniformLocation(program, "u_motionTrail");
         uMotionVelocity = GL20.glGetUniformLocation(program, "u_motionVelocity");
         uTrailTex = GL20.glGetUniformLocation(program, "u_trailTex");
+        uHalftoneEnabled = GL20.glGetUniformLocation(program, "u_halftoneEnabled");
+        uHalftoneMode = GL20.glGetUniformLocation(program, "u_halftoneMode");
+        uHalftoneInk = GL20.glGetUniformLocation(program, "u_halftoneInk");
+        uHalftoneCells = GL20.glGetUniformLocation(program, "u_halftoneCells");
+        uHalftoneHighlightThresh = GL20.glGetUniformLocation(program, "u_halftoneHighlightThresh");
+        uHalftoneDotSoftness = GL20.glGetUniformLocation(program, "u_halftoneDotSoftness");
+        uHalftoneAngle = GL20.glGetUniformLocation(program, "u_halftoneAngle");
 
         /* Fullscreen quad VAO/VBO (NDC coords + UV) */
         vao = GL30.glGenVertexArrays();

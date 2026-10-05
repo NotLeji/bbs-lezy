@@ -46,6 +46,7 @@
 	"bbs.ui.camera.clips.bbs:letterbox": "Letterbox (Black Bars)",
 	"bbs.ui.camera.clips.bbs:cinematic": "Cinematic Effect",
 	"bbs.ui.camera.clips.bbs:vignette": "Vignette",
+	"bbs.ui.camera.clips.bbs:halftone": "Halftone (Screen-tone)",
 	"bbs.ui.textures.player_skin-title": "Download Player Skin",
 	"bbs.ui.textures.player_skin-description": "Enter a Minecraft Java username to download their skin.\n\nTip: You can also use \"player:<name>\" directly in any texture path.",
 	"bbslezy.ui.forms.editors.illusion": "Illusion",

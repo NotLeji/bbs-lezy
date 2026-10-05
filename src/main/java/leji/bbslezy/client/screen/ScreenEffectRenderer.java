@@ -4,6 +4,8 @@ import leji.bbslezy.camera.clips.screen.CinematicClip;
 import leji.bbslezy.camera.clips.screen.ColorClip;
 import leji.bbslezy.camera.clips.screen.ColorEffect;
 import leji.bbslezy.camera.clips.screen.GrainEffect;
+import leji.bbslezy.camera.clips.screen.HalftoneClip;
+import leji.bbslezy.camera.clips.screen.HalftoneEffect;
 import leji.bbslezy.camera.clips.screen.LetterboxClip;
 import leji.bbslezy.camera.clips.screen.LayeredEffect;
 import leji.bbslezy.camera.clips.screen.LetterboxEffect;
@@ -41,8 +43,9 @@ public class ScreenEffectRenderer
         List<ColorEffect> effects = ColorClip.getEffects(context);
         List<LetterboxEffect> letterboxEffects = LetterboxClip.getEffects(context);
         List<GrainEffect> grainEffects = CinematicClip.getGrainEffects(context);
+        List<HalftoneEffect> halftoneEffects = HalftoneClip.getEffects(context);
 
-        if (effects.isEmpty() && letterboxEffects.isEmpty() && grainEffects.isEmpty())
+        if (effects.isEmpty() && letterboxEffects.isEmpty() && grainEffects.isEmpty() && halftoneEffects.isEmpty())
         {
             return;
         }
@@ -51,25 +54,34 @@ public class ScreenEffectRenderer
         GL11.glGetIntegerv(GL11.GL_VIEWPORT, prevViewport);
         RenderSystem.disableDepthTest();
 
-        for (int layer : collectLayers(effects, letterboxEffects, grainEffects))
+        for (int layer : collectLayers(effects, letterboxEffects, grainEffects, halftoneEffects))
         {
-            renderLayer(batcher, layer, screenW, screenH, effects, letterboxEffects, grainEffects);
+            renderLayer(batcher, layer, screenW, screenH, effects, letterboxEffects, grainEffects, halftoneEffects);
         }
 
         effects.clear();
         letterboxEffects.clear();
         grainEffects.clear();
+        halftoneEffects.clear();
 
         GL11.glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
         RenderSystem.enableDepthTest();
     }
 
-    /** One track's worth of the frame: the tint it lays down, the pass over it, the bars on top. */
     public static void renderLayer(Batcher2D batcher, int layer, int screenW, int screenH,
         List<ColorEffect> effects, List<LetterboxEffect> letterboxEffects, List<GrainEffect> grainEffects)
     {
+        renderLayer(batcher, layer, screenW, screenH, effects, letterboxEffects, grainEffects, List.of());
+    }
+
+    /** One track's worth of the frame: the tint it lays down, the pass over it, the bars on top. */
+    public static void renderLayer(Batcher2D batcher, int layer, int screenW, int screenH,
+        List<ColorEffect> effects, List<LetterboxEffect> letterboxEffects, List<GrainEffect> grainEffects,
+        List<HalftoneEffect> halftoneEffects)
+    {
         List<ColorEffect> shaderEffects = new ArrayList<>();
         List<GrainEffect> layerGrain = new ArrayList<>();
+        List<HalftoneEffect> layerHalftone = new ArrayList<>();
 
         for (ColorEffect effect : effects)
         {
@@ -97,14 +109,21 @@ public class ScreenEffectRenderer
             }
         }
 
-        /* Shader pass: vintage flicker, scratches, color grade, fisheye, grain, and the rest. */
-        if (!shaderEffects.isEmpty() || !layerGrain.isEmpty())
+        for (HalftoneEffect effect : halftoneEffects)
         {
-            batcher.flush();
-            ColorGradeRenderer.apply(shaderEffects, layerGrain);
-            ColorGradeRenderer.resyncMinecraftState(batcher);
+            if (effect.layer() == layer)
+            {
+                layerHalftone.add(effect);
+            }
         }
 
+        /* Shader pass: vintage flicker, scratches, color grade, fisheye, grain, halftone, and the rest. */
+        if (!shaderEffects.isEmpty() || !layerGrain.isEmpty() || !layerHalftone.isEmpty())
+        {
+            batcher.flush();
+            ColorGradeRenderer.apply(shaderEffects, layerGrain, layerHalftone);
+            ColorGradeRenderer.resyncMinecraftState(batcher);
+        }
         /* Letterbox bars, over the frame, on an ortho projection matrix of our own. */
         for (LetterboxEffect le : letterboxEffects)
         {
@@ -133,11 +152,18 @@ public class ScreenEffectRenderer
      */
     static List<Integer> collectLayers(List<ColorEffect> effects, List<LetterboxEffect> letterboxEffects, List<GrainEffect> grainEffects)
     {
+        return collectLayers(effects, letterboxEffects, grainEffects, List.of());
+    }
+
+    static List<Integer> collectLayers(List<ColorEffect> effects, List<LetterboxEffect> letterboxEffects,
+        List<GrainEffect> grainEffects, List<HalftoneEffect> halftoneEffects)
+    {
         List<Integer> layers = new ArrayList<>();
 
         collectLayers(layers, effects);
         collectLayers(layers, letterboxEffects);
         collectLayers(layers, grainEffects);
+        collectLayers(layers, halftoneEffects);
 
         layers.sort(null);
 

@@ -183,4 +183,57 @@ class ScreenClipsTest
         assertEquals(2F, result.x, 1e-4F);
         assertEquals(3F, result.y, 1e-4F);
     }
+    @Test
+    void halftoneClip_properties()
+    {
+        HalftoneClip clip = new HalftoneClip();
+        assertNotNull(clip.create());
+        assertInstanceOf(HalftoneClip.class, clip.create());
+        assertEquals(4, clip.channels.length);
+        assertEquals(HalftoneEffect.MODE_BW, clip.mode.get());
+        assertEquals(0xff000000, clip.inkColor.get());
+        assertEquals("cells", clip.cells.getId());
+        assertEquals("highlight_threshold", clip.highlightThreshold.getId());
+        assertEquals("dot_softness", clip.dotSoftness.getId());
+        assertEquals("angle", clip.angle.getId());
+    }
+
+    @Test
+    void halftoneClip_applyClipDefaultsAndKeyframes()
+    {
+        HalftoneClip clip = new HalftoneClip();
+        ClipContext context = new ClipContext<HalftoneClip, Position>()
+        {
+            @Override
+            public boolean apply(Clip clip, Position position)
+            {
+                return false;
+            }
+        };
+        context.setup(0, 0, 0F);
+        Position position = new Position();
+
+        clip.apply(context, position);
+        List<HalftoneEffect> effects = HalftoneClip.getEffects(context);
+        assertEquals(1, effects.size());
+
+        HalftoneEffect effect = effects.get(0);
+        assertEquals(HalftoneEffect.MODE_BW, effect.mode);
+        assertEquals(0xff000000, effect.inkColor);
+        assertEquals(130F, effect.cells, 1e-4F);
+        assertEquals(0.85F, effect.highlightThreshold, 1e-4F);
+        assertEquals(0.05F, effect.dotSoftness, 1e-4F);
+        assertEquals(45F, effect.angle, 1e-4F);
+
+        // Test custom keyframed values
+        clip.cells.insert(0, 200.0);
+        clip.angle.insert(0, 30.0);
+        clip.mode.set(HalftoneEffect.MODE_COLOR);
+        effects.clear();
+        clip.apply(context, position);
+        assertEquals(1, effects.size());
+        assertEquals(HalftoneEffect.MODE_COLOR, effect.mode);
+        assertEquals(200F, effect.cells, 1e-4F);
+        assertEquals(30F, effect.angle, 1e-4F);
+    }
 }

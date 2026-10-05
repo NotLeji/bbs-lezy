@@ -7,11 +7,13 @@ import leji.bbslezy.camera.clips.screen.CinematicClip;
 import leji.bbslezy.camera.clips.screen.ColorClip;
 import leji.bbslezy.camera.clips.screen.LetterboxClip;
 import leji.bbslezy.camera.clips.screen.VignetteClip;
+import leji.bbslezy.camera.clips.screen.HalftoneClip;
 import leji.bbslezy.client.screen.ScreenEffectRenderer;
 import leji.bbslezy.ui.film.clips.UICinematicClip;
 import leji.bbslezy.ui.film.clips.UIColorClip;
 import leji.bbslezy.ui.film.clips.UILetterboxClip;
 import leji.bbslezy.ui.film.clips.UIVignetteClip;
+import leji.bbslezy.ui.film.clips.UIHalftoneClip;
 import leji.bbslezy.forms.renderers.FormIllusionRenderer;
 import leji.bbslezy.ui.forms.editors.panels.UIIllusionFormPanel;
 import leji.bbslezy.ui.framework.elements.input.keyframes.factories.UIIllusionKeyframeFactory;
@@ -84,6 +86,7 @@ public class BBSLodClient implements BBSAddonMod
         event.register(LetterboxClip.class, UILetterboxClip::new);
         event.register(CinematicClip.class, UICinematicClip::new);
         event.register(VignetteClip.class, UIVignetteClip::new);
+        event.register(HalftoneClip.class, UIHalftoneClip::new);
     }
 
     @Subscribe

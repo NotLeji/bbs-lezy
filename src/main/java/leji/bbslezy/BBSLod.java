@@ -8,6 +8,7 @@ import leji.bbslezy.camera.clips.screen.CinematicClip;
 import leji.bbslezy.camera.clips.screen.ColorClip;
 import leji.bbslezy.camera.clips.screen.LetterboxClip;
 import leji.bbslezy.camera.clips.screen.VignetteClip;
+import leji.bbslezy.camera.clips.screen.HalftoneClip;
 import leji.bbslezy.forms.utils.Illusion;
 import leji.bbslezy.forms.values.ValueIllusion;
 import leji.bbslezy.utils.keyframes.factories.IllusionKeyframeFactory;
@@ -76,5 +77,6 @@ public class BBSLod implements BBSAddonMod
         event.factory.register(Link.bbs("letterbox"), LetterboxClip.class, new ClipFactoryData(Icons.FULLSCREEN, 0x222222));
         event.factory.register(Link.bbs("cinematic"), CinematicClip.class, new ClipFactoryData(Icons.CAMERA, 0xff8800));
         event.factory.register(Link.bbs("vignette"), VignetteClip.class, new ClipFactoryData(Icons.CIRCLE, 0x333333));
+        event.factory.register(Link.bbs("halftone"), HalftoneClip.class, new ClipFactoryData(Icons.MORE, 0x111111));
     }
 }
