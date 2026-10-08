@@ -24,6 +24,8 @@ import leji.bbslezy.utils.keyframes.factories.LensRadiusSettingsKeyframeFactory;
 import leji.bbslezy.video.LezyEncoderProbe;
 import mchorse.bbs_mod.api.client.events.FormRenderEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import leji.bbslezy.ui.skin.SkinFetcher;
 import mchorse.bbs_mod.api.client.events.RegisterClipPanelsEvent;
 import mchorse.bbs_mod.film.replays.tracks.TrackStyle;
 import mchorse.bbs_mod.api.client.events.RegisterFormPanelsEvent;
@@ -146,5 +148,7 @@ public class BBSLodClient implements BBSAddonMod
         FormRenderEvents.AFTER.register(FormIllusionRenderer::render);
         FilmEvents.SHUTDOWN.register((film) -> LezyAudioReverse.clear());
         FilmEvents.SHUTDOWN.register((film) -> leji.bbslezy.client.screen.ColorGradeRenderer.clearTrail());
+        SkinFetcher.cleanupTempFolder();
+        ClientLifecycleEvents.CLIENT_STOPPING.register((client) -> SkinFetcher.cleanupTempFolder());
     }
 }

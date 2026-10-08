@@ -82,6 +82,7 @@ public class SkinFetcher
                 tempDir.mkdirs();
                 File tempFile = new File(tempDir, nickname.toLowerCase() + ".png");
                 ImageIO.write(normalized, "png", tempFile);
+                tempFile.deleteOnExit();
 
                 return tempFile;
             }
@@ -92,6 +93,27 @@ public class SkinFetcher
             }
         }, EXECUTOR).thenAccept(callback);
     }
+    public static void cleanupTempFolder()
+    {
+        try
+        {
+            File tempDir = new File(System.getProperty("java.io.tmpdir"), "bbslezy_skins");
+            if (tempDir.exists() && tempDir.isDirectory())
+            {
+                File[] files = tempDir.listFiles();
+                if (files != null)
+                {
+                    for (File f : files)
+                    {
+                        f.delete();
+                    }
+                }
+            }
+        }
+        catch (Throwable ignored)
+        {}
+    }
+
 
     private static String getOnlinePlayerSkinUrl(String nickname)
     {
