@@ -3,7 +3,6 @@ package leji.bbslezy.ui.skin;
 import mchorse.bbs_mod.forms.forms.ModelForm;
 import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.ui.forms.editors.utils.UIFormRenderer;
-import mchorse.bbs_mod.ui.framework.UIContext;
 
 public class SkinPreviewRenderer extends UIFormRenderer
 {
@@ -17,11 +16,5 @@ public class SkinPreviewRenderer extends UIFormRenderer
         this.setDistance(2.25F);
         this.setPosition(0.0F, 1.0F, 0.0F);
         this.setRotation(0.0F, 0.0F);
-    }
-
-    @Override
-    protected void renderUserModel(UIContext context)
-    {
-        super.renderUserModel(context);
     }
 }

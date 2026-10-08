@@ -1,6 +1,7 @@
 package leji.bbslezy.mixin.client;
 
 import leji.bbslezy.ui.skin.SkinSearchByNickPanel;
+import mchorse.bbs_mod.l10n.L10n;
 import mchorse.bbs_mod.ui.forms.editors.UIFormEditor;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIIcon;
 import mchorse.bbs_mod.ui.framework.elements.overlay.UIOverlay;
@@ -24,6 +25,7 @@ public class UIFormEditorMixin
                 SkinSearchByNickPanel panel = new SkinSearchByNickPanel(editor);
                 UIOverlay.addOverlay(editor.getContext(), panel, 320, 265);
             });
+            searchSkin.tooltip(L10n.lang("bbslezy.ui.skin.by_nickname"));
             editor.icons.add(searchSkin);
             editor.icons.resize();
         }

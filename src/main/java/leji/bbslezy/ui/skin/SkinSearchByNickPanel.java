@@ -327,6 +327,16 @@ public class SkinSearchByNickPanel extends UIOverlayPanel
     private void clearPreview()
     {
         this.previewTexture = null;
+        if (!this.nickname.isEmpty())
+        {
+            try
+            {
+                Link tempLink = Link.bbs("bbslezy_temp_skin_" + this.nickname.trim().toLowerCase());
+                BBSModClient.getTextures().delete(tempLink);
+            }
+            catch (Throwable ignored)
+            {}
+        }
         this.clearPreview3D();
     }
 
