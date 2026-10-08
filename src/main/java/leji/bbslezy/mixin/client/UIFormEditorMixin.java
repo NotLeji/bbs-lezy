@@ -21,8 +21,8 @@ public class UIFormEditorMixin
             UIFormEditor editor = (UIFormEditor) (Object) this;
             UIIcon searchSkin = new UIIcon(Icons.SEARCH, b ->
             {
-                SkinSearchByNickPanel panel = new SkinSearchByNickPanel();
-                UIOverlay.addOverlay(editor.getContext(), panel, 320, 260);
+                SkinSearchByNickPanel panel = new SkinSearchByNickPanel(editor);
+                UIOverlay.addOverlay(editor.getContext(), panel, 320, 265);
             });
             editor.icons.add(searchSkin);
             editor.icons.resize();
