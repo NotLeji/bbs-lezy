@@ -22,6 +22,8 @@
 	"bbslezy.config.general.hardware_acceleration-comment": "Enable GPU hardware-accelerated video encoding (NVIDIA NVENC, AMD AMF/VA-API, Intel QSV/VA-API) for drastically faster render speeds and lower CPU load.",
 	"bbslezy.config.general.gpu_vendor": "GPU Encoder",
 	"bbslezy.config.general.gpu_vendor-comment": "Hardware encoder to use: Auto-Detect (uses current OpenGL GPU; QSV/VA-API on Linux, AMF/QSV on Windows), NVIDIA (NVENC), AMD (AMF / VA-API), or Intel (QSV / VA-API).",
+	"bbslezy.config.general.snap_player_to_preview": "Snap player to camera preview",
+	"bbslezy.config.general.snap_player_to_preview-comment": "Silently moves player to preview camera position so Minecraft renders chunk/particles/audio there, and restores player position upon exit.",
 	"bbslezy.ui.video.gpu_unsupported_title": "GPU Encoding Unsupported",
 	"bbslezy.ui.video.gpu_unsupported_message": "Hardware acceleration is enabled, but the GPU (%s) — or the ffmpeg build it uses — does not support hardware encoding for the selected codec (%s).\n\nWould you like to render this video using the CPU instead?",
 	"bbslezy.ui.video.render_cpu": "Render with CPU",
@@ -39,10 +41,12 @@
 	"bbslezy.ui.lod.render_limit": "Render limit",
 	"bbslezy.ui.lod.focus_distance": "Focus distance",
 	"bbslezy.ui.dashboard.keys.toggle_shaders": "Toggle Iris shaders",
+	"bbslezy.ui.dashboard.shader_toggle": "Toggle Iris shaders",
 	"bbs.ui.camera.clips.bbs:color": "Color Grade",
 	"bbs.ui.camera.clips.bbs:letterbox": "Letterbox (Black Bars)",
 	"bbs.ui.camera.clips.bbs:cinematic": "Cinematic Effect",
 	"bbs.ui.camera.clips.bbs:vignette": "Vignette",
+	"bbs.ui.camera.clips.bbs:halftone": "Halftone (Screen-tone)",
 	"bbs.ui.textures.player_skin-title": "Download Player Skin",
 	"bbs.ui.textures.player_skin-description": "Enter a Minecraft Java username to download their skin.\n\nTip: You can also use \"player:<name>\" directly in any texture path.",
 	"bbslezy.ui.forms.editors.illusion": "Illusion",
@@ -83,5 +87,9 @@
 	"bbslezy.ui.forms.editors.general.illusion_gradual": "Gradual Transform",
 	"bbslezy.ui.forms.editors.general.illusion_gradual-tooltip": "Ramps the transform from 0 on the base model up to full on the last duplicate.",
 	"bbslezy.ui.forms.editors.general.illusion_gradual_invert": "Invert Gradual",
-	"bbslezy.ui.forms.editors.general.illusion_gradual_invert-tooltip": "Inverts the transform ramp."
+	"bbslezy.ui.forms.editors.general.illusion_gradual_invert-tooltip": "Inverts the transform ramp.",
+	"bbslezy.ui.audio.reverse": "Reverse audio",
+	"bbslezy.ui.audio.reverse.tooltip": "Play this clip's audio from the end of its duration backwards",
+	"bbslezy.ui.audio.keyframes": "Volume Keyframes",
+	"bbslezy.ui.audio.keyframes.tooltip": "Open dope sheet track editor to animate audio volume over time"
 }

@@ -19,16 +19,25 @@ public abstract class UIDashboardMixin
     @Inject(method = "<init>", at = @At("TAIL"))
     private void bbslezy$init(CallbackInfo ci)
     {
-        UIElement overlay = ((UIDashboard) (Object) this).overlay;
+        try
+        {
+            UIDashboard self = (UIDashboard) (Object) this;
+            UIElement overlay = self.overlay;
 
-        overlay.keys().keybinds.removeIf(k -> "K".equalsIgnoreCase(k.getKeyCombo()));
+            overlay.keys().keybinds.removeIf(k -> "K".equalsIgnoreCase(k.getKeyCombo()));
 
-        KeyCombo toggleShaders = new KeyCombo(
-            "toggle_shaders",
-            L10n.lang("bbslezy.ui.dashboard.keys.toggle_shaders"),
-            GLFW.GLFW_KEY_K
-        ).categoryKey("dashboard");
+            KeyCombo toggleShaders = new KeyCombo(
+                "toggle_shaders",
+                L10n.lang("bbslezy.ui.dashboard.keys.toggle_shaders"),
+                GLFW.GLFW_KEY_K
+            ).categoryKey("dashboard");
 
-        overlay.keys().register(toggleShaders, LezyIrisHelper::toggleShaders).category(UIKeys.DASHBOARD_CATEGORY);
+            overlay.keys().register(toggleShaders, LezyIrisHelper::toggleShaders).category(UIKeys.DASHBOARD_CATEGORY);
+
+        }
+        catch (Throwable ignored)
+        {
+            /* Failures in dashboard injection must never break BBS initialization */
+        }
     }
 }

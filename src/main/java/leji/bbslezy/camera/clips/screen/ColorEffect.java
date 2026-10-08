@@ -39,16 +39,9 @@ public class ColorEffect implements LayeredEffect
     public float gainR, gainG, gainB;
 
     public boolean hasCinematic;
-    public float aberration;
-    public float aberrationAngle;
-    public float aberrationDirectional;
-    public float aberrationRadius;
-    public float aberrationHardness;
-    public float aberrationBalance;
-    public float aberrationCenterX;
-    public float aberrationCenterY;
-    public float aberrationGreen;
-    public float aberrationSpectrum;
+    public float chromaticAberration;
+    public float chromaticAberrationCenterX;
+    public float chromaticAberrationCenterY;
     public float vhs;
     public float lensDistortion;
     public float lensOverscan;
@@ -71,6 +64,9 @@ public class ColorEffect implements LayeredEffect
     public float heatSpeed;
     public float heatScale;
     public float time;
+    public float pixelation;
+    public float motionBlur;
+    public float motionTrail;
 
     public void reset()
     {
@@ -82,16 +78,9 @@ public class ColorEffect implements LayeredEffect
         this.hasDistort = false;
         this.hasCinematic = false;
 
-        this.aberration = 0F;
-        this.aberrationAngle = 0F;
-        this.aberrationDirectional = 0F;
-        this.aberrationRadius = 1F;
-        this.aberrationHardness = 1F;
-        this.aberrationBalance = 0F;
-        this.aberrationCenterX = 0.5F;
-        this.aberrationCenterY = 0.5F;
-        this.aberrationGreen = 0F;
-        this.aberrationSpectrum = 0F;
+        this.chromaticAberration = 0F;
+        this.chromaticAberrationCenterX = 0.5F;
+        this.chromaticAberrationCenterY = 0.5F;
         this.vhs = 0F;
         this.lensDistortion = 0F;
         this.lensOverscan = 1F;
@@ -114,5 +103,8 @@ public class ColorEffect implements LayeredEffect
         this.heatSpeed = 0F;
         this.heatScale = 0F;
         this.time = 0F;
+        this.pixelation = 0F;
+        this.motionBlur = 0F;
+        this.motionTrail = 0F;
     }
 }

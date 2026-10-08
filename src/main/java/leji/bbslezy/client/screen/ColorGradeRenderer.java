@@ -2,6 +2,7 @@ package leji.bbslezy.client.screen;
 
 import leji.bbslezy.camera.clips.screen.ColorEffect;
 import leji.bbslezy.camera.clips.screen.GrainEffect;
+import leji.bbslezy.camera.clips.screen.HalftoneEffect;
 import mchorse.bbs_mod.graphics.texture.Texture;
 import mchorse.bbs_mod.graphics.texture.TextureFormat;
 import mchorse.bbs_mod.ui.framework.elements.utils.Batcher2D;
@@ -71,15 +72,8 @@ public class ColorGradeRenderer
             uniform vec2 u_distort;
 
             /* Cinematic effects */
-            uniform float u_aberration;
-            uniform float u_aberrationAngle;
-            uniform float u_aberrationDirectional;
-            uniform float u_aberrationRadius;
-            uniform float u_aberrationHardness;
-            uniform float u_aberrationBalance;
-            uniform vec2 u_aberrationCenter;
-            uniform float u_aberrationGreen;
-            uniform float u_aberrationSpectrum;
+            uniform float u_chromatic;
+            uniform vec2 u_chromaticCenter;
             uniform float u_vhs;
             uniform float u_lensDistortion;
             uniform float u_lensRadiusX;
@@ -98,6 +92,20 @@ public class ColorGradeRenderer
             uniform vec2 u_lensCenter;
             uniform vec2 u_radialBlurCenter;
             uniform vec2 u_lightLeakCenter;
+            uniform float u_pixelation;
+            /* Motion Blur & Trail */
+            uniform float u_motionBlur;
+            uniform float u_motionTrail;
+            uniform vec2 u_motionVelocity;
+            uniform sampler2D u_trailTex;
+            /* Halftone */
+            uniform int u_halftoneEnabled;
+            uniform int u_halftoneMode;
+            uniform vec3 u_halftoneInk;
+            uniform float u_halftoneCells;
+            uniform float u_halftoneHighlightThresh;
+            uniform float u_halftoneDotSoftness;
+            uniform float u_halftoneAngle;
 
             /* --- HSL helpers --- */
 
@@ -304,63 +312,26 @@ public class ColorGradeRenderer
                     distortedUV = clamp(distortedUV + heatOffset, 0.0, 1.0);
                 }
 
+                /* Pixelation */
+                if (u_pixelation > 0.5)
+                {
+                    vec2 texSize = vec2(textureSize(u_sampler, 0));
+                    vec2 cells = texSize / vec2(u_pixelation);
+                    distortedUV = floor(distortedUV * cells) / cells;
+                }
+
                 /* Chromatic Aberration splitting */
                 vec2 uvRed = distortedUV;
                 vec2 uvGreen = distortedUV;
                 vec2 uvBlue = distortedUV;
-                if (abs(u_aberration) > 0.001)
+                if (abs(u_chromatic) > 0.001)
                 {
-                    vec2 delta = distortedUV - u_aberrationCenter;
+                    vec2 delta = distortedUV - u_chromaticCenter;
                     float dist = length(delta);
-                    vec2 radialDir = dist > 1.0e-6 ? delta / dist : vec2(1.0, 0.0);
-                    float angle = radians(u_aberrationAngle);
-                    float rotCa = cos(angle);
-                    float rotSa = sin(angle);
-                    vec2 linearDir = vec2(1.0, 0.0);
-                    vec2 splitDir = mix(radialDir, linearDir, u_aberrationDirectional);
-                    splitDir = vec2(splitDir.x * rotCa - splitDir.y * rotSa,
-                                    splitDir.x * rotSa + splitDir.y * rotCa);
-                    float splitLen = length(splitDir);
-
-                    splitDir = splitLen > 1.0e-6 ? splitDir / splitLen : radialDir;
-
-                    float cornerRadius = 0.70710678;
-                    float radius = max(u_aberrationRadius * cornerRadius, 1.0e-6);
-                    float rNorm = dist / radius;
-                    float hardness = clamp(u_aberrationHardness, 0.0, 1.0);
-                    float feather = (1.0 - hardness) * 0.75;
-                    float mask = 1.0;
-
-                    if (u_aberrationRadius < 0.999 || feather > 0.0001)
-                    {
-                        if (feather < 0.0001)
-                        {
-                            mask = step(rNorm, 1.0);
-                        }
-                        else
-                        {
-                            mask = 1.0 - smoothstep(max(0.0, 1.0 - feather), 1.0 + feather, rNorm);
-                        }
-                    }
-
-                    float amount = dist * dist * u_aberration * clamp(mask, 0.0, 1.0);
-                    float balance = clamp(u_aberrationBalance, -1.0, 1.0);
-                    float redScale = max(0.0, 1.0 + balance);
-                    float blueScale = max(0.0, 1.0 - balance);
-                    float spectrum = u_aberrationSpectrum;
-                    float green = u_aberrationGreen;
-                    float greenAmount = abs(green) > 1.0e-6 ? green : spectrum * 0.5;
-                    vec2 perp = vec2(-splitDir.y, splitDir.x);
-                    vec2 redDir = normalize(mix(splitDir, splitDir + perp * 0.5, spectrum));
-                    vec2 blueDir = normalize(mix(-splitDir, -splitDir + perp * 0.5, spectrum));
-                    vec2 greenDir = abs(greenAmount) > 1.0e-6 ? perp : vec2(0.0);
-
-                    uvRed += redDir * amount * redScale;
-                    uvBlue += blueDir * amount * blueScale;
-                    uvGreen += greenDir * amount * greenAmount;
-                    uvRed = clamp(uvRed, 0.0, 1.0);
-                    uvGreen = clamp(uvGreen, 0.0, 1.0);
-                    uvBlue = clamp(uvBlue, 0.0, 1.0);
+                    vec2 dir = dist > 1.0e-6 ? delta / dist : vec2(1.0, 0.0);
+                    float amount = dist * u_chromatic;
+                    uvRed  = clamp(distortedUV + dir * amount, 0.0, 1.0);
+                    uvBlue = clamp(distortedUV - dir * amount, 0.0, 1.0);
                 }
 
                 float r = texture(u_sampler, uvRed).r;
@@ -396,6 +367,26 @@ public class ColorGradeRenderer
                     rgb = blurRGB / 5.0;
                 }
 
+                /* Motion Blur (Camera Velocity Directional Blur) */
+                if (abs(u_motionBlur) > 0.001 && length(u_motionVelocity) > 1.0e-5)
+                {
+                    vec2 vel = u_motionVelocity * u_motionBlur * 0.15;
+                    vec3 blur = rgb;
+                    const float SAMPLES[7] = float[7](-0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75);
+                    for (int i = 0; i < 7; i++)
+                    {
+                        blur += texture(u_sampler, clamp(distortedUV + vel * SAMPLES[i], 0.0, 1.0)).rgb;
+                    }
+                    rgb = blur / 8.0;
+                }
+
+                /* Motion Trail (Accumulation Buffer) */
+                if (abs(u_motionTrail) > 0.001)
+                {
+                    vec3 trail = texture(u_trailTex, v_uv).rgb;
+                    rgb = mix(rgb, trail, clamp(abs(u_motionTrail) * 0.85, 0.0, 0.90));
+                }
+
                 /* 1 — Lift / Gamma / Gain */
                 rgb = rgb * (vec3(1.0) + u_gain);
                 rgb = sign(rgb) * pow(max(abs(rgb), vec3(1e-4)), max(vec3(1e-4), vec3(1.0) / (vec3(1.0) + u_gamma)));
@@ -415,6 +406,48 @@ public class ColorGradeRenderer
                     vec3 hsl = rgb2hsl(rgb);
                     hsl.x = fract(hsl.x + u_hue / 360.0);
                     rgb = hsl2rgb(hsl);
+                }
+
+                /* Halftone (Screen-tone) */
+                if (u_halftoneEnabled == 1 && u_halftoneCells > 0.0)
+                {
+                    vec2 texSize = vec2(textureSize(u_sampler, 0));
+                    float invAspect = texSize.y / texSize.x;
+                    vec2 centered = distortedUV - 0.5;
+                    vec2 aspectPos = vec2(centered.x, centered.y * invAspect);
+
+                    float rad = radians(u_halftoneAngle);
+                    float cosA = cos(rad);
+                    float sinA = sin(rad);
+                    vec2 rotPos = vec2(aspectPos.x * cosA - aspectPos.y * sinA, aspectPos.x * sinA + aspectPos.y * cosA);
+
+                    vec2 grid = rotPos * u_halftoneCells;
+                    vec2 cellIndex = floor(grid);
+                    vec2 local = fract(grid);
+
+                    vec2 cellCenterRot = (cellIndex + 0.5) / u_halftoneCells;
+                    vec2 unrotAspect = vec2(cellCenterRot.x * cosA + cellCenterRot.y * sinA, -cellCenterRot.x * sinA + cellCenterRot.y * cosA);
+                    vec2 sampleUV = clamp(vec2(unrotAspect.x, unrotAspect.y / invAspect) + 0.5, 0.0, 1.0);
+
+                    vec3 cellSample = texture(u_sampler, sampleUV).rgb;
+                    float lum = dot(cellSample, vec3(0.2126, 0.7152, 0.0722));
+
+                    float hThresh = max(0.01, u_halftoneHighlightThresh);
+                    float darkness = clamp((hThresh - lum) / hThresh, 0.0, 1.0);
+
+                    float r = 0.71 * sqrt(darkness);
+                    float dist = length(local - vec2(0.5));
+                    float softness = max(0.001, u_halftoneDotSoftness);
+                    float mask = smoothstep(r + softness, r - softness, dist);
+
+                    if (darkness <= 0.0001)
+                    {
+                        mask = 0.0;
+                    }
+
+                    vec3 paper = vec3(1.0);
+                    vec3 ink = (u_halftoneMode == 1) ? rgb : u_halftoneInk;
+                    rgb = mix(paper, ink, mask);
                 }
 
                 /* 5 — Vignette (radial, smooth) */
@@ -544,7 +577,7 @@ public class ColorGradeRenderer
             }
             """;
 
-    private static final int SHADER_VERSION = 22;
+    private static final int SHADER_VERSION = 28;
     private static int loadedShaderVersion;
     private static boolean initialized;
     private static boolean failed;
@@ -552,6 +585,13 @@ public class ColorGradeRenderer
     private static int vao;
     private static int vbo;
     private static Texture tempTex;
+    private static Texture trailTex;
+    private static int trailFbo;
+    private static int trailW;
+    private static int trailH;
+    private static float prevYaw;
+    private static float prevPitch;
+    private static boolean prevAnglesValid;
 
     private static int uSampler;
     private static int uVigStr;
@@ -568,15 +608,8 @@ public class ColorGradeRenderer
     private static int uGrainSize;
     private static int uGrainSeed;
     private static int uDistort;
-    private static int uAberration;
-    private static int uAberrationAngle;
-    private static int uAberrationDirectional;
-    private static int uAberrationRadius;
-    private static int uAberrationHardness;
-    private static int uAberrationBalance;
-    private static int uAberrationCenter;
-    private static int uAberrationGreen;
-    private static int uAberrationSpectrum;
+    private static int uChromatic;
+    private static int uChromaticCenter;
     private static int uVHS;
     private static int uLensDistortion;
     private static int uLensRadiusX;
@@ -595,14 +628,32 @@ public class ColorGradeRenderer
     private static int uHeatSpeed;
     private static int uHeatScale;
     private static int uTime;
+    private static int uPixelation;
+    private static int uMotionBlur;
+    private static int uMotionTrail;
+    private static int uMotionVelocity;
+    private static int uTrailTex;
+    private static int uHalftoneEnabled;
+    private static int uHalftoneMode;
+    private static int uHalftoneInk;
+    private static int uHalftoneCells;
+    private static int uHalftoneHighlightThresh;
+    private static int uHalftoneDotSoftness;
+    private static int uHalftoneAngle;
 
     public static void apply(List<ColorEffect> effects, List<GrainEffect> grainEffects)
+    {
+        apply(effects, grainEffects, List.of());
+    }
+
+    public static void apply(List<ColorEffect> effects, List<GrainEffect> grainEffects, List<HalftoneEffect> halftoneEffects)
     {
         boolean needVignette = false;
         boolean needGrade = false;
         boolean needGrain = false;
         boolean needDistort = false;
         boolean needCinematic = false;
+        boolean needHalftone = false;
 
         for (ColorEffect e : effects)
         {
@@ -617,7 +668,25 @@ public class ColorGradeRenderer
             if (e.strength > 0F) needGrain = true;
         }
 
-        if (!needVignette && !needGrade && !needGrain && !needDistort && !needCinematic)
+        int halftoneMode = HalftoneEffect.MODE_BW;
+        int halftoneInk = 0xff000000;
+        float halftoneCells = 130F;
+        float halftoneHighlightThresh = 0.85F;
+        float halftoneDotSoftness = 0.05F;
+        float halftoneAngle = 45F;
+
+        for (HalftoneEffect h : halftoneEffects)
+        {
+            needHalftone = true;
+            halftoneMode = h.mode;
+            halftoneInk = h.inkColor;
+            halftoneCells = h.cells;
+            halftoneHighlightThresh = h.highlightThreshold;
+            halftoneDotSoftness = h.dotSoftness;
+            halftoneAngle = h.angle;
+        }
+
+        if (!needVignette && !needGrade && !needGrain && !needDistort && !needCinematic && !needHalftone)
         {
             return;
         }
@@ -736,16 +805,9 @@ public class ColorGradeRenderer
         }
 
         /* Accumulate cinematic effects */
-        float aberration = 0F;
-        float aberrationAngle = 0F;
-        float aberrationDirectional = 0F;
-        float aberrationRadius = 1F;
-        float aberrationHardness = 1F;
-        float aberrationBalance = 0F;
-        float aberrationCenterX = 0.5F;
-        float aberrationCenterY = 0.5F;
-        float aberrationGreen = 0F;
-        float aberrationSpectrum = 0F;
+        float chromatic = 0F;
+        float chromaticCenterX = 0.5F;
+        float chromaticCenterY = 0.5F;
         float vhs = 0F;
         float lensDistortion = 0F;
         float lensRadiusX = 1F;
@@ -761,29 +823,25 @@ public class ColorGradeRenderer
         float heatSpeed = 0F;
         float heatScale = 0F;
         float time = 0F;
+        float pixelation = 0F;
         float lensCenterX = 0.5F;
         float lensCenterY = 0.5F;
         float radialBlurCenterX = 0.5F;
         float radialBlurCenterY = 0.5F;
         float lightLeakCenterX = 0.0F;
         float lightLeakCenterY = 0.4F;
+        float motionBlur = 0F;
+        float motionTrail = 0F;
 
         for (ColorEffect e : effects)
         {
             if (e.hasCinematic)
             {
-                if (Math.abs(e.aberration) > Math.abs(aberration))
+                if (Math.abs(e.chromaticAberration) > Math.abs(chromatic))
                 {
-                    aberration = e.aberration;
-                    aberrationAngle = e.aberrationAngle;
-                    aberrationDirectional = e.aberrationDirectional;
-                    aberrationRadius = e.aberrationRadius;
-                    aberrationHardness = e.aberrationHardness;
-                    aberrationBalance = e.aberrationBalance;
-                    aberrationCenterX = e.aberrationCenterX;
-                    aberrationCenterY = e.aberrationCenterY;
-                    aberrationGreen = e.aberrationGreen;
-                    aberrationSpectrum = e.aberrationSpectrum;
+                    chromatic = e.chromaticAberration;
+                    chromaticCenterX = e.chromaticAberrationCenterX;
+                    chromaticCenterY = e.chromaticAberrationCenterY;
                 }
 
                 if (Math.abs(e.vhs) > Math.abs(vhs)) vhs = e.vhs;
@@ -816,6 +874,9 @@ public class ColorGradeRenderer
                 if (Math.abs(e.heatStrength) > Math.abs(heatStrength)) heatStrength = e.heatStrength;
                 if (Math.abs(e.heatSpeed) > Math.abs(heatSpeed)) heatSpeed = e.heatSpeed;
                 if (Math.abs(e.heatScale) > Math.abs(heatScale)) heatScale = e.heatScale;
+                if (Math.abs(e.pixelation) > Math.abs(pixelation)) pixelation = e.pixelation;
+                if (Math.abs(e.motionBlur) > Math.abs(motionBlur)) motionBlur = e.motionBlur;
+                if (Math.abs(e.motionTrail) > Math.abs(motionTrail)) motionTrail = e.motionTrail;
                 time = e.time;
             }
         }
@@ -848,21 +909,8 @@ public class ColorGradeRenderer
         GL20.glUniform1f(uGrainSize, grainSize);
         GL20.glUniform1f(uGrainSeed, grainSeed);
         GL20.glUniform2f(uDistort, distortX, distortY);
-        GL20.glUniform1f(uAberration, aberration);
-        GL20.glUniform1f(uAberrationAngle, aberrationAngle);
-        GL20.glUniform1f(uAberrationDirectional, aberrationDirectional);
-        GL20.glUniform1f(uAberrationRadius, Math.max(0F, aberrationRadius));
-        GL20.glUniform1f(
-            uAberrationHardness,
-            Math.max(0F, Math.min(1F, aberrationHardness))
-        );
-        GL20.glUniform1f(
-            uAberrationBalance,
-            Math.max(-1F, Math.min(1F, aberrationBalance))
-        );
-        GL20.glUniform2f(uAberrationCenter, aberrationCenterX, aberrationCenterY);
-        GL20.glUniform1f(uAberrationGreen, aberrationGreen);
-        GL20.glUniform1f(uAberrationSpectrum, aberrationSpectrum);
+        GL20.glUniform1f(uChromatic, chromatic);
+        GL20.glUniform2f(uChromaticCenter, chromaticCenterX, chromaticCenterY);
         GL20.glUniform1f(uVHS, vhs);
         GL20.glUniform1f(uLensDistortion, lensDistortion);
         GL20.glUniform1f(uLensRadiusX, Math.max(0F, lensRadiusX));
@@ -881,6 +929,50 @@ public class ColorGradeRenderer
         GL20.glUniform1f(uHeatSpeed, 0.5F + heatSpeed * 2.0F);
         GL20.glUniform1f(uHeatScale, 2.0F + heatScale * 35.0F);
         GL20.glUniform1f(uTime, time);
+        GL20.glUniform1f(uPixelation, Math.max(0F, pixelation * 16F));
+        /* Camera velocity estimation for motion blur */
+        float curYaw = mc.gameRenderer.getCamera().getYaw();
+        float curPitch = mc.gameRenderer.getCamera().getPitch();
+        float velX = 0F;
+        float velY = 0F;
+
+        if (prevAnglesValid)
+        {
+            float dYaw = curYaw - prevYaw;
+            float dPitch = curPitch - prevPitch;
+            while (dYaw > 180F) dYaw -= 360F;
+            while (dYaw < -180F) dYaw += 360F;
+            velX = -dYaw * 0.02F;
+            velY = dPitch * 0.02F;
+        }
+        prevYaw = curYaw;
+        prevPitch = curPitch;
+        prevAnglesValid = true;
+
+        GL20.glUniform1f(uMotionBlur, motionBlur);
+        GL20.glUniform1f(uMotionTrail, motionTrail);
+        GL20.glUniform2f(uMotionVelocity, velX, velY);
+
+
+        GL20.glUniform1i(uHalftoneEnabled, needHalftone ? 1 : 0);
+        if (needHalftone)
+        {
+            GL20.glUniform1i(uHalftoneMode, halftoneMode);
+            float inkR = ((halftoneInk >> 16) & 0xFF) / 255.0F;
+            float inkG = ((halftoneInk >> 8) & 0xFF) / 255.0F;
+            float inkB = (halftoneInk & 0xFF) / 255.0F;
+            GL20.glUniform3f(uHalftoneInk, inkR, inkG, inkB);
+            GL20.glUniform1f(uHalftoneCells, halftoneCells);
+            GL20.glUniform1f(uHalftoneHighlightThresh, halftoneHighlightThresh);
+            GL20.glUniform1f(uHalftoneDotSoftness, halftoneDotSoftness);
+            GL20.glUniform1f(uHalftoneAngle, halftoneAngle);
+        }
+        /* Bind trail texture to unit 1 */
+        setupTrailBuffer(fbW, fbH);
+        GL13.glActiveTexture(GL13.GL_TEXTURE1);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, trailTex.id);
+        GL20.glUniform1i(uTrailTex, 1);
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
 
         GL30.glBindVertexArray(vao);
         GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 6);
@@ -888,6 +980,18 @@ public class ColorGradeRenderer
 
         GL20.glUseProgram(0);
         tempTex.unbind();
+        /* Update trail accumulation buffer if motion trail is active */
+        if (Math.abs(motionTrail) > 0.001F && trailFbo != 0)
+        {
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, fb.fbo);
+            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, trailFbo);
+            GL30.glBlitFramebuffer(0, 0, fbW, fbH, 0, 0, fbW, fbH, GL11.GL_COLOR_BUFFER_BIT, GL11.GL_LINEAR);
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+        }
+
+        GL13.glActiveTexture(GL13.GL_TEXTURE1);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
         fb.beginWrite(false);
@@ -996,15 +1100,8 @@ public class ColorGradeRenderer
         uGrainSize = GL20.glGetUniformLocation(program, "u_grainSize");
         uGrainSeed = GL20.glGetUniformLocation(program, "u_grainSeed");
         uDistort = GL20.glGetUniformLocation(program, "u_distort");
-        uAberration = GL20.glGetUniformLocation(program, "u_aberration");
-        uAberrationAngle = GL20.glGetUniformLocation(program, "u_aberrationAngle");
-        uAberrationDirectional = GL20.glGetUniformLocation(program, "u_aberrationDirectional");
-        uAberrationRadius = GL20.glGetUniformLocation(program, "u_aberrationRadius");
-        uAberrationHardness = GL20.glGetUniformLocation(program, "u_aberrationHardness");
-        uAberrationBalance = GL20.glGetUniformLocation(program, "u_aberrationBalance");
-        uAberrationCenter = GL20.glGetUniformLocation(program, "u_aberrationCenter");
-        uAberrationGreen = GL20.glGetUniformLocation(program, "u_aberrationGreen");
-        uAberrationSpectrum = GL20.glGetUniformLocation(program, "u_aberrationSpectrum");
+        uChromatic = GL20.glGetUniformLocation(program, "u_chromatic");
+        uChromaticCenter = GL20.glGetUniformLocation(program, "u_chromaticCenter");
         uVHS = GL20.glGetUniformLocation(program, "u_vhs");
         uLensDistortion = GL20.glGetUniformLocation(program, "u_lensDistortion");
         uLensRadiusX = GL20.glGetUniformLocation(program, "u_lensRadiusX");
@@ -1023,6 +1120,18 @@ public class ColorGradeRenderer
         uHeatSpeed = GL20.glGetUniformLocation(program, "u_heatSpeed");
         uHeatScale = GL20.glGetUniformLocation(program, "u_heatScale");
         uTime = GL20.glGetUniformLocation(program, "u_time");
+        uPixelation = GL20.glGetUniformLocation(program, "u_pixelation");
+        uMotionBlur = GL20.glGetUniformLocation(program, "u_motionBlur");
+        uMotionTrail = GL20.glGetUniformLocation(program, "u_motionTrail");
+        uMotionVelocity = GL20.glGetUniformLocation(program, "u_motionVelocity");
+        uTrailTex = GL20.glGetUniformLocation(program, "u_trailTex");
+        uHalftoneEnabled = GL20.glGetUniformLocation(program, "u_halftoneEnabled");
+        uHalftoneMode = GL20.glGetUniformLocation(program, "u_halftoneMode");
+        uHalftoneInk = GL20.glGetUniformLocation(program, "u_halftoneInk");
+        uHalftoneCells = GL20.glGetUniformLocation(program, "u_halftoneCells");
+        uHalftoneHighlightThresh = GL20.glGetUniformLocation(program, "u_halftoneHighlightThresh");
+        uHalftoneDotSoftness = GL20.glGetUniformLocation(program, "u_halftoneDotSoftness");
+        uHalftoneAngle = GL20.glGetUniformLocation(program, "u_halftoneAngle");
 
         /* Fullscreen quad VAO/VBO (NDC coords + UV) */
         vao = GL30.glGenVertexArrays();
@@ -1054,5 +1163,53 @@ public class ColorGradeRenderer
 
         GL30.glBindVertexArray(0);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+    }
+
+    private static void setupTrailBuffer(int w, int h)
+    {
+        if (trailTex == null)
+        {
+            trailTex = new Texture();
+            trailTex.setFormat(TextureFormat.RGB_U8);
+            trailTex.setFilter(GL11.GL_LINEAR);
+            trailTex.setWrap(GL12.GL_CLAMP_TO_EDGE);
+        }
+
+        if (trailFbo == 0 || trailW != w || trailH != h)
+        {
+            trailW = w;
+            trailH = h;
+            trailTex.setSize(w, h);
+            trailTex.bind();
+            GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGB8, w, h, 0, GL11.GL_RGB, GL11.GL_UNSIGNED_BYTE, (java.nio.ByteBuffer) null);
+            trailTex.unbind();
+
+            if (trailFbo == 0)
+            {
+                trailFbo = GL30.glGenFramebuffers();
+            }
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, trailFbo);
+            GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0, GL11.GL_TEXTURE_2D, trailTex.id, 0);
+            GL11.glClearColor(0F, 0F, 0F, 1F);
+            GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+        }
+    }
+
+    public static void clearTrail()
+    {
+        prevAnglesValid = false;
+        if (trailFbo != 0)
+        {
+            GL30.glDeleteFramebuffers(trailFbo);
+            trailFbo = 0;
+        }
+        if (trailTex != null)
+        {
+            trailTex.delete();
+            trailTex = null;
+        }
+        trailW = 0;
+        trailH = 0;
     }
 }

@@ -4,6 +4,7 @@ import leji.bbslezy.camera.clips.screen.ColorEffect;
 import leji.bbslezy.camera.clips.screen.GrainEffect;
 import leji.bbslezy.camera.clips.screen.LetterboxEffect;
 import org.junit.jupiter.api.Test;
+import leji.bbslezy.camera.clips.screen.HalftoneEffect;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +57,10 @@ class ScreenEffectLayerOrderTest
         LetterboxEffect bars = new LetterboxEffect();
         bars.layer = 0;
 
+        HalftoneEffect halftone = new HalftoneEffect();
+        halftone.layer = 3;
+
+        assertEquals(List.of(0, 1, 2, 3), ScreenEffectRenderer.collectLayers(List.of(grade), List.of(bars), List.of(grain), List.of(halftone)));
         assertEquals(List.of(0, 1, 2), ScreenEffectRenderer.collectLayers(List.of(grade), List.of(bars), List.of(grain)));
     }
 

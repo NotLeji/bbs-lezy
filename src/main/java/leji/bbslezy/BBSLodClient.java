@@ -7,11 +7,13 @@ import leji.bbslezy.camera.clips.screen.CinematicClip;
 import leji.bbslezy.camera.clips.screen.ColorClip;
 import leji.bbslezy.camera.clips.screen.LetterboxClip;
 import leji.bbslezy.camera.clips.screen.VignetteClip;
+import leji.bbslezy.camera.clips.screen.HalftoneClip;
 import leji.bbslezy.client.screen.ScreenEffectRenderer;
 import leji.bbslezy.ui.film.clips.UICinematicClip;
 import leji.bbslezy.ui.film.clips.UIColorClip;
 import leji.bbslezy.ui.film.clips.UILetterboxClip;
 import leji.bbslezy.ui.film.clips.UIVignetteClip;
+import leji.bbslezy.ui.film.clips.UIHalftoneClip;
 import leji.bbslezy.forms.renderers.FormIllusionRenderer;
 import leji.bbslezy.ui.forms.editors.panels.UIIllusionFormPanel;
 import leji.bbslezy.ui.framework.elements.input.keyframes.factories.UIIllusionKeyframeFactory;
@@ -28,6 +30,7 @@ import mchorse.bbs_mod.api.client.events.RegisterFormPanelsEvent;
 import mchorse.bbs_mod.api.client.events.RegisterFrameOverlaysEvent;
 import mchorse.bbs_mod.api.client.events.RegisterKeyframeEditorsEvent;
 import mchorse.bbs_mod.l10n.L10n;
+import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.ui.film.clips.actions.UIDamageActionClip;
 import mchorse.bbs_mod.ui.framework.elements.input.keyframes.factories.UIKeyframeFactory;
 import mchorse.bbs_mod.utils.colors.Colors;
@@ -42,6 +45,8 @@ import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 
 import java.util.Collections;
+import leji.bbslezy.audio.LezyAudioReverse;
+import mchorse.bbs_mod.api.client.events.FilmEvents;
 
 /**
  * The client half of the BBS Lezy addon, registered under {@code bbs-client-addon}.
@@ -81,6 +86,7 @@ public class BBSLodClient implements BBSAddonMod
         event.register(LetterboxClip.class, UILetterboxClip::new);
         event.register(CinematicClip.class, UICinematicClip::new);
         event.register(VignetteClip.class, UIVignetteClip::new);
+        event.register(HalftoneClip.class, UIHalftoneClip::new);
     }
 
     @Subscribe
@@ -133,6 +139,12 @@ public class BBSLodClient implements BBSAddonMod
         UIKeyframeFactory.register(LensRadiusSettingsKeyframeFactory.INSTANCE, UILensRadiusSettingsKeyframeFactory::new);
         TrackStyle.register("illusion", Icons.POSE, Colors.DEEP_PINK);
         TrackStyle.register("illusion_transform", Icons.ALL_DIRECTIONS, 0xdd66ff);
+        TrackStyle.register("bbslezy_volume", Icons.SOUND, Colors.ACTIVE);
+        TrackStyle.registerLabel("bbslezy_volume", IKey.constant("Volume"));
+        TrackStyle.register("volume", Icons.SOUND, Colors.ACTIVE);
+        TrackStyle.registerLabel("volume", IKey.constant("Volume"));
         FormRenderEvents.AFTER.register(FormIllusionRenderer::render);
+        FilmEvents.SHUTDOWN.register((film) -> LezyAudioReverse.clear());
+        FilmEvents.SHUTDOWN.register((film) -> leji.bbslezy.client.screen.ColorGradeRenderer.clearTrail());
     }
 }

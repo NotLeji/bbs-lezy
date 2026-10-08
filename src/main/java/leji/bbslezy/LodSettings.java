@@ -25,6 +25,7 @@ public class LodSettings
     public static ValueInt videoCodec;
     public static ValueBoolean hardwareAcceleration;
     public static ValueInt gpuVendor;
+    public static ValueBoolean snapPlayerToPreview;
 
     public static void register(SettingsBuilder builder)
     {
@@ -49,5 +50,6 @@ public class LodSettings
             IKey.raw("AMD (AMF)"),
             IKey.raw("Intel (QSV)")
         );
+        snapPlayerToPreview = builder.getBoolean("snap_player_to_preview", true);
     }
 }

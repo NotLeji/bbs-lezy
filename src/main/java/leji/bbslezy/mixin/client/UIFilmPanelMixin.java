@@ -1,6 +1,8 @@
 package leji.bbslezy.mixin.client;
 
 import leji.bbslezy.ui.LezyReplayActions;
+import leji.bbslezy.ui.LezyIrisHelper;
+import mchorse.bbs_mod.ui.framework.elements.buttons.UIIcon;
 import mchorse.bbs_mod.l10n.L10n;
 import mchorse.bbs_mod.ui.film.UIFilmPanel;
 import mchorse.bbs_mod.ui.utils.context.ContextMenuManager;
@@ -24,6 +26,18 @@ public abstract class UIFilmPanelMixin
 
         try
         {
+            UIIcon shaderButton = new UIIcon(
+                () -> LezyIrisHelper.areShadersEnabled() ? Icons.SUN : Icons.LIGHT,
+                (b) -> LezyIrisHelper.toggleShaders()
+            );
+            shaderButton.tooltip(L10n.lang("bbslezy.ui.dashboard.shader_toggle"));
+            self.actions().layout(shaderButton, LezyIrisHelper::areShadersEnabled);
+        }
+        catch (Throwable ignored)
+        {}
+
+        try
+        {
             self.cameraEditor.clips.context((ContextMenuManager menu) ->
             {
                 if (self.getData() == null)
@@ -44,5 +58,23 @@ public abstract class UIFilmPanelMixin
         }
         catch (Throwable ignored)
         {}
+    }
+
+    @Inject(method = "enterEditing", at = @At("TAIL"))
+    private void bbslezy$onEnterEditing(CallbackInfo ci)
+    {
+        leji.bbslezy.ui.LezyPreviewSnap.onEnter((UIFilmPanel) (Object) this);
+    }
+
+    @Inject(method = "leaveEditing", at = @At("TAIL"))
+    private void bbslezy$onLeaveEditing(CallbackInfo ci)
+    {
+        leji.bbslezy.ui.LezyPreviewSnap.onLeave((UIFilmPanel) (Object) this);
+    }
+
+    @Inject(method = "update", at = @At("RETURN"))
+    private void bbslezy$onUpdate(CallbackInfo ci)
+    {
+        leji.bbslezy.ui.LezyPreviewSnap.onUpdate((UIFilmPanel) (Object) this);
     }
 }
