@@ -7,14 +7,14 @@ import mchorse.bbs_mod.ui.framework.UIContext;
 
 public class SkinPreviewRenderer extends UIFormRenderer
 {
-    public SkinPreviewRenderer(String texturePath, boolean isAlex)
+    public SkinPreviewRenderer(Link textureLink, boolean isAlex)
     {
         ModelForm modelForm = new ModelForm();
         modelForm.model.set(isAlex ? "player/alex" : "player/steve");
-        modelForm.texture.set(Link.assets(texturePath + ".png"));
+        modelForm.texture.set(textureLink);
         this.form = modelForm;
         this.grid = false;
-        this.setDistance(16.0F);
+        this.setDistance(2.25F);
         this.setPosition(0.0F, 1.0F, 0.0F);
         this.setRotation(0.0F, 0.0F);
     }
