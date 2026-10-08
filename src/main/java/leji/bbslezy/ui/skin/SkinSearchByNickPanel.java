@@ -20,6 +20,7 @@ import mchorse.bbs_mod.ui.framework.elements.utils.UIRenderable;
 import mchorse.bbs_mod.ui.utils.UI;
 import mchorse.bbs_mod.utils.resources.Pixels;
 import mchorse.bbs_mod.utils.resources.PlayerSkins;
+import net.minecraft.client.MinecraftClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL11;
@@ -167,57 +168,40 @@ public class SkinSearchByNickPanel extends UIOverlayPanel
         this.clearPreview();
         this.updateButtonsLayout(false);
 
-        Link link = new Link(PlayerSkins.SOURCE, name + ".png");
-        PlayerSkins.forget(name);
-
-        PlayerSkins.request(link, name, loaded ->
+        /* Fetch strictly to OS temporary folder - no Minecraft permanent storage touched */
+        SkinFetcher.fetchMojangSkin(name, tempFile -> MinecraftClient.getInstance().execute(() ->
         {
-            if (!Boolean.TRUE.equals(loaded))
+            if (tempFile == null || !tempFile.exists())
             {
                 this.setResult(L10n.lang("bbslezy.ui.skin.not_found"));
                 return;
             }
 
-            File file = PlayerSkins.getFile(name);
-            if (file == null || !file.exists())
-            {
-                this.setResult(L10n.lang("bbslezy.ui.skin.download_failed"));
-                return;
-            }
-
             try
             {
-                /* Save strictly to .temp folder for temporary preview */
-                File tempFolder = new File(BBSMod.getAssetsFolder(), "skins/.temp");
-                tempFolder.mkdirs();
-                this.tempPreviewFile = new File(tempFolder, name + ".png");
-                Files.copy(file.toPath(), this.tempPreviewFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                this.tempPreviewFile = tempFile;
 
                 /* Create 2D texture preview */
-                try (InputStream in = new FileInputStream(this.tempPreviewFile))
+                try (InputStream in = new FileInputStream(tempFile))
                 {
                     Pixels pixels = Pixels.fromPNGStream(in);
                     if (pixels != null)
                     {
-                        this.previewTexture = Texture.textureFromPixels(pixels, GL11.GL_NEAREST);
+                        Link tempLink = Link.bbs("bbslezy_temp_skin_" + name.toLowerCase());
+                        Texture texture = BBSModClient.getTextures().createTexture(tempLink);
+                        texture.bind();
+                        texture.uploadTexture(pixels);
+                        this.previewTexture = texture;
+
+                        /* Create 3D rotatable preview using temp link */
+                        this.isAlexSkin = SkinFetcher.isAlex(tempFile);
+                        this.clearPreview3D();
+                        this.preview3D = new SkinPreviewRenderer(tempLink, this.isAlexSkin);
+                        this.preview3D.relative(this.content).x(105).y(72).w(200).h(155);
+                        this.content.add(this.preview3D);
+                        this.content.resize();
                     }
                 }
-
-                /* Create 3D rotatable preview using temp link */
-                this.isAlexSkin = SkinFetcher.isAlex(this.tempPreviewFile);
-                Link tempLink = Link.assets("skins/.temp/" + name + ".png");
-                try
-                {
-                    BBSModClient.getTextures().delete(tempLink);
-                }
-                catch (Throwable ignored)
-                {}
-
-                this.clearPreview3D();
-                this.preview3D = new SkinPreviewRenderer(tempLink, this.isAlexSkin);
-                this.preview3D.relative(this.content).x(105).y(72).w(200).h(155);
-                this.content.add(this.preview3D);
-                this.content.resize();
 
                 this.updateButtonsLayout(true);
                 this.setResult(L10n.lang("bbslezy.ui.skin.skin_found"));
@@ -227,10 +211,10 @@ public class SkinSearchByNickPanel extends UIOverlayPanel
                 LOG.error("Failed to display skin preview for " + name, e);
                 this.setResult(L10n.lang("bbslezy.ui.skin.preview_failed"));
             }
-        });
+        }));
     }
 
-    private boolean saveSkinFile(String name)
+    private boolean saveSkinToMinecraft(String name)
     {
         if (this.tempPreviewFile == null || !this.tempPreviewFile.exists() || !PlayerSkins.isNickname(name))
         {
@@ -239,10 +223,17 @@ public class SkinSearchByNickPanel extends UIOverlayPanel
 
         try
         {
+            /* 1. Save to BBS assets/skins folder */
             File skinsFolder = new File(BBSMod.getAssetsFolder(), "skins");
             skinsFolder.mkdirs();
             File dest = new File(skinsFolder, name + ".png");
             Files.copy(this.tempPreviewFile.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+            /* 2. Register into BBS "player" directory / player: source */
+            Link playerLink = new Link(PlayerSkins.SOURCE, name + ".png");
+            PlayerSkins.forget(name);
+            PlayerSkins.request(playerLink, name, null);
+
             BBSResources.markAssetsChanged();
             return true;
         }
@@ -256,7 +247,7 @@ public class SkinSearchByNickPanel extends UIOverlayPanel
     private void saveSkinOnly()
     {
         String name = this.nickname.trim();
-        if (this.saveSkinFile(name))
+        if (this.saveSkinToMinecraft(name))
         {
             this.applied = true;
             this.close();
@@ -270,7 +261,7 @@ public class SkinSearchByNickPanel extends UIOverlayPanel
     private void applySkinToEditor()
     {
         String name = this.nickname.trim();
-        if (!this.saveSkinFile(name))
+        if (!this.saveSkinToMinecraft(name))
         {
             this.setResult(L10n.lang("bbslezy.ui.skin.download_failed"));
             return;
@@ -311,7 +302,7 @@ public class SkinSearchByNickPanel extends UIOverlayPanel
     @Override
     public void close()
     {
-        /* If user closes without applying/saving, clean up the temporary preview file */
+        /* If user closes without applying/saving, delete the temporary preview file from OS temp */
         if (!this.applied && this.tempPreviewFile != null && this.tempPreviewFile.exists())
         {
             try

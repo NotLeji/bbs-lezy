@@ -11,6 +11,7 @@
         "UIDashboardMixin",
         "UIFilmPanelMixin",
         "UIFormEditorMixin",
+        "UITextureBrowserMixin",
         "VideoExportSessionMixin",
         "AudioReaderMixin",
         "ToWAVImporterMixin",
