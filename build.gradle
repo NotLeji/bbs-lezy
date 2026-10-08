@@ -13,6 +13,7 @@ repositories {
 	/* BBS is published here by `gradlew publishToMavenLocal` in the BBS repository. There is no
 	 * public repository for it. */
 	mavenLocal()
+	mavenCentral()
 
 	/* Sodium lives on Modrinth's maven; the exclusiveContent filter keeps the repository from
 	 * being consulted for anything else. Same shape as BBS's own build file. */
@@ -48,6 +49,7 @@ dependencies {
 	/* transitive = false keeps BBS's own Iris and glsl-transformer out of this build; Sodium is
 	 * declared above instead so the dev client runs with it. */
 	modImplementation("mchorse:bbs:${project.bbs_version}") { transitive = false }
+	implementation(include("org.jsoup:jsoup:1.15.4"))
 
 	testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"
 	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
