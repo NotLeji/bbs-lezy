@@ -5,6 +5,7 @@ import mchorse.bbs_mod.BBSMod;
 import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.BBSResources;
 import mchorse.bbs_mod.forms.forms.Form;
+import mchorse.bbs_mod.forms.forms.MobForm;
 import mchorse.bbs_mod.forms.forms.ModelForm;
 import mchorse.bbs_mod.graphics.texture.Texture;
 import mchorse.bbs_mod.l10n.L10n;
@@ -38,6 +39,7 @@ public class SkinSearchByNickPanel extends UIOverlayPanel
     private String nickname = "";
     private UILabel resultLabel;
     private UIButton findButton;
+    private UIButton saveButton;
     private UIButton applyButton;
     private Texture previewTexture;
     private UIRenderable previewRenderer;
@@ -81,11 +83,71 @@ public class SkinSearchByNickPanel extends UIOverlayPanel
             }
         });
 
-        this.applyButton = new UIButton(L10n.lang("bbslezy.ui.skin.apply"), b -> this.applySkin());
-        this.applyButton.relative(this.content).x(0.5F).y(232).w(220).h(20).anchor(0.5F);
-        this.applyButton.setEnabled(false);
+        this.saveButton = new UIButton(L10n.lang("bbslezy.ui.skin.save"), b -> this.saveSkinOnly());
+        this.applyButton = new UIButton(L10n.lang("bbslezy.ui.skin.apply"), b -> this.applySkinToEditor());
 
-        this.content.add(nickInput, this.findButton, this.resultLabel, this.previewRenderer, this.applyButton);
+        this.content.add(nickInput, this.findButton, this.resultLabel, this.previewRenderer, this.saveButton, this.applyButton);
+        this.updateButtonsLayout(false);
+    }
+
+    /**
+     * Determines whether the given form can receive a player skin.
+     * Covers vanilla player models, replay actors, and all custom models/rigs (ModelForm),
+     * as well as MobForm.
+     */
+    public static boolean isPlayerSkinCompatible(Form form)
+    {
+        if (form == null)
+        {
+            return false;
+        }
+
+        /* ModelForm covers vanilla player, replay actors, and all custom player rigs/models */
+        if (form instanceof ModelForm)
+        {
+            return true;
+        }
+
+        /* MobForm can also use player skins via texture and slim flag */
+        if (form instanceof MobForm)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean canApplyToEditor()
+    {
+        return this.editor != null && isPlayerSkinCompatible(this.editor.form);
+    }
+
+    private void updateButtonsLayout(boolean enabled)
+    {
+        boolean canApply = this.canApplyToEditor();
+
+        if (canApply)
+        {
+            /* Two buttons: [Save] and [Apply] */
+            this.saveButton.relative(this.content).x(0.5F, -57).y(232).w(105).h(20).anchor(0.5F);
+            this.saveButton.setVisible(true);
+            this.saveButton.setEnabled(enabled);
+
+            this.applyButton.relative(this.content).x(0.5F, 57).y(232).w(105).h(20).anchor(0.5F);
+            this.applyButton.setVisible(true);
+            this.applyButton.setEnabled(enabled);
+        }
+        else
+        {
+            /* Single button: [Save] spanning full width */
+            this.saveButton.relative(this.content).x(0.5F).y(232).w(220).h(20).anchor(0.5F);
+            this.saveButton.setVisible(true);
+            this.saveButton.setEnabled(enabled);
+
+            this.applyButton.setVisible(false);
+            this.applyButton.setEnabled(false);
+        }
+
         this.content.resize();
     }
 
@@ -96,14 +158,14 @@ public class SkinSearchByNickPanel extends UIOverlayPanel
         if (!PlayerSkins.isNickname(name))
         {
             this.setResult(L10n.lang("bbslezy.ui.skin.not_found"));
-            this.applyButton.setEnabled(false);
+            this.updateButtonsLayout(false);
             return;
         }
 
         LOG.info("Searching Mojang skin for: " + name);
         this.setResult(L10n.lang("bbslezy.ui.skin.searching"));
         this.clearPreview();
-        this.applyButton.setEnabled(false);
+        this.updateButtonsLayout(false);
 
         Link link = new Link(PlayerSkins.SOURCE, name + ".png");
         PlayerSkins.forget(name);
@@ -157,7 +219,7 @@ public class SkinSearchByNickPanel extends UIOverlayPanel
                 this.content.add(this.preview3D);
                 this.content.resize();
 
-                this.applyButton.setEnabled(true);
+                this.updateButtonsLayout(true);
                 this.setResult(L10n.lang("bbslezy.ui.skin.skin_found"));
             }
             catch (Exception e)
@@ -168,59 +230,88 @@ public class SkinSearchByNickPanel extends UIOverlayPanel
         });
     }
 
-    private void applySkin()
+    private boolean saveSkinFile(String name)
     {
-        String name = this.nickname.trim();
         if (this.tempPreviewFile == null || !this.tempPreviewFile.exists() || !PlayerSkins.isNickname(name))
         {
-            return;
+            return false;
         }
 
         try
         {
-            /* 1. Save permanently to BBS assets/skins folder */
             File skinsFolder = new File(BBSMod.getAssetsFolder(), "skins");
             skinsFolder.mkdirs();
             File dest = new File(skinsFolder, name + ".png");
             Files.copy(this.tempPreviewFile.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
-            Link permanentLink = Link.assets("skins/" + name + ".png");
             BBSResources.markAssetsChanged();
-
-            /* 2. Apply directly to the form/replay in UIFormEditor */
-            if (this.editor != null)
-            {
-                Form current = this.editor.form;
-                ModelForm modelForm;
-
-                if (current instanceof ModelForm)
-                {
-                    modelForm = (ModelForm) current;
-                }
-                else
-                {
-                    modelForm = new ModelForm();
-                }
-
-                modelForm.texture.set(permanentLink);
-                modelForm.model.set(this.isAlexSkin ? "player/alex" : "player/steve");
-                this.editor.edit(modelForm);
-            }
-
-            this.applied = true;
-            this.close();
+            return true;
         }
         catch (Exception e)
         {
-            LOG.error("Failed to apply skin " + name, e);
+            LOG.error("Failed to save skin " + name, e);
+            return false;
+        }
+    }
+
+    private void saveSkinOnly()
+    {
+        String name = this.nickname.trim();
+        if (this.saveSkinFile(name))
+        {
+            this.applied = true;
+            this.close();
+        }
+        else
+        {
             this.setResult(L10n.lang("bbslezy.ui.skin.download_failed"));
         }
+    }
+
+    private void applySkinToEditor()
+    {
+        String name = this.nickname.trim();
+        if (!this.saveSkinFile(name))
+        {
+            this.setResult(L10n.lang("bbslezy.ui.skin.download_failed"));
+            return;
+        }
+
+        Link permanentLink = Link.assets("skins/" + name + ".png");
+
+        if (this.canApplyToEditor())
+        {
+            Form form = this.editor.form;
+
+            if (form instanceof ModelForm modelForm)
+            {
+                modelForm.texture.set(permanentLink);
+
+                /* Only switch model to player/steve or player/alex if it's currently a vanilla player model.
+                 * For custom models (e.g. custom player rigs), keep their custom model intact! */
+                String currentModel = modelForm.model.get();
+                if (currentModel == null || currentModel.isEmpty() || currentModel.startsWith("player"))
+                {
+                    modelForm.model.set(this.isAlexSkin ? "player/alex" : "player/steve");
+                }
+
+                this.editor.edit(modelForm);
+            }
+            else if (form instanceof MobForm mobForm)
+            {
+                mobForm.texture.set(permanentLink);
+                mobForm.slim.set(this.isAlexSkin);
+                this.editor.edit(mobForm);
+            }
+        }
+
+        this.applied = true;
+        this.close();
     }
 
     @Override
     public void close()
     {
-        /* If user closes without applying, clean up the temporary preview file */
+        /* If user closes without applying/saving, clean up the temporary preview file */
         if (!this.applied && this.tempPreviewFile != null && this.tempPreviewFile.exists())
         {
             try
