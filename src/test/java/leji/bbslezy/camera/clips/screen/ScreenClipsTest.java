@@ -267,13 +267,19 @@ class ScreenClipsTest
         assertEquals(0F, LetterboxClip.getEffects(context).get(0).size);
         assertEquals((float) expectedWidth, LetterboxClip.getEffects(context).get(0).width, 1e-3F);
 
-        // CUSTOM: leaves manual height/width alone
-        clip.height.set(0.42D);
-        clip.width.set(0.85D);
+        // CUSTOM: calculates bars dynamically from customRatio
         clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
+        clip.customRatio.set(2.0F);
         clip.applyAspectRatioPreset(canvasRatio);
-        assertEquals(0.42D, clip.height.get(), 1e-3D);
-        assertEquals(0.85D, clip.width.get(), 1e-3D);
+        double expectedCustomHeight = 2D * (1D - (double) canvasRatio / 2.0D);
+        assertEquals(expectedCustomHeight, clip.height.get(), 1e-3D);
+        assertEquals(1.0D, clip.width.get(), 1e-3D);
+
+        // CUSTOM pillarbox: e.g. 1.0 (Square) on 16:9 canvas
+        clip.customRatio.set(1.0F);
+        clip.applyAspectRatioPreset(canvasRatio);
+        assertEquals(0.0D, clip.height.get(), 1e-3D);
+        assertEquals(1.0D / (double) canvasRatio, clip.width.get(), 1e-3D);
     }
 
 

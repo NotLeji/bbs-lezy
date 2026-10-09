@@ -33,6 +33,7 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
     public UITrackpad smoothness;
     public UIColor color;
     public UIChoiceButton<AspectRatioPreset> aspectPreset;
+    public UITrackpad customRatio;
     public UIButton edit;
     public UIKeyframeEditor keyframes;
 
@@ -57,8 +58,22 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
                 v.set(p.ordinal());
                 this.clip.applyAspectRatioPreset(this.currentCanvasRatio());
             });
+            this.fillData();
         });
-        this.aspectPreset.tooltip(IKey.raw("Aspect ratio presets (Scope, Flat, HD, etc.)"));
+        this.aspectPreset.tooltip(IKey.raw("Aspect ratio presets (Scope, Flat, HD, Custom, etc.)"));
+
+        this.customRatio = new UITrackpad((v) ->
+        {
+            this.editor.editMultiple(this.clip.customRatio, (f) ->
+            {
+                f.set(v.floatValue());
+                this.clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
+                this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
+                this.clip.applyAspectRatioPreset(this.currentCanvasRatio());
+            });
+        }).limit(0.1D, 10D).values(0.01D, 0.05D, 0.1D);
+        this.customRatio.tooltip(IKey.raw("Target aspect ratio (width ÷ height, e.g. 2.39 for Scope, 1.85 for Flat, 0.56 for 9:16)"));
+        this.bind(this.customRatio, () -> this.customRatio.setValue((double) this.clip.customRatio.get()));
 
         this.height = this.trackpad(this.clip.height).limit(0D, 1.5D).values(0.01D, 0.05D, 0.1D);
         this.height.tooltip(IKey.raw("Bar thickness (0.48 = standard 2.39:1 cinema scope)"));
@@ -94,7 +109,7 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
     {
         super.registerPanels();
 
-        this.panels.add(this.section(IKey.raw("Bar Size & Shape"), this.aspectPreset, this.height, this.width, this.smoothness));
+        this.panels.add(this.section(IKey.raw("Bar Size & Shape"), this.aspectPreset, this.customRatio, this.height, this.width, this.smoothness));
         this.panels.add(this.section(IKey.raw("Color"), this.color));
         this.panels.add(this.section(IKey.raw("Animate with Keyframes"), this.edit).tooltip(
             IKey.raw("Optional: animate bar height, width, rotation, and color over time")
@@ -117,6 +132,7 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
         {
             this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
         }
+        this.customRatio.setValue((double) this.clip.customRatio.get());
         this.keyframes.view.removeAllSheets();
 
         for (KeyframeChannel<?> channel : this.clip.channels)

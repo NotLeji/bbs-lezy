@@ -8,6 +8,7 @@ import mchorse.bbs_mod.settings.values.core.ValueColor;
 import mchorse.bbs_mod.settings.values.numeric.ValueDouble;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.settings.values.numeric.ValueInt;
+import mchorse.bbs_mod.settings.values.numeric.ValueFloat;
 import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.clips.ClipContext;
 import mchorse.bbs_mod.utils.colors.Color;
@@ -33,6 +34,7 @@ public class LetterboxClip extends CameraClip
 
     /* Persisted on the clip: which aspect preset is selected, or CUSTOM (manual height/width). */
     public final ValueInt aspectPreset = new ValueInt("aspectPreset", AspectRatioPreset.CUSTOM.ordinal(), 0, AspectRatioPreset.values().length - 1);
+    public final ValueFloat customRatio = new ValueFloat("customRatio", 2.39F);
 
     /* Optional keyframe channels for animation */
     public final KeyframeChannel<Double> heightChannel = new KeyframeChannel<>("height", KeyframeFactories.DOUBLE);
@@ -72,6 +74,7 @@ public class LetterboxClip extends CameraClip
         this.add(this.color);
 
         this.add(this.aspectPreset);
+        this.add(this.customRatio);
         for (KeyframeChannel channel : this.channels)
         {
             this.add(channel);
@@ -128,10 +131,18 @@ public class LetterboxClip extends CameraClip
     {
         int index = MathUtils.clamp(this.aspectPreset.get(), 0, AspectRatioPreset.values().length - 1);
         AspectRatioPreset preset = AspectRatioPreset.values()[index];
-        float ratio = preset.getRatio();
+        float ratio = (preset == AspectRatioPreset.CUSTOM)
+            ? Math.max(0.01F, this.customRatio.get())
+            : preset.getRatio();
+
         if (ratio <= 0F)
         {
             return;
+        }
+
+        if (preset != AspectRatioPreset.CUSTOM)
+        {
+            this.customRatio.set(ratio);
         }
 
         if (ratio >= canvasRatio - ASPECT_TOLERANCE)
