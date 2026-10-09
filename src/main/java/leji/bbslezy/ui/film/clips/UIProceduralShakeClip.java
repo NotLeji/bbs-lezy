@@ -1,11 +1,14 @@
 package leji.bbslezy.ui.film.clips;
 
 import leji.bbslezy.camera.clips.modifiers.ProceduralShakeClip;
+import leji.bbslezy.camera.clips.modifiers.ShakePreset;
 import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.ui.film.IUIClipsDelegate;
 import mchorse.bbs_mod.ui.film.clips.UIClip;
 import mchorse.bbs_mod.ui.film.clips.widgets.UIBitToggle;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
+import mchorse.bbs_mod.ui.framework.elements.buttons.UIChoiceButton;
+import java.util.Arrays;
 import mchorse.bbs_mod.ui.framework.elements.input.UITrackpad;
 import mchorse.bbs_mod.ui.utils.UI;
 import mchorse.bbs_mod.ui.utils.UIConstants;
@@ -27,7 +30,7 @@ public class UIProceduralShakeClip extends UIClip<ProceduralShakeClip>
     public UITrackpad rotFov;
 
     public UIBitToggle active;
-    public UIButton presetBtn;
+    public UIChoiceButton<ShakePreset> presetChoice;
 
     public UIProceduralShakeClip(ProceduralShakeClip clip, IUIClipsDelegate editor)
     {
@@ -69,14 +72,19 @@ public class UIProceduralShakeClip extends UIClip<ProceduralShakeClip>
 
         this.active = this.bind(new UIBitToggle((value) -> this.clip.active.set(value)).all(), () -> this.active.setValue(this.clip.active.get()));
 
-        this.presetBtn = new UIButton(IKey.raw("Presets"), (b) -> {});
-        this.presetBtn.context((menu) ->
+        this.presetChoice = new UIChoiceButton<>(
+            Arrays.asList(ShakePreset.values()),
+            (p) -> Icons.EXCHANGE,
+            (p) -> IKey.raw(p.getLabel())
+        ).callback((p) ->
         {
-            menu.action(Icons.PLAY, IKey.raw("Gentle"), () -> this.editor.editMultiple(this.clip.preset, (v) -> this.clip.applyPreset(ProceduralShakeClip.PRESET_GENTLE)));
-            menu.action(Icons.EXCHANGE, IKey.raw("Action"), () -> this.editor.editMultiple(this.clip.preset, (v) -> this.clip.applyPreset(ProceduralShakeClip.PRESET_ACTION)));
-            menu.action(Icons.FOUR_STAR, IKey.raw("Explosion"), () -> this.editor.editMultiple(this.clip.preset, (v) -> this.clip.applyPreset(ProceduralShakeClip.PRESET_EXPLOSION)));
+            this.editor.editMultiple(this.clip.preset, (v) ->
+            {
+                this.clip.applyPreset(p.ordinal());
+            });
+            this.fillData();
         });
-        this.presetBtn.tooltip(IKey.raw("Apply shake presets (Gentle, Action, Explosion)"));
+        this.presetChoice.tooltip(IKey.raw("Apply shake presets (Gentle, Action, Explosion)"));
     }
 
     @Override
@@ -84,7 +92,7 @@ public class UIProceduralShakeClip extends UIClip<ProceduralShakeClip>
     {
         super.registerPanels();
 
-        this.panels.add(this.section(IKey.raw("Presets"), this.presetBtn));
+        this.panels.add(this.section(IKey.raw("Presets"), this.presetChoice));
         this.panels.add(this.section(IKey.raw("Noise Parameters"),
             UI.row(UIConstants.MARGIN, 0, 20, this.frequency, this.intensity),
             UI.row(UIConstants.MARGIN, 0, 20, this.octaves, this.seed)
@@ -98,4 +106,17 @@ public class UIProceduralShakeClip extends UIClip<ProceduralShakeClip>
         ));
         this.panels.add(this.section(IKey.raw("Active Axes"), this.active));
     }
+    @Override
+    public void fillData()
+    {
+        super.fillData();
+
+        int presetIndex = this.clip.preset.get();
+        ShakePreset[] presets = ShakePreset.values();
+        if (presetIndex >= 0 && presetIndex < presets.length)
+        {
+            this.presetChoice.setValue(presets[presetIndex]);
+        }
+    }
+
 }

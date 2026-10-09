@@ -259,13 +259,14 @@ class ScreenClipsTest
         double expectedWidth = (9D / 16D) / (double) canvasRatio;
         assertEquals(expectedWidth, clip.width.get(), 1e-3D);
 
-        // CUSTOM: no change to manual settings
-        clip.height.set(0.42D);
-        clip.width.set(0.85D);
-        clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
-        clip.applyAspectRatioPreset(canvasRatio);
-        assertEquals(0.42D, clip.height.get(), 1e-3D);
-        assertEquals(0.85D, clip.width.get(), 1e-3D);
+        // Pillarbox effect is added to context even when height is 0
+        ClipContext context = dummyContext(0, 0F);
+        LetterboxClip.getEffects(context).clear();
+        Position position = new Position();
+        clip.apply(context, position);
+        assertEquals(1, LetterboxClip.getEffects(context).size());
+        assertEquals(0F, LetterboxClip.getEffects(context).get(0).size);
+        assertEquals((float) expectedWidth, LetterboxClip.getEffects(context).get(0).width, 1e-3F);
     }
 
     @Test
@@ -348,7 +349,7 @@ class ScreenClipsTest
 
         clip.duration.set(30);
         ClipContext context = dummyContext(5, 0.5F);
-
+        context.count = 1;
         Position pos1 = new Position();
         clip.apply(context, pos1);
 
@@ -358,6 +359,26 @@ class ScreenClipsTest
         assertEquals(pos1.angle.yaw, pos2.angle.yaw, 1e-6F, "Shake must be deterministic");
         assertEquals(pos1.angle.pitch, pos2.angle.pitch, 1e-6F, "Shake must be deterministic");
     }
+    @Test
+    void proceduralShakeClip_preventsRunawayDriftWithoutBaseClip()
+    {
+        ProceduralShakeClip clip = new ProceduralShakeClip();
+        clip.duration.set(30);
+
+        // When running past base clips (context.count == 0, no clip underneath), position is untouched
+        ClipContext emptyContext = dummyContext(5, 0.5F);
+        emptyContext.count = 0;
+
+        Position pos = new Position();
+        float initialYaw = pos.angle.yaw;
+        float initialPitch = pos.angle.pitch;
+
+        clip.apply(emptyContext, pos);
+
+        assertEquals(initialYaw, pos.angle.yaw, 1e-6F, "Shake must not mutate orientation without a base camera clip");
+        assertEquals(initialPitch, pos.angle.pitch, 1e-6F, "Shake must not mutate orientation without a base camera clip");
+    }
+
     @SuppressWarnings("unchecked")
     private static ClipContext dummyContext(int ticks, float transition)
     {

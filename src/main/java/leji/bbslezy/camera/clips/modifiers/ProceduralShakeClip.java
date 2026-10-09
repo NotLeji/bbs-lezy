@@ -93,6 +93,13 @@ public class ProceduralShakeClip extends ComponentClip
     @Override
     protected void applyClip(ClipContext context, Position position)
     {
+        /* Guard: ProceduralShakeClip is a modifier clip. It must not accumulate runaway drift
+         * into unmanaged camera orientations when running past the end of base camera clips. */
+        if (context.count == 0 && (this.layer.get() == 0 || !context.applyUnderneath(context.ticks, context.transition, new Position())))
+        {
+            return;
+        }
+
         float t = context.relativeTick + context.transition;
         float factor = this.envelope.factorEnabled(this.duration.get(), t);
         if (factor <= 1e-4F)

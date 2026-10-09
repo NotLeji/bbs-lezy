@@ -148,22 +148,52 @@ public class ScreenEffectRenderer
             Matrix4f cache = new Matrix4f(RenderSystem.getProjectionMatrix());
             Matrix4f ortho = new Matrix4f().ortho(0, screenW, screenH, 0, -1000, 3000);
             RenderSystem.setProjectionMatrix(ortho, VertexSorter.BY_Z);
+            RenderSystem.depthFunc(GL11.GL_ALWAYS);
+            RenderSystem.disableCull();
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
 
             renderLetterbox(batcher, le, screenW, screenH);
 
             batcher.flush();
             RenderSystem.setProjectionMatrix(cache, VertexSorter.BY_Z);
+            RenderSystem.enableCull();
         }
 
         /* Fullscreen tints (transitions, impact flash) composite over letterbox */
+        boolean hasTint = false;
         for (TintEffect te : tintEffects)
         {
-            if (te.layer() != layer)
+            if (te.layer() == layer)
             {
-                continue;
+                hasTint = true;
+                break;
+            }
+        }
+
+        if (hasTint)
+        {
+            Matrix4f cache = new Matrix4f(RenderSystem.getProjectionMatrix());
+            Matrix4f ortho = new Matrix4f().ortho(0, screenW, screenH, 0, -100, 100);
+            RenderSystem.setProjectionMatrix(ortho, VertexSorter.BY_Z);
+            RenderSystem.depthFunc(GL11.GL_ALWAYS);
+            RenderSystem.disableCull();
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+
+            for (TintEffect te : tintEffects)
+            {
+                if (te.layer() != layer)
+                {
+                    continue;
+                }
+
+                batcher.box(0, 0, screenW, screenH, te.color);
             }
 
-            batcher.box(0, 0, screenW, screenH, te.color);
+            batcher.flush();
+            RenderSystem.setProjectionMatrix(cache, VertexSorter.BY_Z);
+            RenderSystem.enableCull();
         }
     }
 
@@ -221,14 +251,17 @@ public class ScreenEffectRenderer
 
     private static void renderLetterbox(Batcher2D batcher, LetterboxEffect effect, int screenW, int screenH)
     {
-        if (effect.width <= 0F)
+        if (effect.width <= 0F && effect.size <= 0F)
         {
             return;
         }
 
         int barH = (int) (screenH * effect.size);
+        float barWidthFactor = effect.width;
+        int barW = Math.max(1, Math.round(screenW * barWidthFactor));
+        int barX = (screenW - barW) / 2;
 
-        if (barH <= 0)
+        if (barH <= 0 && barX <= 0)
         {
             return;
         }
@@ -263,21 +296,32 @@ public class ScreenEffectRenderer
         int barW = Math.max(1, Math.round(screenW * barWidthFactor));
         int barX = (screenW - barW) / 2;
 
-        if (smoothH > 0)
+        /* Pillarbox (vertical side bars) when barX > 0 */
+        if (barX > 0)
         {
-            int solidH = barH - smoothH;
-            int transparent = Colors.setA(color, 0F);
-
-            batcher.box(barX, 0, barX + barW, solidH, color);
-            batcher.gradientVBox(barX, solidH, barX + barW, barH, color, transparent);
-
-            batcher.gradientVBox(barX, screenH - barH, barX + barW, screenH - solidH, transparent, color);
-            batcher.box(barX, screenH - solidH, barX + barW, screenH, color);
+            batcher.box(0, 0, barX, screenH, color);
+            batcher.box(screenW - barX, 0, screenW, screenH, color);
         }
-        else
+
+        /* Letterbox (horizontal top/bottom bars) when barH > 0 */
+        if (barH > 0)
         {
-            batcher.box(barX, 0, barX + barW, barH, color);
-            batcher.box(barX, screenH - barH, barX + barW, screenH, color);
+            if (smoothH > 0)
+            {
+                int solidH = barH - smoothH;
+                int transparent = Colors.setA(color, 0F);
+
+                batcher.box(barX, 0, barX + barW, solidH, color);
+                batcher.gradientVBox(barX, solidH, barX + barW, barH, color, transparent);
+
+                batcher.gradientVBox(barX, screenH - barH, barX + barW, screenH - solidH, transparent, color);
+                batcher.box(barX, screenH - solidH, barX + barW, screenH, color);
+            }
+            else
+            {
+                batcher.box(barX, 0, barX + barW, barH, color);
+                batcher.box(barX, screenH - barH, barX + barW, screenH, color);
+            }
         }
     }
 }

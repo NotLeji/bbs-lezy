@@ -8,6 +8,7 @@ import mchorse.bbs_mod.settings.values.core.ValueColor;
 import mchorse.bbs_mod.settings.values.numeric.ValueDouble;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.settings.values.numeric.ValueInt;
+import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.clips.ClipContext;
 import mchorse.bbs_mod.utils.colors.Color;
 import mchorse.bbs_mod.utils.colors.Colors;
@@ -31,7 +32,7 @@ public class LetterboxClip extends CameraClip
     public static final float ASPECT_TOLERANCE = 0.001F;
 
     /* Persisted on the clip: which aspect preset is selected, or CUSTOM (manual height/width). */
-    public final ValueInt aspectPreset = new ValueInt("aspectPreset", AspectRatioPreset.CUSTOM.ordinal(), 0, AspectRatioPreset.values().length - 1);
+    public final ValueInt aspectPreset = new ValueInt("aspectPreset", AspectRatioPreset.SCOPE_239.ordinal(), 0, AspectRatioPreset.values().length - 1);
 
     /* Optional keyframe channels for animation */
     public final KeyframeChannel<Double> heightChannel = new KeyframeChannel<>("height", KeyframeFactories.DOUBLE);
@@ -88,13 +89,13 @@ public class LetterboxClip extends CameraClip
             ? (float) (double) this.height.get()
             : (float) (double) this.heightChannel.interpolate(t);
 
-        if (barH > 0F)
-        {
-            float sz = barH * 0.25F;
-            float barW = this.widthChannel.isEmpty()
-                ? (float) (double) this.width.get()
-                : (float) (double) this.widthChannel.interpolate(t);
+        float sz = barH * 0.25F;
+        float barW = this.widthChannel.isEmpty()
+            ? (float) (double) this.width.get()
+            : (float) (double) this.widthChannel.interpolate(t);
 
+        if (barH > 0F || barW < 0.999F)
+        {
             float smooth = (this.smoothnessChannel.isEmpty()
                 ? (float) (double) this.smoothness.get()
                 : (float) (double) this.smoothnessChannel.interpolate(t)) * 0.25F;
@@ -125,13 +126,10 @@ public class LetterboxClip extends CameraClip
 
     public void applyAspectRatioPreset(float canvasRatio)
     {
-        AspectRatioPreset preset = AspectRatioPreset.values()[this.aspectPreset.get()];
+        int index = MathUtils.clamp(this.aspectPreset.get(), 0, AspectRatioPreset.values().length - 1);
+        AspectRatioPreset preset = AspectRatioPreset.values()[index];
         float ratio = preset.getRatio();
 
-        if (ratio <= 0F)
-        {
-            return;
-        }
 
         if (ratio >= canvasRatio - ASPECT_TOLERANCE)
         {
