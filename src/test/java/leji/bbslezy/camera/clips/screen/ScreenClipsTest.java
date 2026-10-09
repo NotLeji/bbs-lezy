@@ -269,46 +269,6 @@ class ScreenClipsTest
         assertEquals((float) expectedWidth, LetterboxClip.getEffects(context).get(0).width, 1e-3F);
     }
 
-    @Test
-    void transitionClip_propertiesAndOpacity()
-    {
-        TransitionClip clip = new TransitionClip();
-        clip.duration.set(20);
-
-        Position position = new Position();
-        ClipContext context = dummyContext(0, 0F);
-
-        // FADE_OUT: starts 0, ends ~1
-        clip.type.set(TransitionClip.TYPE_FADE_OUT);
-        context.setup(0, 0, 0F);
-        TintClip.getTints(context).clear();
-        clip.apply(context, position);
-        // at t=0, opacity is 0 -> tint list should be empty
-        assertTrue(TintClip.getTints(context).isEmpty());
-
-        // at t=20, opacity is 1 -> tint list has effect
-        context.setup(20, 20, 0F);
-        TintClip.getTints(context).clear();
-        clip.apply(context, position);
-        assertEquals(1, TintClip.getTints(context).size());
-        TintEffect effect = TintClip.getTints(context).get(0);
-        assertEquals(1F, Colors.getA(effect.color), 1e-3F);
-
-        // FLASH: decays from 1 to 0 with squared decay
-        clip.type.set(TransitionClip.TYPE_FLASH);
-        context.setup(0, 0, 0F);
-        TintClip.getTints(context).clear();
-        clip.apply(context, position);
-        assertEquals(1, TintClip.getTints(context).size());
-        assertEquals(1F, Colors.getA(TintClip.getTints(context).get(0).color), 0.01F);
-
-        // At half duration (t=10/20=0.5), progress=0.5, (1-0.5)^2 = 0.25
-        context.setup(10, 10, 0F);
-        TintClip.getTints(context).clear();
-        clip.apply(context, position);
-        assertEquals(1, TintClip.getTints(context).size());
-        assertEquals(0.25F, Colors.getA(TintClip.getTints(context).get(0).color), 0.01F);
-    }
 
     @Test
     void impactClip_punchInFov()

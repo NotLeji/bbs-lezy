@@ -10,7 +10,6 @@ import leji.bbslezy.camera.clips.screen.LetterboxClip;
 import leji.bbslezy.camera.clips.screen.VignetteClip;
 import leji.bbslezy.camera.clips.screen.HalftoneClip;
 import leji.bbslezy.camera.clips.modifiers.ProceduralShakeClip;
-import leji.bbslezy.camera.clips.screen.TransitionClip;
 import leji.bbslezy.camera.clips.screen.ImpactClip;
 import leji.bbslezy.forms.utils.Illusion;
 import leji.bbslezy.forms.values.ValueIllusion;
@@ -82,7 +81,6 @@ public class BBSLod implements BBSAddonMod
         event.factory.register(Link.bbs("vignette"), VignetteClip.class, new ClipFactoryData(Icons.CIRCLE, 0x333333));
         event.factory.register(Link.bbs("halftone"), HalftoneClip.class, new ClipFactoryData(Icons.MORE, 0x111111));
         event.factory.register(Link.bbs("shake"), ProceduralShakeClip.class, new ClipFactoryData(Icons.EXCHANGE, 0x950347));
-        event.factory.register(Link.bbs("transition"), TransitionClip.class, new ClipFactoryData(Icons.TIME, 0xd45f00));
         event.factory.register(Link.bbs("impact"), ImpactClip.class, new ClipFactoryData(Icons.FOUR_STAR, 0xe65b06));
     }
 }

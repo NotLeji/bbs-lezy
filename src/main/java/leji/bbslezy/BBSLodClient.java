@@ -9,7 +9,6 @@ import leji.bbslezy.camera.clips.screen.LetterboxClip;
 import leji.bbslezy.camera.clips.screen.VignetteClip;
 import leji.bbslezy.camera.clips.screen.HalftoneClip;
 import leji.bbslezy.camera.clips.modifiers.ProceduralShakeClip;
-import leji.bbslezy.camera.clips.screen.TransitionClip;
 import leji.bbslezy.camera.clips.screen.ImpactClip;
 import leji.bbslezy.client.screen.ScreenEffectRenderer;
 import leji.bbslezy.ui.film.clips.UICinematicClip;
@@ -18,7 +17,6 @@ import leji.bbslezy.ui.film.clips.UILetterboxClip;
 import leji.bbslezy.ui.film.clips.UIVignetteClip;
 import leji.bbslezy.ui.film.clips.UIHalftoneClip;
 import leji.bbslezy.ui.film.clips.UIProceduralShakeClip;
-import leji.bbslezy.ui.film.clips.UITransitionClip;
 import leji.bbslezy.ui.film.clips.UIImpactClip;
 import leji.bbslezy.ui.film.UIGuidesOverlay;
 import leji.bbslezy.forms.renderers.FormIllusionRenderer;
@@ -98,7 +96,6 @@ public class BBSLodClient implements BBSAddonMod
         event.register(VignetteClip.class, UIVignetteClip::new);
         event.register(HalftoneClip.class, UIHalftoneClip::new);
         event.register(ProceduralShakeClip.class, UIProceduralShakeClip::new);
-        event.register(TransitionClip.class, UITransitionClip::new);
         event.register(ImpactClip.class, UIImpactClip::new);
     }
     @Subscribe
