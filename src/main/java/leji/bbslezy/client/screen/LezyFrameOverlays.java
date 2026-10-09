@@ -8,6 +8,8 @@ import leji.bbslezy.camera.clips.screen.HalftoneClip;
 import leji.bbslezy.camera.clips.screen.HalftoneEffect;
 import leji.bbslezy.camera.clips.screen.LetterboxClip;
 import leji.bbslezy.camera.clips.screen.LetterboxEffect;
+import leji.bbslezy.camera.clips.screen.TintClip;
+import leji.bbslezy.camera.clips.screen.TintEffect;
 import com.mojang.blaze3d.systems.RenderSystem;
 import org.lwjgl.opengl.GL11;
 
@@ -103,9 +105,10 @@ public class LezyFrameOverlays
         List<LetterboxEffect> letterboxEffects = LetterboxClip.getEffects(context);
         List<GrainEffect> grainEffects = CinematicClip.getGrainEffects(context);
         List<HalftoneEffect> halftoneEffects = HalftoneClip.getEffects(context);
+        List<TintEffect> tintEffects = TintClip.getTints(context);
         List<ImageOverlay> images = ImageClip.getImages(context);
         List<Subtitle> subtitles = SubtitleClip.getSubtitles(context);
-        if (effects.isEmpty() && letterboxEffects.isEmpty() && grainEffects.isEmpty() && halftoneEffects.isEmpty() && images.isEmpty() && subtitles.isEmpty())
+        if (effects.isEmpty() && letterboxEffects.isEmpty() && grainEffects.isEmpty() && halftoneEffects.isEmpty() && tintEffects.isEmpty() && images.isEmpty() && subtitles.isEmpty())
         {
             return;
         }
@@ -131,9 +134,9 @@ public class LezyFrameOverlays
 
         /* Every track on the frame, not just the ones holding an effect: a subtitle on track 3 is
          * still a track the effects below it have to be drawn under. */
-        for (int track : collectTracks(effects, letterboxEffects, grainEffects, halftoneEffects, imageLayers, subtitleLayers))
+        for (int track : collectTracks(effects, letterboxEffects, grainEffects, halftoneEffects, tintEffects, imageLayers, subtitleLayers))
         {
-            ScreenEffectRenderer.renderLayer(batcher, track, screenW, screenH, effects, letterboxEffects, grainEffects, halftoneEffects);
+            ScreenEffectRenderer.renderLayer(batcher, track, screenW, screenH, effects, letterboxEffects, grainEffects, halftoneEffects, tintEffects);
 
             UIImageRenderer.renderImages(stack, batcher, atLayer(images, imageLayers, track));
             UISubtitleRenderer.renderSubtitles(stack, batcher, atLayer(subtitles, subtitleLayers, track));
@@ -144,7 +147,7 @@ public class LezyFrameOverlays
         letterboxEffects.clear();
         grainEffects.clear();
         halftoneEffects.clear();
-
+        tintEffects.clear();
         GL11.glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
         RenderSystem.enableDepthTest();
     }
@@ -166,7 +169,14 @@ public class LezyFrameOverlays
         List<GrainEffect> grainEffects, List<HalftoneEffect> halftoneEffects,
         Map<ImageOverlay, Integer> imageLayers, Map<Subtitle, Integer> subtitleLayers)
     {
-        TreeSet<Integer> tracks = new TreeSet<>(ScreenEffectRenderer.collectLayers(effects, letterboxEffects, grainEffects, halftoneEffects));
+        return collectTracks(effects, letterboxEffects, grainEffects, halftoneEffects, List.of(), imageLayers, subtitleLayers);
+    }
+
+    static TreeSet<Integer> collectTracks(List<ColorEffect> effects, List<LetterboxEffect> letterboxEffects,
+        List<GrainEffect> grainEffects, List<HalftoneEffect> halftoneEffects, List<TintEffect> tintEffects,
+        Map<ImageOverlay, Integer> imageLayers, Map<Subtitle, Integer> subtitleLayers)
+    {
+        TreeSet<Integer> tracks = new TreeSet<>(ScreenEffectRenderer.collectLayers(effects, letterboxEffects, grainEffects, halftoneEffects, tintEffects));
 
         tracks.addAll(imageLayers.values());
         tracks.addAll(subtitleLayers.values());

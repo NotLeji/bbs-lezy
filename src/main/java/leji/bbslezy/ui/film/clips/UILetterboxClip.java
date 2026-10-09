@@ -1,5 +1,6 @@
 package leji.bbslezy.ui.film.clips;
 
+import leji.bbslezy.camera.clips.screen.AspectRatioPreset;
 import leji.bbslezy.camera.clips.screen.LetterboxClip;
 import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.l10n.keys.IKey;
@@ -11,6 +12,11 @@ import mchorse.bbs_mod.ui.film.clips.UIClip;
 import mchorse.bbs_mod.ui.film.replays.UIReplaysEditor;
 import mchorse.bbs_mod.ui.film.utils.keyframes.UIFilmKeyframes;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
+import mchorse.bbs_mod.ui.framework.elements.buttons.UIChoiceButton;
+import mchorse.bbs_mod.ui.utils.icons.Icons;
+import net.minecraft.client.MinecraftClient;
+
+import java.util.Arrays;
 import mchorse.bbs_mod.ui.framework.elements.input.UIColor;
 import mchorse.bbs_mod.ui.framework.elements.input.UITrackpad;
 import mchorse.bbs_mod.ui.framework.elements.input.keyframes.UIKeyframeEditor;
@@ -26,6 +32,7 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
     public UITrackpad width;
     public UITrackpad smoothness;
     public UIColor color;
+    public UIChoiceButton<AspectRatioPreset> aspectPreset;
     public UIButton edit;
     public UIKeyframeEditor keyframes;
 
@@ -38,6 +45,20 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
     protected void registerUI()
     {
         super.registerUI();
+
+        this.aspectPreset = new UIChoiceButton<>(
+            Arrays.asList(AspectRatioPreset.values()),
+            (p) -> Icons.FULLSCREEN,
+            (p) -> IKey.raw(p.getLabel())
+        ).callback((p) ->
+        {
+            this.editor.editMultiple(this.clip.aspectPreset, (v) ->
+            {
+                v.set(p.ordinal());
+                this.clip.applyAspectRatioPreset(this.currentCanvasRatio());
+            });
+        });
+        this.aspectPreset.tooltip(IKey.raw("Aspect ratio presets (Scope, Flat, HD, etc.)"));
 
         this.height = this.trackpad(this.clip.height).limit(0D, 1.5D).values(0.01D, 0.05D, 0.1D);
         this.height.tooltip(IKey.raw("Bar thickness (0.48 = standard 2.39:1 cinema scope)"));
@@ -73,7 +94,7 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
     {
         super.registerPanels();
 
-        this.panels.add(this.section(IKey.raw("Bar Size & Shape"), this.height, this.width, this.smoothness));
+        this.panels.add(this.section(IKey.raw("Bar Size & Shape"), this.aspectPreset, this.height, this.width, this.smoothness));
         this.panels.add(this.section(IKey.raw("Color"), this.color));
         this.panels.add(this.section(IKey.raw("Animate with Keyframes"), this.edit).tooltip(
             IKey.raw("Optional: animate bar height, width, rotation, and color over time")
@@ -86,6 +107,16 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
         super.fillData();
 
         this.color.setColor(this.clip.color.get().getARGBColor());
+        int presetIndex = this.clip.aspectPreset.get();
+        AspectRatioPreset[] presets = AspectRatioPreset.values();
+        if (presetIndex >= 0 && presetIndex < presets.length)
+        {
+            this.aspectPreset.setValue(presets[presetIndex]);
+        }
+        else
+        {
+            this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
+        }
         this.keyframes.view.removeAllSheets();
 
         for (KeyframeChannel<?> channel : this.clip.channels)
@@ -116,5 +147,25 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
         }
 
         super.collectUndoData(data);
+    }
+    private float currentCanvasRatio()
+    {
+        try
+        {
+            MinecraftClient mc = MinecraftClient.getInstance();
+            if (mc != null && mc.getWindow() != null)
+            {
+                int w = mc.getWindow().getScaledWidth();
+                int h = mc.getWindow().getScaledHeight();
+                if (w > 0 && h > 0)
+                {
+                    return (float) w / (float) h;
+                }
+            }
+        }
+        catch (Throwable ignored)
+        {}
+
+        return 16F / 9F;
     }
 }

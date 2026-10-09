@@ -7,6 +7,7 @@ import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.settings.values.core.ValueColor;
 import mchorse.bbs_mod.settings.values.numeric.ValueDouble;
 import mchorse.bbs_mod.utils.clips.Clip;
+import mchorse.bbs_mod.settings.values.numeric.ValueInt;
 import mchorse.bbs_mod.utils.clips.ClipContext;
 import mchorse.bbs_mod.utils.colors.Color;
 import mchorse.bbs_mod.utils.colors.Colors;
@@ -27,6 +28,10 @@ public class LetterboxClip extends CameraClip
     public final ValueDouble width = new ValueDouble("width", DEFAULT_WIDTH);
     public final ValueDouble smoothness = new ValueDouble("smoothness", 0D);
     public final ValueColor color = new ValueColor("color", DEFAULT_COLOR.copy());
+    public static final float ASPECT_TOLERANCE = 0.001F;
+
+    /* Persisted on the clip: which aspect preset is selected, or CUSTOM (manual height/width). */
+    public final ValueInt aspectPreset = new ValueInt("aspectPreset", AspectRatioPreset.CUSTOM.ordinal(), 0, AspectRatioPreset.values().length - 1);
 
     /* Optional keyframe channels for animation */
     public final KeyframeChannel<Double> heightChannel = new KeyframeChannel<>("height", KeyframeFactories.DOUBLE);
@@ -65,6 +70,7 @@ public class LetterboxClip extends CameraClip
         this.add(this.smoothness);
         this.add(this.color);
 
+        this.add(this.aspectPreset);
         for (KeyframeChannel channel : this.channels)
         {
             this.add(channel);
@@ -114,6 +120,28 @@ public class LetterboxClip extends CameraClip
             this.effect.layer = this.layer.get();
 
             getEffects(context).add(this.effect);
+        }
+    }
+
+    public void applyAspectRatioPreset(float canvasRatio)
+    {
+        AspectRatioPreset preset = AspectRatioPreset.values()[this.aspectPreset.get()];
+        float ratio = preset.getRatio();
+
+        if (ratio <= 0F)
+        {
+            return;
+        }
+
+        if (ratio >= canvasRatio - ASPECT_TOLERANCE)
+        {
+            this.height.set(2D * (1D - canvasRatio / (double) ratio));
+            this.width.set(1D);
+        }
+        else
+        {
+            this.height.set(0D);
+            this.width.set((double) (ratio / canvasRatio));
         }
     }
 

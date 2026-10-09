@@ -8,12 +8,19 @@ import leji.bbslezy.camera.clips.screen.ColorClip;
 import leji.bbslezy.camera.clips.screen.LetterboxClip;
 import leji.bbslezy.camera.clips.screen.VignetteClip;
 import leji.bbslezy.camera.clips.screen.HalftoneClip;
+import leji.bbslezy.camera.clips.modifiers.ProceduralShakeClip;
+import leji.bbslezy.camera.clips.screen.TransitionClip;
+import leji.bbslezy.camera.clips.screen.ImpactClip;
 import leji.bbslezy.client.screen.ScreenEffectRenderer;
 import leji.bbslezy.ui.film.clips.UICinematicClip;
 import leji.bbslezy.ui.film.clips.UIColorClip;
 import leji.bbslezy.ui.film.clips.UILetterboxClip;
 import leji.bbslezy.ui.film.clips.UIVignetteClip;
 import leji.bbslezy.ui.film.clips.UIHalftoneClip;
+import leji.bbslezy.ui.film.clips.UIProceduralShakeClip;
+import leji.bbslezy.ui.film.clips.UITransitionClip;
+import leji.bbslezy.ui.film.clips.UIImpactClip;
+import leji.bbslezy.ui.film.UIGuidesOverlay;
 import leji.bbslezy.forms.renderers.FormIllusionRenderer;
 import leji.bbslezy.ui.forms.editors.panels.UIIllusionFormPanel;
 import leji.bbslezy.ui.framework.elements.input.keyframes.factories.UIIllusionKeyframeFactory;
@@ -30,6 +37,7 @@ import mchorse.bbs_mod.api.client.events.RegisterClipPanelsEvent;
 import mchorse.bbs_mod.film.replays.tracks.TrackStyle;
 import mchorse.bbs_mod.api.client.events.RegisterFormPanelsEvent;
 import mchorse.bbs_mod.api.client.events.RegisterFrameOverlaysEvent;
+import mchorse.bbs_mod.api.client.events.RegisterPreviewOverlaysEvent;
 import mchorse.bbs_mod.api.client.events.RegisterKeyframeEditorsEvent;
 import mchorse.bbs_mod.l10n.L10n;
 import mchorse.bbs_mod.l10n.keys.IKey;
@@ -89,8 +97,10 @@ public class BBSLodClient implements BBSAddonMod
         event.register(CinematicClip.class, UICinematicClip::new);
         event.register(VignetteClip.class, UIVignetteClip::new);
         event.register(HalftoneClip.class, UIHalftoneClip::new);
+        event.register(ProceduralShakeClip.class, UIProceduralShakeClip::new);
+        event.register(TransitionClip.class, UITransitionClip::new);
+        event.register(ImpactClip.class, UIImpactClip::new);
     }
-
     @Subscribe
     public void onFrameOverlays(RegisterFrameOverlaysEvent event)
     {
@@ -108,6 +118,12 @@ public class BBSLodClient implements BBSAddonMod
 
             LezyFrameOverlays.render(stack, batcher, context, w, h);
         });
+    }
+
+    @Subscribe
+    public void onPreviewOverlays(RegisterPreviewOverlaysEvent event)
+    {
+        event.register(UIGuidesOverlay::new);
     }
 
     @Subscribe

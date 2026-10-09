@@ -2,6 +2,8 @@ package leji.bbslezy.camera.clips.screen;
 
 import leji.bbslezy.actions.LezyDamageActionClip;
 import leji.bbslezy.utils.keyframes.factories.LensRadiusSettingsKeyframeFactory;
+import leji.bbslezy.camera.clips.modifiers.ProceduralShakeClip;
+import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.camera.data.Position;
 import mchorse.bbs_mod.utils.clips.ClipContext;
 import mchorse.bbs_mod.utils.clips.Clip;
@@ -236,4 +238,139 @@ class ScreenClipsTest
         assertEquals(200F, effect.cells, 1e-4F);
         assertEquals(30F, effect.angle, 1e-4F);
     }
+
+    @Test
+    void letterboxClip_aspectRatioPresetMath()
+    {
+        LetterboxClip clip = new LetterboxClip();
+        float canvasRatio = 16F / 9F; // ~1.7778
+
+        // SCOPE 2.39: wider than canvas -> horizontal bars
+        clip.aspectPreset.set(AspectRatioPreset.SCOPE_239.ordinal());
+        clip.applyAspectRatioPreset(canvasRatio);
+        double expectedHeight = 2D * (1D - (double) canvasRatio / 2.39D);
+        assertEquals(expectedHeight, clip.height.get(), 1e-3D);
+        assertEquals(1.0D, clip.width.get(), 1e-3D);
+
+        // SHORTS 9:16 (0.5625): narrower than canvas -> pillarbox (height = 0, width < 1)
+        clip.aspectPreset.set(AspectRatioPreset.SHORTS_916.ordinal());
+        clip.applyAspectRatioPreset(canvasRatio);
+        assertEquals(0.0D, clip.height.get(), 1e-3D);
+        double expectedWidth = (9D / 16D) / (double) canvasRatio;
+        assertEquals(expectedWidth, clip.width.get(), 1e-3D);
+
+        // CUSTOM: no change to manual settings
+        clip.height.set(0.42D);
+        clip.width.set(0.85D);
+        clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
+        clip.applyAspectRatioPreset(canvasRatio);
+        assertEquals(0.42D, clip.height.get(), 1e-3D);
+        assertEquals(0.85D, clip.width.get(), 1e-3D);
+    }
+
+    @Test
+    void transitionClip_propertiesAndOpacity()
+    {
+        TransitionClip clip = new TransitionClip();
+        clip.duration.set(20);
+
+        Position position = new Position();
+        ClipContext context = dummyContext(0, 0F);
+
+        // FADE_OUT: starts 0, ends ~1
+        clip.type.set(TransitionClip.TYPE_FADE_OUT);
+        context.setup(0, 0, 0F);
+        TintClip.getTints(context).clear();
+        clip.apply(context, position);
+        // at t=0, opacity is 0 -> tint list should be empty
+        assertTrue(TintClip.getTints(context).isEmpty());
+
+        // at t=20, opacity is 1 -> tint list has effect
+        context.setup(20, 20, 0F);
+        TintClip.getTints(context).clear();
+        clip.apply(context, position);
+        assertEquals(1, TintClip.getTints(context).size());
+        TintEffect effect = TintClip.getTints(context).get(0);
+        assertEquals(1F, Colors.getA(effect.color), 1e-3F);
+
+        // FLASH: decays from 1 to 0 with squared decay
+        clip.type.set(TransitionClip.TYPE_FLASH);
+        context.setup(0, 0, 0F);
+        TintClip.getTints(context).clear();
+        clip.apply(context, position);
+        assertEquals(1, TintClip.getTints(context).size());
+        assertEquals(1F, Colors.getA(TintClip.getTints(context).get(0).color), 0.01F);
+
+        // At half duration (t=10/20=0.5), progress=0.5, (1-0.5)^2 = 0.25
+        context.setup(10, 10, 0F);
+        TintClip.getTints(context).clear();
+        clip.apply(context, position);
+        assertEquals(1, TintClip.getTints(context).size());
+        assertEquals(0.25F, Colors.getA(TintClip.getTints(context).get(0).color), 0.01F);
+    }
+
+    @Test
+    void impactClip_punchInFov()
+    {
+        ImpactClip clip = new ImpactClip();
+        clip.duration.set(30);
+        clip.punchInEnabled.set(true);
+        clip.punchInFov.set(20F);
+        clip.punchInDuration.set(10);
+        clip.freezeEnabled.set(false);
+        clip.shakeEnabled.set(false);
+        clip.flashEnabled.set(false);
+
+        ClipContext context = dummyContext(0, 0F);
+        Position position = new Position();
+        position.angle.fov = 70F;
+
+        // at t=0, punch-in is maximum (fov drops by 20 -> 50)
+        context.setup(0, 0, 0F);
+        clip.apply(context, position);
+        assertEquals(50F, position.angle.fov, 1e-3F);
+
+        // at t=10 (end of punchInDuration), decay is (1-1)^2 = 0 -> fov unaffected
+        position.angle.fov = 70F;
+        context.setup(10, 10, 0F);
+        assertEquals(70F, position.angle.fov, 1e-3F);
+    }
+
+    @Test
+    void proceduralShakeClip_presetsAndDeterminism()
+    {
+        ProceduralShakeClip clip = new ProceduralShakeClip();
+        clip.applyPreset(ProceduralShakeClip.PRESET_EXPLOSION);
+
+        assertEquals(3.0F, clip.frequency.get());
+        assertEquals(2.0F, clip.intensity.get());
+        assertEquals(0.25F, clip.posX.get());
+
+        clip.duration.set(30);
+        ClipContext context = dummyContext(5, 0.5F);
+
+        Position pos1 = new Position();
+        clip.apply(context, pos1);
+
+        Position pos2 = new Position();
+        clip.apply(context, pos2);
+
+        assertEquals(pos1.angle.yaw, pos2.angle.yaw, 1e-6F, "Shake must be deterministic");
+        assertEquals(pos1.angle.pitch, pos2.angle.pitch, 1e-6F, "Shake must be deterministic");
+    }
+    @SuppressWarnings("unchecked")
+    private static ClipContext dummyContext(int ticks, float transition)
+    {
+        ClipContext context = new ClipContext()
+        {
+            @Override
+            public boolean apply(Clip clip, Object position)
+            {
+                return false;
+            }
+        };
+        context.setup(ticks, ticks, transition);
+        return context;
+    }
+
 }

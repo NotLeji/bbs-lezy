@@ -5,6 +5,7 @@ import leji.bbslezy.camera.clips.screen.GrainEffect;
 import leji.bbslezy.camera.clips.screen.LetterboxEffect;
 import org.junit.jupiter.api.Test;
 import leji.bbslezy.camera.clips.screen.HalftoneEffect;
+import leji.bbslezy.camera.clips.screen.TintEffect;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,10 +61,13 @@ class ScreenEffectLayerOrderTest
         HalftoneEffect halftone = new HalftoneEffect();
         halftone.layer = 3;
 
+        TintEffect tint = new TintEffect();
+        tint.layer = 4;
+
+        assertEquals(List.of(0, 1, 2, 3, 4), ScreenEffectRenderer.collectLayers(List.of(grade), List.of(bars), List.of(grain), List.of(halftone), List.of(tint)));
         assertEquals(List.of(0, 1, 2, 3), ScreenEffectRenderer.collectLayers(List.of(grade), List.of(bars), List.of(grain), List.of(halftone)));
         assertEquals(List.of(0, 1, 2), ScreenEffectRenderer.collectLayers(List.of(grade), List.of(bars), List.of(grain)));
     }
-
     @Test
     void anEmptyFrameDrawsNothing()
     {
