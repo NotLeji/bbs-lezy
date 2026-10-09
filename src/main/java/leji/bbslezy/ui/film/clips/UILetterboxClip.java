@@ -13,6 +13,7 @@ import mchorse.bbs_mod.ui.film.replays.UIReplaysEditor;
 import mchorse.bbs_mod.ui.film.utils.keyframes.UIFilmKeyframes;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIChoiceButton;
+import mchorse.bbs_mod.client.BBSRendering;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import net.minecraft.client.MinecraftClient;
 
@@ -57,14 +58,19 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
                 v.set(p.ordinal());
                 this.clip.applyAspectRatioPreset(this.currentCanvasRatio());
             });
+            this.height.setValue(this.clip.height.get());
+            this.width.setValue(this.clip.width.get());
             this.fillData();
         });
         this.aspectPreset.tooltip(IKey.raw("Aspect ratio presets (Scope, Flat, HD, Custom, etc.)"));
 
         this.height = new UITrackpad((v) ->
         {
-            this.editor.editMultiple(this.clip.height, (d) -> d.set(v));
-            this.clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
+            this.editor.editMultiple(this.clip.height, (d) ->
+            {
+                d.set(v);
+                this.clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
+            });
             this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
         }).limit(0D, 1.5D).values(0.01D, 0.05D, 0.1D);
         this.height.tooltip(IKey.raw("Bar thickness (0.48 = standard 2.39:1 cinema scope)"));
@@ -72,13 +78,15 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
 
         this.width = new UITrackpad((v) ->
         {
-            this.editor.editMultiple(this.clip.width, (d) -> d.set(v));
-            this.clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
+            this.editor.editMultiple(this.clip.width, (d) ->
+            {
+                d.set(v);
+                this.clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
+            });
             this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
         }).limit(0D, 1D).values(0.01D, 0.05D, 0.1D);
         this.width.tooltip(IKey.raw("Bar width coverage"));
         this.bind(this.width, () -> this.width.setValue(this.clip.width.get()));
-
         this.smoothness = this.trackpad(this.clip.smoothness).limit(0D, 1D).values(0.02D, 0.05D, 0.1D);
         this.smoothness.tooltip(IKey.raw("Inner edge gradient feathering (0 = solid hard bars, 1 = full soft fade)"));
         this.color = new UIColor((c) -> this.editor.editMultiple(this.clip.color, (v) -> v.set(Color.rgba(c))));
@@ -164,15 +172,11 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
     {
         try
         {
-            MinecraftClient mc = MinecraftClient.getInstance();
-            if (mc != null && mc.getWindow() != null)
+            int w = BBSRendering.getVideoWidth();
+            int h = BBSRendering.getVideoHeight();
+            if (w > 0 && h > 0)
             {
-                int w = mc.getWindow().getScaledWidth();
-                int h = mc.getWindow().getScaledHeight();
-                if (w > 0 && h > 0)
-                {
-                    return (float) w / (float) h;
-                }
+                return (float) w / (float) h;
             }
         }
         catch (Throwable ignored)
