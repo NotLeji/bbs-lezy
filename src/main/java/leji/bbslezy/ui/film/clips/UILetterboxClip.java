@@ -115,7 +115,7 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
         }
         else
         {
-            this.aspectPreset.setValue(AspectRatioPreset.SCOPE_239);
+            this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
         }
         this.keyframes.view.removeAllSheets();
 

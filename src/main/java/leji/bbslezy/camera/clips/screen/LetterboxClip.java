@@ -32,7 +32,7 @@ public class LetterboxClip extends CameraClip
     public static final float ASPECT_TOLERANCE = 0.001F;
 
     /* Persisted on the clip: which aspect preset is selected, or CUSTOM (manual height/width). */
-    public final ValueInt aspectPreset = new ValueInt("aspectPreset", AspectRatioPreset.SCOPE_239.ordinal(), 0, AspectRatioPreset.values().length - 1);
+    public final ValueInt aspectPreset = new ValueInt("aspectPreset", AspectRatioPreset.CUSTOM.ordinal(), 0, AspectRatioPreset.values().length - 1);
 
     /* Optional keyframe channels for animation */
     public final KeyframeChannel<Double> heightChannel = new KeyframeChannel<>("height", KeyframeFactories.DOUBLE);
@@ -129,7 +129,10 @@ public class LetterboxClip extends CameraClip
         int index = MathUtils.clamp(this.aspectPreset.get(), 0, AspectRatioPreset.values().length - 1);
         AspectRatioPreset preset = AspectRatioPreset.values()[index];
         float ratio = preset.getRatio();
-
+        if (ratio <= 0F)
+        {
+            return;
+        }
 
         if (ratio >= canvasRatio - ASPECT_TOLERANCE)
         {

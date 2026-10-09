@@ -258,7 +258,6 @@ class ScreenClipsTest
         assertEquals(0.0D, clip.height.get(), 1e-3D);
         double expectedWidth = (9D / 16D) / (double) canvasRatio;
         assertEquals(expectedWidth, clip.width.get(), 1e-3D);
-
         // Pillarbox effect is added to context even when height is 0
         ClipContext context = dummyContext(0, 0F);
         LetterboxClip.getEffects(context).clear();
@@ -267,6 +266,14 @@ class ScreenClipsTest
         assertEquals(1, LetterboxClip.getEffects(context).size());
         assertEquals(0F, LetterboxClip.getEffects(context).get(0).size);
         assertEquals((float) expectedWidth, LetterboxClip.getEffects(context).get(0).width, 1e-3F);
+
+        // CUSTOM: leaves manual height/width alone
+        clip.height.set(0.42D);
+        clip.width.set(0.85D);
+        clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
+        clip.applyAspectRatioPreset(canvasRatio);
+        assertEquals(0.42D, clip.height.get(), 1e-3D);
+        assertEquals(0.85D, clip.width.get(), 1e-3D);
     }
 
 
