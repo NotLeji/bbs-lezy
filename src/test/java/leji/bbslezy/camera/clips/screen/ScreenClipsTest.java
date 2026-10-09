@@ -267,19 +267,27 @@ class ScreenClipsTest
         assertEquals(0F, LetterboxClip.getEffects(context).get(0).size);
         assertEquals((float) expectedWidth, LetterboxClip.getEffects(context).get(0).width, 1e-3F);
 
-        // CUSTOM: calculates bars dynamically from customRatio
-        clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
+        // MODE_CUSTOM_RATIO: calculates bars dynamically from customRatio
+        clip.mode.set(LetterboxClip.MODE_CUSTOM_RATIO);
         clip.customRatio.set(2.0F);
         clip.applyAspectRatioPreset(canvasRatio);
         double expectedCustomHeight = 2D * (1D - (double) canvasRatio / 2.0D);
         assertEquals(expectedCustomHeight, clip.height.get(), 1e-3D);
         assertEquals(1.0D, clip.width.get(), 1e-3D);
 
-        // CUSTOM pillarbox: e.g. 1.0 (Square) on 16:9 canvas
+        // MODE_CUSTOM_RATIO pillarbox: e.g. 1.0 (Square) on 16:9 canvas
         clip.customRatio.set(1.0F);
         clip.applyAspectRatioPreset(canvasRatio);
         assertEquals(0.0D, clip.height.get(), 1e-3D);
         assertEquals(1.0D / (double) canvasRatio, clip.width.get(), 1e-3D);
+
+        // MODE_MANUAL: completely decouples manual sliders from any ratio calculation
+        clip.mode.set(LetterboxClip.MODE_MANUAL);
+        clip.height.set(0.35D);
+        clip.width.set(0.80D);
+        clip.applyAspectRatioPreset(canvasRatio);
+        assertEquals(0.35D, clip.height.get(), 1e-3D, "Manual mode must leave height untouched");
+        assertEquals(0.80D, clip.width.get(), 1e-3D, "Manual mode must leave width untouched");
     }
 
 

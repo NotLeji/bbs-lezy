@@ -13,6 +13,7 @@ import mchorse.bbs_mod.ui.film.replays.UIReplaysEditor;
 import mchorse.bbs_mod.ui.film.utils.keyframes.UIFilmKeyframes;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIChoiceButton;
+import mchorse.bbs_mod.ui.framework.elements.buttons.UICirculate;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import net.minecraft.client.MinecraftClient;
 
@@ -28,6 +29,7 @@ import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
 
 public class UILetterboxClip extends UIClip<LetterboxClip>
 {
+    public UICirculate mode;
     public UITrackpad height;
     public UITrackpad width;
     public UITrackpad smoothness;
@@ -47,6 +49,20 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
     {
         super.registerUI();
 
+        this.mode = new UICirculate((b) ->
+        {
+            this.editor.editMultiple(this.clip.mode, (v) ->
+            {
+                v.set(this.mode.getValue());
+                this.clip.applyAspectRatioPreset(this.currentCanvasRatio());
+            });
+            this.updateVisibility();
+        });
+        this.mode.addLabel(IKey.raw("Aspect Preset"));
+        this.mode.addLabel(IKey.raw("Custom Ratio"));
+        this.mode.addLabel(IKey.raw("Manual Bars"));
+        this.mode.tooltip(IKey.raw("Framing mode: automated preset, custom aspect ratio, or independent manual bars"));
+
         this.aspectPreset = new UIChoiceButton<>(
             Arrays.asList(AspectRatioPreset.values()),
             (p) -> Icons.FULLSCREEN,
@@ -60,15 +76,13 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
             });
             this.fillData();
         });
-        this.aspectPreset.tooltip(IKey.raw("Aspect ratio presets (Scope, Flat, HD, Custom, etc.)"));
+        this.aspectPreset.tooltip(IKey.raw("Aspect ratio presets (Scope, Flat, HD, etc.)"));
 
         this.customRatio = new UITrackpad((v) ->
         {
             this.editor.editMultiple(this.clip.customRatio, (f) ->
             {
                 f.set(v.floatValue());
-                this.clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
-                this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
                 this.clip.applyAspectRatioPreset(this.currentCanvasRatio());
             });
         }).limit(0.1D, 10D).values(0.01D, 0.05D, 0.1D);
@@ -102,6 +116,8 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
             this.keyframes.view.getGraph().clearSelection();
         });
         this.edit.keys().register(Keys.FORMS_EDIT, () -> this.edit.clickItself());
+
+        this.updateVisibility();
     }
 
     @Override
@@ -109,7 +125,7 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
     {
         super.registerPanels();
 
-        this.panels.add(this.section(IKey.raw("Bar Size & Shape"), this.aspectPreset, this.customRatio, this.height, this.width, this.smoothness));
+        this.panels.add(this.section(IKey.raw("Bar Size & Shape"), this.mode, this.aspectPreset, this.customRatio, this.height, this.width, this.smoothness));
         this.panels.add(this.section(IKey.raw("Color"), this.color));
         this.panels.add(this.section(IKey.raw("Animate with Keyframes"), this.edit).tooltip(
             IKey.raw("Optional: animate bar height, width, rotation, and color over time")
@@ -122,18 +138,15 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
         super.fillData();
 
         this.color.setColor(this.clip.color.get().getARGBColor());
+        this.mode.setValue(this.clip.mode.get());
         int presetIndex = this.clip.aspectPreset.get();
         AspectRatioPreset[] presets = AspectRatioPreset.values();
         if (presetIndex >= 0 && presetIndex < presets.length)
         {
             this.aspectPreset.setValue(presets[presetIndex]);
         }
-        else
-        {
-            this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
-        }
         this.customRatio.setValue((double) this.clip.customRatio.get());
-        this.keyframes.view.removeAllSheets();
+        this.updateVisibility();
 
         for (KeyframeChannel<?> channel : this.clip.channels)
         {
@@ -184,4 +197,13 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
 
         return 16F / 9F;
     }
+    private void updateVisibility()
+    {
+        int m = this.clip.mode.get();
+        this.aspectPreset.setVisible(m == LetterboxClip.MODE_PRESET);
+        this.customRatio.setVisible(m == LetterboxClip.MODE_CUSTOM_RATIO);
+        this.height.setVisible(m == LetterboxClip.MODE_MANUAL);
+        this.width.setVisible(m == LetterboxClip.MODE_MANUAL);
+    }
+
 }

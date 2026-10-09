@@ -24,6 +24,11 @@ public class LetterboxClip extends CameraClip
     public static final double DEFAULT_HEIGHT = 0.48D;
     public static final double DEFAULT_WIDTH = 1.0D;
     private static final Color DEFAULT_COLOR = Color.rgba(Colors.A100);
+    public static final int MODE_PRESET = 0;
+    public static final int MODE_CUSTOM_RATIO = 1;
+    public static final int MODE_MANUAL = 2;
+
+    public final ValueInt mode = new ValueInt("mode", MODE_PRESET, 0, 2);
 
     /* Static property values (active by default immediately upon adding the clip) */
     public final ValueDouble height = new ValueDouble("height", DEFAULT_HEIGHT);
@@ -33,7 +38,7 @@ public class LetterboxClip extends CameraClip
     public static final float ASPECT_TOLERANCE = 0.001F;
 
     /* Persisted on the clip: which aspect preset is selected, or CUSTOM (manual height/width). */
-    public final ValueInt aspectPreset = new ValueInt("aspectPreset", AspectRatioPreset.CUSTOM.ordinal(), 0, AspectRatioPreset.values().length - 1);
+    public final ValueInt aspectPreset = new ValueInt("aspectPreset", AspectRatioPreset.SCOPE_239.ordinal(), 0, AspectRatioPreset.values().length - 1);
     public final ValueFloat customRatio = new ValueFloat("customRatio", 2.39F);
 
     /* Optional keyframe channels for animation */
@@ -73,6 +78,7 @@ public class LetterboxClip extends CameraClip
         this.add(this.smoothness);
         this.add(this.color);
 
+        this.add(this.mode);
         this.add(this.aspectPreset);
         this.add(this.customRatio);
         for (KeyframeChannel channel : this.channels)
@@ -129,20 +135,27 @@ public class LetterboxClip extends CameraClip
 
     public void applyAspectRatioPreset(float canvasRatio)
     {
-        int index = MathUtils.clamp(this.aspectPreset.get(), 0, AspectRatioPreset.values().length - 1);
-        AspectRatioPreset preset = AspectRatioPreset.values()[index];
-        float ratio = (preset == AspectRatioPreset.CUSTOM)
-            ? Math.max(0.01F, this.customRatio.get())
-            : preset.getRatio();
-
-        if (ratio <= 0F)
+        int m = this.mode.get();
+        if (m == MODE_MANUAL)
         {
             return;
         }
 
-        if (preset != AspectRatioPreset.CUSTOM)
+        float ratio;
+        if (m == MODE_CUSTOM_RATIO)
         {
+            ratio = Math.max(0.01F, this.customRatio.get());
+        }
+        else
+        {
+            int index = MathUtils.clamp(this.aspectPreset.get(), 0, AspectRatioPreset.values().length - 1);
+            ratio = AspectRatioPreset.values()[index].getRatio();
             this.customRatio.set(ratio);
+        }
+
+        if (ratio <= 0F)
+        {
+            return;
         }
 
         if (ratio >= canvasRatio - ASPECT_TOLERANCE)
