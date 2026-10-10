@@ -32,27 +32,24 @@ Not every replay model is drawn every frame — only the ones closest to the cam
 - **Multi-codec audio, picked straight in the audio browser** — BBS can now read `.mp3`, `.m4a`, `.aac`, `.opus`, `.wma`, `.alac`, `.ape`, `.flac`, `.aif/.aiff` and `.ac3` directly. They show up in the "Pick audio..." menu, get a waveform preview, can be edited (offset, duration, volume), cut or split on the timeline, and render just like the built-in WAVs. Decoding is on-demand through ffmpeg, so the file on disk is never modified or converted.
 - **Import audio without conversion** — dropped audio files are copied **verbatim** (byte-identical) instead of being force-re-encoded to mono WAV. Video files (`.mp4`) still get their audio extracted the usual way.
 
-**4. Screen effect clips (big thanks to ElgatoPro300)**
+**4. Screen effect clips**
 
-Many thanks to ElgatoPro300, who made BBS CML, the source of this feature.
+Ported from ElgatoPro300's BBS CML — thanks!
 
 https://github.com/user-attachments/assets/169defa4-20fe-452a-8dac-c3a78e5c6c52
 
 - **Cinematic Effect** — one clip bundling the whole vintage camera look: film flicker, random scratches, desaturation, framing/letterbox, film grain, and optics (fisheye, chromatic aberration, VHS glitch, radial blur). Every effect has its own parameters and they combine freely.
 - **Color Grade** — pure color grading (saturation, hue, brightness, contrast, lift, gamma, gain) plus a flat overlay tint.
 - **Vignette** — radial darkening toward the frame edges.
-- **Letterbox** — cinematic black bars (height, width, smoothness, color, offset, rotation, zoom).
-- **Per-track clip hierarchy** — clip effects now follow the track order in the camera timeline. Each track gets its own pass, bottom track first, so a Color Grade on an upper track reads as an effect layer on top of the lower track's grade instead of being summed into a single look. Several clips on the same track still stack together, which is useful for building a look up in layers. A film with every clip on one track still costs a single pass, so there is no extra performance cost.
+- **Letterbox** — cinematic bars with aspect-ratio presets (Scope 2.39:1, Cinema, Univisium, Flat, 16:9, 4:3, Square, 9:16 Shorts, Custom), pillarbox support for vertical video, inner-edge feathering, color, offset, rotation and zoom.
+- **Camera Shake** — procedural handheld shake with Gentle / Action / Explosion presets and per-axis amplitude control.
+- **Impact Frame** — freeze frame, screen flash, FOV punch-in and shake impulse in one clip, with Anime Impact / Hard Hit / Explosion / Dramatic presets.
+- **Per-track clip hierarchy** — effects follow the camera timeline's track order, bottom track first, so an upper-track grade layers over the lower tracks instead of merging into one look. Same-track clips still stack, and a single-track film still costs a single pass.
 
 **5. Illusion (visual duplication)**
 
-Thanks again to ElgatoPro300.
-
-- Adds visual duplicates around a form or model block **without adding entities** to the scene. One actor can look like ten without ten times the entity load.
-- Aimed in 6 directions (front, back, left, right, up, down), with adjustable spread, opacity fade, and an **Enabled** toggle to turn all duplicates on or off.
-- Advanced options: **Uniform Distance** (even spacing between duplicates), **Real** (duplicates interact with world blocks, e.g. stomping on them), **Distort** (duplicates smear into streaks), and **Gradual Transform** (the transform ramps from the main model up to the last duplicate).
-- Keyframable from the Dope Sheet as the `illusion` and `illusion_transform` tracks, so distance and transform can be animated along the timeline — on Model Blocks and Replay Actors alike.
-- All parameters live in the **Illusion** section of the Form Editor panel.
+- Visual duplicates around a form or model block **without adding entities** — one actor reads as ten with none of the entity load. 6 directions, spread, opacity fade, an **Enabled** toggle, etc. (Uniform Distance, Real, Distort, Gradual Transform).
+- Keyframable from the Dope Sheet (`illusion` and `illusion_transform` tracks), all tuned from the Form Editor's **Illusion** section. Ported from ElgatoPro300's BBS CML.
 
 **6. Video export (CQP, codec & GPU)**
 
@@ -61,6 +58,16 @@ Thanks again to ElgatoPro300.
 - **Hardware Acceleration (GPU)** — encode on the GPU (NVIDIA NVENC, AMD AMF on Windows / VA-API on Linux, Intel QSV with VA-API fallback on Linux) for much faster exports and a lighter CPU load. Default: **on**. There is an **Auto-Detect** option or you can pick a specific vendor.
 - **GPU codec warning** — if the selected codec (such as VP9) or the active GPU / ffmpeg build lacks a working hardware encoder, a dialog offers to fall back to CPU encoding for that one export.
 - **Linux quality-of-life fixes** — bounded sliders wrap the cursor at the window edge on Linux/XWayland just like unbounded trackpads, Linux video export probes and uses NVENC, Intel QSV (with VA-API fallback), or AMD VA-API per render node, and loading/reloading an Iris shaderpack inside the BBS editor schedules a clean reload once the editor closes.
+
+**7. Framing guides**
+
+- Toggle button in the film preview toolbar: left-click turns all guides on/off (your last setup is remembered), right-click picks which ones show.
+- Safe areas (Action 90%, Title 80%), 9:16 vertical and 2.39:1 scope overlays, plus BBS's native center lines and crosshair.
+- Color, opacity and labels live in the BBS Lezy settings.
+
+**8. Etc.**
+
+Smaller stuff that didn't earn its own section: halftone screentone clip, motion blur and pixelation channels, skin search with 3D preview, Look At batch baking, damage action clip, snap-player-to-preview, reverse audio with volume keyframes, open-folder-on-import, Linux cursor wrap and Iris depth fixes, dashboard shader toggle (K).
 
 ## Documentation
 
@@ -125,11 +132,11 @@ The result ends up in `build/libs/bbs-lezy-<version>.jar`.
 
 ## Credits
 
-The fun and most of the features started as someone else's work, so a big thank you to:
+Standing on other people's work, so a big thank you to:
 
-- [McHorse](https://www.youtube.com/@McHorsesCreations) — the author of BBS FS itself.
-- [ElgatoPro300](https://www.youtube.com/@ElGatoPro300) — for **screen effect clips** and **illusion**. Both were ported from his BBS CML, so all credit goes back to him.
-- [Wemmpy](https://www.youtube.com/@Wemppy4) — for the FatalError text and Indonesian language support.
+- [McHorse](https://www.youtube.com/@McHorsesCreations) — creator of BBS (Blockbuster), the original mod none of this exists without.
+- [Wemmpy](https://www.youtube.com/@Wemppy4) — creator of BBS FS, the fork this addon is built for.
+- [ElgatoPro300](https://www.youtube.com/@ElGatoPro300) — screen effect clips and illusion, ported from his BBS CML.
 
 and the AI that was willing to be chopped up for it 😈
 
