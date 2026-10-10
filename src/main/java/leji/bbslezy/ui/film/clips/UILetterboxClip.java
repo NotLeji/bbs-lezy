@@ -53,22 +53,26 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
             (p) -> IKey.raw(p.getLabel())
         ).callback((p) ->
         {
+            this.editor.editMultiple(this.clip.aspectPreset, (v) ->
+            {
+                v.set(p.ordinal());
+                if (p != AspectRatioPreset.CUSTOM)
+                {
+                    this.clip.applyAspectRatioPreset(this.currentCanvasRatio());
+                }
+            });
+
             if (p != AspectRatioPreset.CUSTOM)
             {
-                this.editor.editMultiple(this.clip.aspectPreset, (v) ->
-                {
-                    v.set(p.ordinal());
-                    this.clip.applyAspectRatioPreset(this.currentCanvasRatio());
-                });
                 this.editor.editMultiple(this.clip.height, (h) -> h.set(this.clip.height.get()));
                 this.editor.editMultiple(this.clip.width, (w) -> w.set(this.clip.width.get()));
                 this.height.setValue(this.clip.height.get());
                 this.width.setValue(this.clip.width.get());
             }
+
             this.aspectPreset.setValue(p);
         });
         this.aspectPreset.tooltip(IKey.raw("Aspect ratio presets (Scope, Flat, HD, Custom, etc.)"));
-        this.bind(this.aspectPreset, this::updatePresetDisplay);
 
         this.height = this.trackpad(this.clip.height).limit(0D, 1.5D).values(0.01D, 0.05D, 0.1D);
         this.height.tooltip(IKey.raw("Bar thickness (0.48 = standard 2.39:1 cinema scope)"));
@@ -116,7 +120,16 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
         super.fillData();
 
         this.color.setColor(this.clip.color.get().getARGBColor());
-        this.updatePresetDisplay();
+        int presetIndex = this.clip.aspectPreset.get();
+        AspectRatioPreset[] presets = AspectRatioPreset.values();
+        if (presetIndex >= 0 && presetIndex < presets.length)
+        {
+            this.aspectPreset.setValue(presets[presetIndex]);
+        }
+        else
+        {
+            this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
+        }
         this.height.setValue(this.clip.height.get());
         this.width.setValue(this.clip.width.get());
         for (KeyframeChannel<?> channel : this.clip.channels)
@@ -163,44 +176,6 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
         {}
 
         return 16F / 9F;
-    }
-
-    private void updatePresetDisplay()
-    {
-        float canvasRatio = this.currentCanvasRatio();
-        double currentH = this.clip.height.get();
-        double currentW = this.clip.width.get();
-
-        for (AspectRatioPreset preset : AspectRatioPreset.values())
-        {
-            if (preset == AspectRatioPreset.CUSTOM)
-            {
-                continue;
-            }
-
-            double expectedH;
-            double expectedW;
-            float ratio = preset.getRatio();
-
-            if (ratio >= canvasRatio - LetterboxClip.ASPECT_TOLERANCE)
-            {
-                expectedH = 2D * (1D - canvasRatio / (double) ratio);
-                expectedW = 1D;
-            }
-            else
-            {
-                expectedH = 0D;
-                expectedW = (double) (ratio / canvasRatio);
-            }
-
-            if (Math.abs(currentH - expectedH) < 0.005D && Math.abs(currentW - expectedW) < 0.005D)
-            {
-                this.aspectPreset.setValue(preset);
-                return;
-            }
-        }
-
-        this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
     }
 
 }
