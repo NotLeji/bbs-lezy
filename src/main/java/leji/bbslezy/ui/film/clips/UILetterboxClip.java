@@ -47,59 +47,56 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
     {
         super.registerUI();
 
-        this.aspectPreset = new UIChoiceButton<>(
+        this.aspectPreset = this.bind(new UIChoiceButton<>(
             Arrays.asList(AspectRatioPreset.values()),
             (p) -> Icons.FULLSCREEN,
             (p) -> IKey.raw(p.getLabel())
         ).callback((p) ->
         {
-            this.editor.editMultiple(this.clip.aspectPreset, (v) ->
-            {
-                v.set(p.ordinal());
-                if (p != AspectRatioPreset.CUSTOM)
-                {
-                    this.clip.applyAspectRatioPreset(this.currentCanvasRatio());
-                }
-            });
-
+            this.editor.editMultiple(this.clip.aspectPreset, (v) -> v.set(p.ordinal()));
             if (p != AspectRatioPreset.CUSTOM)
             {
+                this.clip.applyAspectRatioPreset(this.currentCanvasRatio());
                 this.editor.editMultiple(this.clip.height, (h) -> h.set(this.clip.height.get()));
                 this.editor.editMultiple(this.clip.width, (w) -> w.set(this.clip.width.get()));
                 this.height.setValue(this.clip.height.get());
                 this.width.setValue(this.clip.width.get());
             }
-
             this.aspectPreset.setValue(p);
+        }), () ->
+        {
+            int presetIndex = this.clip.aspectPreset.get();
+            AspectRatioPreset[] presets = AspectRatioPreset.values();
+            if (presetIndex >= 0 && presetIndex < presets.length)
+            {
+                this.aspectPreset.setValue(presets[presetIndex]);
+            }
+            else
+            {
+                this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
+            }
         });
         this.aspectPreset.tooltip(IKey.raw("Aspect ratio presets (Scope, Flat, HD, Custom, etc.)"));
 
-        this.height = new UITrackpad((v) ->
+        this.height = this.bind(new UITrackpad((v) ->
         {
-            this.editor.editMultiple(this.clip.height, (d) ->
-            {
-                d.set(v);
-                this.clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
-            });
+            this.editor.editMultiple(this.clip.height, (d) -> d.set(v));
+            this.editor.editMultiple(this.clip.aspectPreset, (a) -> a.set(AspectRatioPreset.CUSTOM.ordinal()));
             this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
-        }).limit(0D, 1.5D).values(0.01D, 0.05D, 0.1D);
+        }).limit(0D, 1.5D).values(0.01D, 0.05D, 0.1D), () -> this.height.setValue(this.clip.height.get()));
         this.height.tooltip(IKey.raw("Bar thickness (0.48 = standard 2.39:1 cinema scope)"));
 
-        this.width = new UITrackpad((v) ->
+        this.width = this.bind(new UITrackpad((v) ->
         {
-            this.editor.editMultiple(this.clip.width, (d) ->
-            {
-                d.set(v);
-                this.clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
-            });
+            this.editor.editMultiple(this.clip.width, (d) -> d.set(v));
+            this.editor.editMultiple(this.clip.aspectPreset, (a) -> a.set(AspectRatioPreset.CUSTOM.ordinal()));
             this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
-        }).limit(0D, 1D).values(0.01D, 0.05D, 0.1D);
+        }).limit(0D, 1D).values(0.01D, 0.05D, 0.1D), () -> this.width.setValue(this.clip.width.get()));
         this.width.tooltip(IKey.raw("Bar width coverage"));
         this.smoothness = this.trackpad(this.clip.smoothness).limit(0D, 1D).values(0.02D, 0.05D, 0.1D);
         this.smoothness.tooltip(IKey.raw("Inner edge gradient feathering (0 = solid hard bars, 1 = full soft fade)"));
-        this.color = new UIColor((c) -> this.editor.editMultiple(this.clip.color, (v) -> v.set(Color.rgba(c))));
+        this.color = this.bind(new UIColor((c) -> this.editor.editMultiple(this.clip.color, (v) -> v.set(Color.rgba(c)))), () -> this.color.setColor(this.clip.color.get().getARGBColor()));
         this.color.tooltip(IKey.raw("Letterbox bar color (default black)"));
-
         this.keyframes = new UIKeyframeEditor((consumer) -> new UIFilmKeyframes(this.editor, consumer));
         this.keyframes.view.rulerRenderer((context) ->
         {
@@ -148,6 +145,8 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
         }
         this.height.setValue(this.clip.height.get());
         this.width.setValue(this.clip.width.get());
+        this.smoothness.setValue(this.clip.smoothness.get());
+        this.keyframes.view.removeAllSheets();
         for (KeyframeChannel<?> channel : this.clip.channels)
         {
             int sheetColor = channel.getId().hashCode() & Colors.RGB;

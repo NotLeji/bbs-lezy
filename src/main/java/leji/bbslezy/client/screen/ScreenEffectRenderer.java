@@ -299,8 +299,24 @@ public class ScreenEffectRenderer
         /* Pillarbox (vertical side bars) when barX > 0 */
         if (barX > 0)
         {
-            batcher.box(0, 0, barX, screenH, color);
-            batcher.box(screenW - barX, 0, screenW, screenH, color);
+            int smoothW = (int) (barX * MathUtils.clamp(effect.smoothness, 0F, 1F));
+
+            if (smoothW > 0)
+            {
+                int solidW = barX - smoothW;
+                int transparent = Colors.setA(color, 0F);
+
+                batcher.box(0, 0, solidW, screenH, color);
+                batcher.gradientHBox(solidW, 0, barX, screenH, color, transparent);
+
+                batcher.gradientHBox(screenW - barX, 0, screenW - solidW, screenH, transparent, color);
+                batcher.box(screenW - solidW, 0, screenW, screenH, color);
+            }
+            else
+            {
+                batcher.box(0, 0, barX, screenH, color);
+                batcher.box(screenW - barX, 0, screenW, screenH, color);
+            }
         }
 
         /* Letterbox (horizontal top/bottom bars) when barH > 0 */

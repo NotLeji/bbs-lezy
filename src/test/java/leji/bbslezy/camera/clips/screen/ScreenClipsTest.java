@@ -12,6 +12,12 @@ import mchorse.bbs_mod.utils.interps.Interpolations;
 import org.junit.jupiter.api.Test;
 import mchorse.bbs_mod.utils.keyframes.factories.KeyframeFactories;
 import static org.junit.jupiter.api.Assertions.*;
+import mchorse.bbs_mod.settings.values.numeric.ValueDouble;
+import mchorse.bbs_mod.settings.values.core.ValueColor;
+import mchorse.bbs_mod.settings.values.core.ValueGroup;
+import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
+import mchorse.bbs_mod.data.types.MapType;
+import mchorse.bbs_mod.data.types.ListType;
 
 class ScreenClipsTest
 {
@@ -274,6 +280,46 @@ class ScreenClipsTest
         clip.applyAspectRatioPreset(canvasRatio);
         assertEquals(0.35D, clip.height.get(), 1e-3D, "Custom preset must leave height untouched");
         assertEquals(0.80D, clip.width.get(), 1e-3D, "Custom preset must leave width untouched");
+    }
+
+    @Test
+    void letterboxClip_channelGroupAndSmoothness()
+    {
+        LetterboxClip clip = new LetterboxClip();
+
+        // Ensure static properties are registered at root without keyframe channel collisions
+        assertInstanceOf(ValueDouble.class, clip.get("height"), "height must be ValueDouble at root");
+        assertInstanceOf(ValueDouble.class, clip.get("width"), "width must be ValueDouble at root");
+        assertInstanceOf(ValueDouble.class, clip.get("smoothness"), "smoothness must be ValueDouble at root");
+        assertInstanceOf(ValueColor.class, clip.get("color"), "color must be ValueColor at root");
+        assertInstanceOf(ValueGroup.class, clip.get("channels"), "channels must be ValueGroup sub-group");
+
+        // Keyframe channels live inside channelsGroup with their expected channel IDs
+        assertInstanceOf(KeyframeChannel.class, clip.channelsGroup.get("height"));
+        assertInstanceOf(KeyframeChannel.class, clip.channelsGroup.get("smoothness"));
+
+        // Smoothness can be adjusted and propagates to LetterboxEffect
+        clip.smoothness.set(0.65D);
+        assertEquals(0.65D, clip.smoothness.get(), 1e-4D);
+
+        ClipContext context = dummyContext(0, 0F);
+        LetterboxClip.getEffects(context).clear();
+        Position position = new Position();
+        clip.apply(context, position);
+
+        assertEquals(1, LetterboxClip.getEffects(context).size());
+        assertEquals(0.65F, LetterboxClip.getEffects(context).get(0).smoothness, 1e-4F);
+
+        // Backward compatibility: fromData loading root-level keyframe lists
+        MapType data = new MapType();
+        data.putDouble("smoothness", 0.35D);
+        data.putDouble("height", 0.50D);
+        ListType kfList = new ListType();
+        data.put("height", kfList); // old format had channel at root
+
+        LetterboxClip loaded = new LetterboxClip();
+        loaded.fromData(data);
+        assertEquals(0.35D, loaded.smoothness.get(), 1e-4D);
     }
 
 

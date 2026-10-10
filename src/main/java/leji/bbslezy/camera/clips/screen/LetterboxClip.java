@@ -4,6 +4,7 @@ import mchorse.bbs_mod.camera.clips.CameraClip;
 import mchorse.bbs_mod.camera.data.Position;
 import mchorse.bbs_mod.data.types.BaseType;
 import mchorse.bbs_mod.data.types.MapType;
+import mchorse.bbs_mod.settings.values.core.ValueGroup;
 import mchorse.bbs_mod.settings.values.core.ValueColor;
 import mchorse.bbs_mod.settings.values.numeric.ValueDouble;
 import mchorse.bbs_mod.utils.clips.Clip;
@@ -45,6 +46,7 @@ public class LetterboxClip extends CameraClip
     public final KeyframeChannel<Double> offsetYChannel = new KeyframeChannel<>("offsetY", KeyframeFactories.DOUBLE);
 
     public final KeyframeChannel[] channels;
+    public final ValueGroup channelsGroup = new ValueGroup("channels");
 
     private LetterboxEffect effect = new LetterboxEffect();
 
@@ -74,8 +76,9 @@ public class LetterboxClip extends CameraClip
         this.add(this.aspectPreset);
         for (KeyframeChannel channel : this.channels)
         {
-            this.add(channel);
+            this.channelsGroup.add(channel);
         }
+        this.add(this.channelsGroup);
     }
 
     @Override
@@ -96,10 +99,9 @@ public class LetterboxClip extends CameraClip
 
         if (barH > 0F || barW < 0.999F)
         {
-            float smooth = (this.smoothnessChannel.isEmpty()
-                ? (float) (double) this.smoothness.get()
-                : (float) (double) this.smoothnessChannel.interpolate(t)) * 0.25F;
-
+            float smooth = (float) (double) (this.smoothnessChannel.isEmpty()
+                ? this.smoothness.get()
+                : this.smoothnessChannel.interpolate(t));
             Color col = this.colorChannel.isEmpty()
                 ? this.color.get()
                 : this.colorChannel.interpolate(t, this.color.get());
@@ -145,6 +147,26 @@ public class LetterboxClip extends CameraClip
         {
             this.height.set(0D);
             this.width.set((double) (ratio / canvasRatio));
+        }
+    }
+
+    @Override
+    public void fromData(BaseType data)
+    {
+        super.fromData(data);
+
+        if (data.isMap())
+        {
+            MapType map = (MapType) data;
+
+            /* Backward compatibility: if keyframe channels were saved at root level */
+            for (KeyframeChannel<?> channel : this.channels)
+            {
+                if (map.has(channel.getId()) && map.get(channel.getId()).isList())
+                {
+                    channel.fromData(map.get(channel.getId()));
+                }
+            }
         }
     }
 
