@@ -21,15 +21,24 @@ public class UIGuidesOverlay extends UIElement
     {
         this.preview = preview;
         this.full(preview);
-
         this.guidesBtn = new UIIcon(Icons.CROPS, (b) ->
         {
-            this.getContext().replaceContextMenu(this::createGuidesMenu);
+            if (this.isGuidesVisible())
+            {
+                LodSettings.guidesEnabled.set(false);
+            }
+            else
+            {
+                LodSettings.guidesEnabled.set(true);
+                if (!this.hasAnyActiveGuide())
+                {
+                    LodSettings.guidesActionSafe.set(true);
+                }
+            }
         });
         this.guidesBtn.context(this::createGuidesMenu);
-        this.guidesBtn.tooltip(IKey.raw("Framing Guides / Safe Areas"), Direction.BOTTOM);
-        this.guidesBtn.highlight(this::hasAnyActiveGuide, Direction.BOTTOM);
-
+        this.guidesBtn.tooltip(IKey.raw("Framing Guides / Safe Areas (Left-click: toggle, Right-click: options)"), Direction.BOTTOM);
+        this.guidesBtn.highlight(this::isGuidesVisible, Direction.BOTTOM);
         preview.icons.add(this.guidesBtn);
     }
 
@@ -41,23 +50,36 @@ public class UIGuidesOverlay extends UIElement
             || LodSettings.guidesCinematic.get();
     }
 
+    private boolean isGuidesVisible()
+    {
+        return LodSettings.guidesEnabled.get() && this.hasAnyActiveGuide();
+    }
+
     private void createGuidesMenu(ContextMenuManager menu)
     {
         menu.action(Icons.CROPS, IKey.raw("Action Safe (90%)"), LodSettings.guidesActionSafe.get(), () ->
         {
-            LodSettings.guidesActionSafe.set(!LodSettings.guidesActionSafe.get());
+            boolean next = !LodSettings.guidesActionSafe.get();
+            LodSettings.guidesActionSafe.set(next);
+            if (next) LodSettings.guidesEnabled.set(true);
         });
         menu.action(Icons.CROPS, IKey.raw("Title Safe (80%)"), LodSettings.guidesTitleSafe.get(), () ->
         {
-            LodSettings.guidesTitleSafe.set(!LodSettings.guidesTitleSafe.get());
+            boolean next = !LodSettings.guidesTitleSafe.get();
+            LodSettings.guidesTitleSafe.set(next);
+            if (next) LodSettings.guidesEnabled.set(true);
         });
         menu.action(Icons.CROPS, IKey.raw("9:16 Vertical"), LodSettings.guidesVertical.get(), () ->
         {
-            LodSettings.guidesVertical.set(!LodSettings.guidesVertical.get());
+            boolean next = !LodSettings.guidesVertical.get();
+            LodSettings.guidesVertical.set(next);
+            if (next) LodSettings.guidesEnabled.set(true);
         });
         menu.action(Icons.CROPS, IKey.raw("2.39:1 Scope"), LodSettings.guidesCinematic.get(), () ->
         {
-            LodSettings.guidesCinematic.set(!LodSettings.guidesCinematic.get());
+            boolean next = !LodSettings.guidesCinematic.get();
+            LodSettings.guidesCinematic.set(next);
+            if (next) LodSettings.guidesEnabled.set(true);
         });
         menu.action(Icons.MORE, IKey.raw("Show Labels"), LodSettings.guidesShowLabels.get(), () ->
         {
@@ -71,7 +93,7 @@ public class UIGuidesOverlay extends UIElement
     {
         super.render(context);
 
-        if (!this.hasAnyActiveGuide())
+        if (!this.isGuidesVisible())
         {
             return;
         }

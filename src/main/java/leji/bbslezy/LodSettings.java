@@ -26,6 +26,7 @@ public class LodSettings
     public static ValueBoolean hardwareAcceleration;
     public static ValueInt gpuVendor;
     public static ValueBoolean snapPlayerToPreview;
+    public static ValueBoolean guidesEnabled;
     public static ValueBoolean guidesActionSafe;
     public static ValueBoolean guidesTitleSafe;
     public static ValueBoolean guidesVertical;
@@ -58,6 +59,7 @@ public class LodSettings
         );
         snapPlayerToPreview = builder.getBoolean("snap_player_to_preview", true);
 
+        guidesEnabled = builder.getBoolean("guides_enabled", true);
         guidesActionSafe = builder.getBoolean("guides_action_safe", false);
         guidesTitleSafe = builder.getBoolean("guides_title_safe", false);
         guidesVertical = builder.getBoolean("guides_vertical", false);
