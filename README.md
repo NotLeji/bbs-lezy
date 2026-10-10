@@ -34,7 +34,7 @@ Not every replay model is drawn every frame — only the ones closest to the cam
 
 **4. Screen effect clips**
 
-Ported from ElgatoPro300's BBS CML — thanks!
+Ported from ElgatoPro300's BBS CML — many thanks!
 
 https://github.com/user-attachments/assets/169defa4-20fe-452a-8dac-c3a78e5c6c52
 
