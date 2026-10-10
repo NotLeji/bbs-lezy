@@ -74,10 +74,26 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
         });
         this.aspectPreset.tooltip(IKey.raw("Aspect ratio presets (Scope, Flat, HD, Custom, etc.)"));
 
-        this.height = this.trackpad(this.clip.height).limit(0D, 1.5D).values(0.01D, 0.05D, 0.1D);
+        this.height = new UITrackpad((v) ->
+        {
+            this.editor.editMultiple(this.clip.height, (d) ->
+            {
+                d.set(v);
+                this.clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
+            });
+            this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
+        }).limit(0D, 1.5D).values(0.01D, 0.05D, 0.1D);
         this.height.tooltip(IKey.raw("Bar thickness (0.48 = standard 2.39:1 cinema scope)"));
 
-        this.width = this.trackpad(this.clip.width).limit(0D, 1D).values(0.01D, 0.05D, 0.1D);
+        this.width = new UITrackpad((v) ->
+        {
+            this.editor.editMultiple(this.clip.width, (d) ->
+            {
+                d.set(v);
+                this.clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
+            });
+            this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
+        }).limit(0D, 1D).values(0.01D, 0.05D, 0.1D);
         this.width.tooltip(IKey.raw("Bar width coverage"));
         this.smoothness = this.trackpad(this.clip.smoothness).limit(0D, 1D).values(0.02D, 0.05D, 0.1D);
         this.smoothness.tooltip(IKey.raw("Inner edge gradient feathering (0 = solid hard bars, 1 = full soft fade)"));
