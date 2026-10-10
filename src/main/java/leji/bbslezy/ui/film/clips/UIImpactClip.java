@@ -61,7 +61,7 @@ public class UIImpactClip extends UIClip<ImpactClip>
     {
         super.registerUI();
 
-        this.style = new UIChoiceButton<>(
+        this.style = this.bind(new UIChoiceButton<>(
             Arrays.asList(ImpactStyle.values()),
             (s) -> Icons.FOUR_STAR,
             (s) -> IKey.raw(s.getLabel())
@@ -72,6 +72,14 @@ public class UIImpactClip extends UIClip<ImpactClip>
                 this.clip.applyStyle(s);
             });
             this.fillData();
+        }), () ->
+        {
+            int styleIndex = this.clip.style.get();
+            ImpactStyle[] styles = ImpactStyle.values();
+            if (styleIndex >= 0 && styleIndex < styles.length)
+            {
+                this.style.setValue(styles[styleIndex]);
+            }
         });
         this.style.tooltip(IKey.raw("Preset impact styles (Anime Impact, Hard Hit, Explosion, Dramatic)"));
 
@@ -82,7 +90,7 @@ public class UIImpactClip extends UIClip<ImpactClip>
 
         /* Flash */
         this.flashEnabled = this.toggle(IKey.raw("Screen Flash"), this.clip.flashEnabled);
-        this.flashColor = new UIColor((c) -> this.editor.editMultiple(this.clip.flashColor, (v) -> v.set(Color.rgba(c))));
+        this.flashColor = this.bind(new UIColor((c) -> this.editor.editMultiple(this.clip.flashColor, (v) -> v.set(Color.rgba(c)))), () -> this.flashColor.setColor(this.clip.flashColor.get().getARGBColor()));
         this.flashIntensity = this.trackpad(this.clip.flashIntensity).limit(0F, 5F).values(0.05F, 0.2F, 1F);
         this.flashIntensity.tooltip(IKey.raw("Flash peak opacity"));
         this.flashDuration = this.trackpad(this.clip.flashDuration).limit(1, 100).values(1, 2, 5);

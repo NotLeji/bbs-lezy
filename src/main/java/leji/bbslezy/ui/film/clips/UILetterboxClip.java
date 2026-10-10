@@ -15,7 +15,6 @@ import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIChoiceButton;
 import mchorse.bbs_mod.client.BBSRendering;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
-import net.minecraft.client.MinecraftClient;
 
 import java.util.Arrays;
 import mchorse.bbs_mod.ui.framework.elements.input.UIColor;

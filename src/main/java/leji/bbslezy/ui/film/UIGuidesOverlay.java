@@ -5,6 +5,7 @@ import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.ui.film.UIFilmPreview;
 import mchorse.bbs_mod.ui.framework.UIContext;
 import mchorse.bbs_mod.ui.framework.elements.UIElement;
+import mchorse.bbs_mod.ui.utils.context.ContextMenuManager;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIIcon;
 import mchorse.bbs_mod.ui.framework.elements.utils.Batcher2D;
 import mchorse.bbs_mod.ui.utils.Area;
@@ -21,30 +22,11 @@ public class UIGuidesOverlay extends UIElement
         this.preview = preview;
         this.full(preview);
 
-        this.guidesBtn = new UIIcon(Icons.CROPS, (b) -> {});
-        this.guidesBtn.context((menu) ->
+        this.guidesBtn = new UIIcon(Icons.CROPS, (b) ->
         {
-            menu.action(Icons.CROPS, IKey.raw("Action Safe (90%)"), LodSettings.guidesActionSafe.get(), () ->
-            {
-                LodSettings.guidesActionSafe.set(!LodSettings.guidesActionSafe.get());
-            });
-            menu.action(Icons.CROPS, IKey.raw("Title Safe (80%)"), LodSettings.guidesTitleSafe.get(), () ->
-            {
-                LodSettings.guidesTitleSafe.set(!LodSettings.guidesTitleSafe.get());
-            });
-            menu.action(Icons.CROPS, IKey.raw("9:16 Vertical"), LodSettings.guidesVertical.get(), () ->
-            {
-                LodSettings.guidesVertical.set(!LodSettings.guidesVertical.get());
-            });
-            menu.action(Icons.CROPS, IKey.raw("2.39:1 Scope"), LodSettings.guidesCinematic.get(), () ->
-            {
-                LodSettings.guidesCinematic.set(!LodSettings.guidesCinematic.get());
-            });
-            menu.action(Icons.MORE, IKey.raw("Show Labels"), LodSettings.guidesShowLabels.get(), () ->
-            {
-                LodSettings.guidesShowLabels.set(!LodSettings.guidesShowLabels.get());
-            });
+            this.getContext().replaceContextMenu(this::createGuidesMenu);
         });
+        this.guidesBtn.context(this::createGuidesMenu);
         this.guidesBtn.tooltip(IKey.raw("Framing Guides / Safe Areas"), Direction.BOTTOM);
         this.guidesBtn.highlight(this::hasAnyActiveGuide, Direction.BOTTOM);
 
@@ -57,6 +39,30 @@ public class UIGuidesOverlay extends UIElement
             || LodSettings.guidesTitleSafe.get()
             || LodSettings.guidesVertical.get()
             || LodSettings.guidesCinematic.get();
+    }
+
+    private void createGuidesMenu(ContextMenuManager menu)
+    {
+        menu.action(Icons.CROPS, IKey.raw("Action Safe (90%)"), LodSettings.guidesActionSafe.get(), () ->
+        {
+            LodSettings.guidesActionSafe.set(!LodSettings.guidesActionSafe.get());
+        });
+        menu.action(Icons.CROPS, IKey.raw("Title Safe (80%)"), LodSettings.guidesTitleSafe.get(), () ->
+        {
+            LodSettings.guidesTitleSafe.set(!LodSettings.guidesTitleSafe.get());
+        });
+        menu.action(Icons.CROPS, IKey.raw("9:16 Vertical"), LodSettings.guidesVertical.get(), () ->
+        {
+            LodSettings.guidesVertical.set(!LodSettings.guidesVertical.get());
+        });
+        menu.action(Icons.CROPS, IKey.raw("2.39:1 Scope"), LodSettings.guidesCinematic.get(), () ->
+        {
+            LodSettings.guidesCinematic.set(!LodSettings.guidesCinematic.get());
+        });
+        menu.action(Icons.MORE, IKey.raw("Show Labels"), LodSettings.guidesShowLabels.get(), () ->
+        {
+            LodSettings.guidesShowLabels.set(!LodSettings.guidesShowLabels.get());
+        });
     }
 
 

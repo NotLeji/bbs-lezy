@@ -41,7 +41,7 @@ public class ImpactClip extends CameraClip
 
     /* Keyframe animation */
     public final KeyframeChannel<Double> channelIntensity = new KeyframeChannel<>("intensity", KeyframeFactories.DOUBLE);
-    public final KeyframeChannel[] channels;
+    public final KeyframeChannel<?>[] channels;
 
     private final TintEffect effect = new TintEffect();
 
@@ -49,7 +49,7 @@ public class ImpactClip extends CameraClip
     {
         super();
 
-        this.channels = new KeyframeChannel[] {
+        this.channels = new KeyframeChannel<?>[] {
             this.channelIntensity,
         };
 
@@ -71,7 +71,7 @@ public class ImpactClip extends CameraClip
         this.add(this.shakeIntensity);
         this.add(this.shakeDuration);
 
-        for (KeyframeChannel channel : this.channels)
+        for (KeyframeChannel<?> channel : this.channels)
         {
             this.add(channel);
         }

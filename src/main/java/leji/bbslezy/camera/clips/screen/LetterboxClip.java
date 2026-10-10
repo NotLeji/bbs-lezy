@@ -9,7 +9,6 @@ import mchorse.bbs_mod.settings.values.core.ValueColor;
 import mchorse.bbs_mod.settings.values.numeric.ValueDouble;
 import mchorse.bbs_mod.utils.clips.Clip;
 import mchorse.bbs_mod.settings.values.numeric.ValueInt;
-import mchorse.bbs_mod.settings.values.numeric.ValueFloat;
 import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.clips.ClipContext;
 import mchorse.bbs_mod.utils.colors.Color;
@@ -45,7 +44,7 @@ public class LetterboxClip extends CameraClip
     public final KeyframeChannel<Double> offsetXChannel = new KeyframeChannel<>("offsetX", KeyframeFactories.DOUBLE);
     public final KeyframeChannel<Double> offsetYChannel = new KeyframeChannel<>("offsetY", KeyframeFactories.DOUBLE);
 
-    public final KeyframeChannel[] channels;
+    public final KeyframeChannel<?>[] channels;
     public final ValueGroup channelsGroup = new ValueGroup("channels");
 
     private LetterboxEffect effect = new LetterboxEffect();
@@ -57,7 +56,7 @@ public class LetterboxClip extends CameraClip
 
     public LetterboxClip()
     {
-        this.channels = new KeyframeChannel[] {
+        this.channels = new KeyframeChannel<?>[] {
             this.heightChannel,
             this.widthChannel,
             this.smoothnessChannel,
@@ -74,7 +73,7 @@ public class LetterboxClip extends CameraClip
         this.add(this.color);
 
         this.add(this.aspectPreset);
-        for (KeyframeChannel channel : this.channels)
+        for (KeyframeChannel<?> channel : this.channels)
         {
             this.channelsGroup.add(channel);
         }

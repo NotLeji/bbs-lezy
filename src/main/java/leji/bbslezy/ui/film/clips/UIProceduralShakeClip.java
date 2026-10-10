@@ -6,7 +6,6 @@ import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.ui.film.IUIClipsDelegate;
 import mchorse.bbs_mod.ui.film.clips.UIClip;
 import mchorse.bbs_mod.ui.film.clips.widgets.UIBitToggle;
-import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIChoiceButton;
 import java.util.Arrays;
 import mchorse.bbs_mod.ui.framework.elements.input.UITrackpad;
@@ -71,8 +70,7 @@ public class UIProceduralShakeClip extends UIClip<ProceduralShakeClip>
         this.rotFov.tooltip(IKey.raw("FOV oscillation amplitude"));
 
         this.active = this.bind(new UIBitToggle((value) -> this.clip.active.set(value)).all(), () -> this.active.setValue(this.clip.active.get()));
-
-        this.presetChoice = new UIChoiceButton<>(
+        this.presetChoice = this.bind(new UIChoiceButton<>(
             Arrays.asList(ShakePreset.values()),
             (p) -> Icons.EXCHANGE,
             (p) -> IKey.raw(p.getLabel())
@@ -83,6 +81,14 @@ public class UIProceduralShakeClip extends UIClip<ProceduralShakeClip>
                 this.clip.applyPreset(p.ordinal());
             });
             this.fillData();
+        }), () ->
+        {
+            int presetIndex = this.clip.preset.get();
+            ShakePreset[] presets = ShakePreset.values();
+            if (presetIndex >= 0 && presetIndex < presets.length)
+            {
+                this.presetChoice.setValue(presets[presetIndex]);
+            }
         });
         this.presetChoice.tooltip(IKey.raw("Apply shake presets (Gentle, Action, Explosion)"));
     }
