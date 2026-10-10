@@ -53,11 +53,20 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
             (p) -> IKey.raw(p.getLabel())
         ).callback((p) ->
         {
-            this.editor.editMultiple(this.clip.aspectPreset, (v) ->
+            if (p != AspectRatioPreset.CUSTOM)
             {
-                v.set(p.ordinal());
-                this.clip.applyAspectRatioPreset(this.currentCanvasRatio());
-            });
+                this.editor.editMultiple(this.clip.aspectPreset, (v) ->
+                {
+                    v.set(p.ordinal());
+                    this.clip.applyAspectRatioPreset(this.currentCanvasRatio());
+                });
+                this.editor.editMultiple(this.clip.height, (h) -> h.set(this.clip.height.get()));
+                this.editor.editMultiple(this.clip.width, (w) -> w.set(this.clip.width.get()));
+            }
+            else
+            {
+                this.editor.editMultiple(this.clip.aspectPreset, (v) -> v.set(AspectRatioPreset.CUSTOM.ordinal()));
+            }
             this.height.setValue(this.clip.height.get());
             this.width.setValue(this.clip.width.get());
             this.fillData();
@@ -138,7 +147,8 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
         {
             this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
         }
-
+        this.height.setValue(this.clip.height.get());
+        this.width.setValue(this.clip.width.get());
         for (KeyframeChannel<?> channel : this.clip.channels)
         {
             int sheetColor = channel.getId().hashCode() & Colors.RGB;
