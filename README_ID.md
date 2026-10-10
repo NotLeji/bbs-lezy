@@ -34,7 +34,7 @@ Nggak semua model replay dirender setiap frame — hanya yang terdekat dengan ka
 
 **4. Screen effect clips**
 
-Hasil porting dari BBS CML milik ElgatoPro300 — makasih!
+Hasil porting dari BBS CML milik ElgatoPro300 — makasih banyak!
 
 https://github.com/user-attachments/assets/169defa4-20fe-452a-8dac-c3a78e5c6c52
 
