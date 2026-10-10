@@ -62,40 +62,19 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
                 });
                 this.editor.editMultiple(this.clip.height, (h) -> h.set(this.clip.height.get()));
                 this.editor.editMultiple(this.clip.width, (w) -> w.set(this.clip.width.get()));
+                this.height.setValue(this.clip.height.get());
+                this.width.setValue(this.clip.width.get());
             }
-            else
-            {
-                this.editor.editMultiple(this.clip.aspectPreset, (v) -> v.set(AspectRatioPreset.CUSTOM.ordinal()));
-            }
-            this.height.setValue(this.clip.height.get());
-            this.width.setValue(this.clip.width.get());
-            this.fillData();
+            this.aspectPreset.setValue(p);
         });
         this.aspectPreset.tooltip(IKey.raw("Aspect ratio presets (Scope, Flat, HD, Custom, etc.)"));
+        this.bind(this.aspectPreset, this::updatePresetDisplay);
 
-        this.height = new UITrackpad((v) ->
-        {
-            this.editor.editMultiple(this.clip.height, (d) ->
-            {
-                d.set(v);
-                this.clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
-            });
-            this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
-        }).limit(0D, 1.5D).values(0.01D, 0.05D, 0.1D);
+        this.height = this.trackpad(this.clip.height).limit(0D, 1.5D).values(0.01D, 0.05D, 0.1D);
         this.height.tooltip(IKey.raw("Bar thickness (0.48 = standard 2.39:1 cinema scope)"));
-        this.bind(this.height, () -> this.height.setValue(this.clip.height.get()));
 
-        this.width = new UITrackpad((v) ->
-        {
-            this.editor.editMultiple(this.clip.width, (d) ->
-            {
-                d.set(v);
-                this.clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
-            });
-            this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
-        }).limit(0D, 1D).values(0.01D, 0.05D, 0.1D);
+        this.width = this.trackpad(this.clip.width).limit(0D, 1D).values(0.01D, 0.05D, 0.1D);
         this.width.tooltip(IKey.raw("Bar width coverage"));
-        this.bind(this.width, () -> this.width.setValue(this.clip.width.get()));
         this.smoothness = this.trackpad(this.clip.smoothness).limit(0D, 1D).values(0.02D, 0.05D, 0.1D);
         this.smoothness.tooltip(IKey.raw("Inner edge gradient feathering (0 = solid hard bars, 1 = full soft fade)"));
         this.color = new UIColor((c) -> this.editor.editMultiple(this.clip.color, (v) -> v.set(Color.rgba(c))));
@@ -137,16 +116,7 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
         super.fillData();
 
         this.color.setColor(this.clip.color.get().getARGBColor());
-        int presetIndex = this.clip.aspectPreset.get();
-        AspectRatioPreset[] presets = AspectRatioPreset.values();
-        if (presetIndex >= 0 && presetIndex < presets.length)
-        {
-            this.aspectPreset.setValue(presets[presetIndex]);
-        }
-        else
-        {
-            this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
-        }
+        this.updatePresetDisplay();
         this.height.setValue(this.clip.height.get());
         this.width.setValue(this.clip.width.get());
         for (KeyframeChannel<?> channel : this.clip.channels)
@@ -193,6 +163,44 @@ public class UILetterboxClip extends UIClip<LetterboxClip>
         {}
 
         return 16F / 9F;
+    }
+
+    private void updatePresetDisplay()
+    {
+        float canvasRatio = this.currentCanvasRatio();
+        double currentH = this.clip.height.get();
+        double currentW = this.clip.width.get();
+
+        for (AspectRatioPreset preset : AspectRatioPreset.values())
+        {
+            if (preset == AspectRatioPreset.CUSTOM)
+            {
+                continue;
+            }
+
+            double expectedH;
+            double expectedW;
+            float ratio = preset.getRatio();
+
+            if (ratio >= canvasRatio - LetterboxClip.ASPECT_TOLERANCE)
+            {
+                expectedH = 2D * (1D - canvasRatio / (double) ratio);
+                expectedW = 1D;
+            }
+            else
+            {
+                expectedH = 0D;
+                expectedW = (double) (ratio / canvasRatio);
+            }
+
+            if (Math.abs(currentH - expectedH) < 0.005D && Math.abs(currentW - expectedW) < 0.005D)
+            {
+                this.aspectPreset.setValue(preset);
+                return;
+            }
+        }
+
+        this.aspectPreset.setValue(AspectRatioPreset.CUSTOM);
     }
 
 }
