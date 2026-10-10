@@ -53,3 +53,9 @@ TESTER_GUIDE.md
 AGENTS.md
 *.mp4
 *.webm
+
+# local AI tooling state — stays on disk, never part of the mod
+/.agents/
+/.omp/
+/dump_session/
+skills-lock.json

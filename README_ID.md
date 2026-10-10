@@ -32,27 +32,24 @@ Nggak semua model replay dirender setiap frame — hanya yang terdekat dengan ka
 - **Multi-codec audio langsung & dikenali di Pick Audio** — BBS kini bisa langsung membaca `.mp3`, `.m4a`, `.aac`, `.opus`, `.wma`, `.alac`, `.ape`, `.flac`, `.aif/.aiff`, dan `.ac3`. File-file ini langsung terdeteksi di menu "Pick audio...", bisa dipreview waveform-nya, diedit (offset, durasi, volume), dicut/split di timeline, dan dirender layaknya WAV bawaan. Decode berjalan on-demand via ffmpeg, sehingga file asli di disk tidak pernah diubah atau dikonversi.
 - **Import file audio tanpa konversi** — file audio yang di-drag & drop ke dalam BBS langsung disalin **apa adanya** (byte-identical), tidak lagi dire-encode paksa menjadi WAV mono. Khusus file video (`.mp4`), audionya tetap diekstrak otomatis seperti biasa.
 
-**4. Screen effect clips (Big Thanks to ElgatoPro300)**
+**4. Screen effect clips**
 
-Many thanks to ElgatoPro300 (who make BBS CML) to make this feature
+Hasil porting dari BBS CML milik ElgatoPro300 — makasih banyak!
 
 https://github.com/user-attachments/assets/169defa4-20fe-452a-8dac-c3a78e5c6c52
 
 - **Cinematic Effect** — satu clip yang menggabungkan efek kamera jadul: vintage film (flicker, goresan acak, desaturasi), framing / letterbox, film grain, dan optik (fisheye, chromatic aberration, VHS glitch, radial blur). Tiap efek punya parameter sendiri dan bisa dikombinasikan.
 - **Color Grade** — color grading murni (saturation, hue, brightness, contrast, lift, gamma, gain) plus flat overlay tint.
 - **Vignette** — penggelapan radial di tepi frame.
-- **Letterbox** — bar hitam sinematik (tinggi, lebar, smoothness, warna, offset, rotasi, zoom).
-- **Hierarki clip per track** — efek clip sekarang mengikuti urutan track di camera timeline. Tiap track dapat pass sendiri, dari track paling bawah ke atas, jadi Color Grade di track atas dibaca sebagai lapisan efek di atas grade track bawah — bukan dijumlahkan jadi satu look. Beberapa clip di track yang sama tetap dijumlahkan seperti biasa, berguna buat menumpuk grade. Film yang semua clipnya ada di satu track tetap cuma satu pass, jadi tidak ada biaya performa tambahan.
+- **Letterbox** — bar sinematik dengan preset rasio aspek (Scope 2.39:1, Cinema, Univisium, Flat, 16:9, 4:3, Square, 9:16 Shorts, Custom), dukungan pillarbox buat video vertikal, feather tepi dalam, warna, offset, rotasi, dan zoom.
+- **Camera Shake** — goyangan handheld prosedural dengan preset Gentle / Action / Explosion plus atur amplitudo per sumbu.
+- **Impact Frame** — freeze frame, flash layar, punch-in FOV, dan impulse shake dalam satu clip, dengan preset Anime Impact / Hard Hit / Explosion / Dramatic.
+- **Hierarki clip per track** — efek ngikutin urutan track di camera timeline, dari track paling bawah ke atas, jadi grade di track atas jadi lapisan di atas grade track bawah — bukan kecampur jadi satu look. Clip yang se-track tetap ditumpuk seperti biasa, dan film yang semuanya se-track tetap cuma satu pass.
 
 **5. Illusion (duplikasi visual)**
 
-Thanks again to ElgatoPro300 :D
-
-- Menambah duplikat visual di sekitar form atau model block **tanpa menambah entitas** di scene. Jadi satu actor bisa terlihat jadi 10 tanpa menambah beban entity Minecraft.
-- Bisa diarahkan ke 6 arah (depan, belakang, kiri, kanan, atas, bawah), diatur jaraknya (spread / spacing), diberi opacity fade, dan punya toggle **Enabled** untuk menyalakan / mematikan semua duplikat.
-- Opsi lanjutan: **Uniform Distance** (jarak antar duplikat sama rata), **Real** (duplikat ikut berinteraksi dengan block dunia, misal menapak blok), **Distort** (duplikat hancur jadi streak), dan **Gradual Transform** (transformasi naik dari model utama ke duplikat terakhir).
-- Bisa di-keyframe lewat Dope Sheet sebagai track `illusion` dan `illusion_transform`, jadi jarak serta transformasi bisa dianimasikan sepanjang timeline — baik di Model Block maupun di Replay Actor.
-- Semua parameter diatur dari section **Illusion** di panel Form Editor.
+- Duplikat visual di sekitar form atau model block **tanpa menambah entitas** — satu actor kelihatan jadi 10 tanpa beban entity. 6 arah, spread, opacity fade, toggle **Enabled**, dll. (Uniform Distance, Real, Distort, Gradual Transform).
+- Bisa di-keyframe lewat Dope Sheet (track `illusion` dan `illusion_transform`), semuanya diatur dari section **Illusion** di Form Editor. Hasil porting dari BBS CML milik ElgatoPro300.
 
 **6. Video export (CQP, codec & GPU)**
 
@@ -61,6 +58,16 @@ Thanks again to ElgatoPro300 :D
 - **Hardware Acceleration (GPU)** — pakai encoder GPU (NVIDIA NVENC, AMD AMF di Windows / VA-API di Linux, Intel QSV dengan fallback VA-API di Linux) buat render jauh lebih cepat dan beban CPU lebih ringan. Default: **nyala**. Ada opsi **Auto-Detect GPU** atau pilih vendor tertentu.
 - **Peringatan codec GPU** — kalau codec yang dipilih (mis. VP9) atau GPU / build ffmpeg tidak mendukung hardware encoder tersebut, muncul dialog yang nawarin encode pakai CPU untuk export itu saja.
 - **Perbaikan Linux (QoL)** — slider terbatas membungkus kursor di tepi jendela pada Linux/XWayland seperti trackpad biasa, export video Linux otomatis mendeteksi dan memakai NVENC, Intel QSV (fallback ke VA-API bila QSV tidak terdeteksi), atau AMD VA-API sesuai render node, serta menyalakan/reload shaderpack Iris di dalam editor BBS menjadwalkan reload bersih saat editor ditutup.
+
+**7. Framing guides**
+
+- Tombol toggle di toolbar preview film: klik kiri nyala/matiin semua guide (setup terakhir diingat), klik kanan buat milih guide mana yang tampil.
+- Safe area (Action 90%, Title 80%), overlay vertikal 9:16 dan scope 2.39:1, plus center lines dan crosshair bawaan BBS.
+- Warna, opacity, dan label diatur dari setting BBS Lezy.
+
+**8. Dll.**
+
+Hal-hal kecil yang nggak dapat section sendiri: clip halftone, channel motion blur & pixelation, skin search dengan preview 3D, Look At batch baking, damage action clip, snap-player-to-preview, reverse audio dengan volume keyframes, open-folder-on-import, perbaikan cursor wrap Linux & Iris depth, toggle shader dashboard (K).
 
 ## Dokumentasi
 
@@ -125,11 +132,11 @@ Hasilnya ada di `build/libs/bbs-lezy-<versi>.jar`.
 
 ## Credit
 
-Biburan dan fitur besarnya berawal dari karya orang-orang ini, jadi terima kasih yang sebesar-besaranya:
+Sebagian besar keseruan di sini berawal dari karya orang-orang ini, jadi makasih banyak buat:
 
-- [McHorse](https://www.youtube.com/@McHorsesCreations) — penulis BBS FS itu sendiri.
-- [ElgatoPro300](https://www.youtube.com/@ElGatoPro300) — buat **screen effect clips** dan **illusion**. Dua fitur itu hasil porting dari BBS CML miliknya, jadi credit-nya balik lagi ke dia.
-- [Wemmpy](https://www.youtube.com/@Wemppy4) — soal teks FatalError dan support bahasa Indonesia.
+- [McHorse](https://www.youtube.com/@McHorsesCreations) — pembuat BBS (Blockbuster), mod original yang jadi fondasi semuanya.
+- [Wemmpy](https://www.youtube.com/@Wemppy4) — pembuat BBS FS, fork yang jadi target addon ini.
+- [ElgatoPro300](https://www.youtube.com/@ElGatoPro300) — screen effect clips dan illusion, hasil porting dari BBS CML miliknya.
 
 dan AI yang bersedia untuk dipecut 😈
 

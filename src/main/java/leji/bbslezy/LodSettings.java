@@ -26,6 +26,12 @@ public class LodSettings
     public static ValueBoolean hardwareAcceleration;
     public static ValueInt gpuVendor;
     public static ValueBoolean snapPlayerToPreview;
+    public static ValueBoolean guidesActionSafe;
+    public static ValueBoolean guidesTitleSafe;
+    public static ValueBoolean guidesVertical;
+    public static ValueBoolean guidesCinematic;
+    public static ValueInt guidesColor;
+    public static ValueBoolean guidesShowLabels;
 
     public static void register(SettingsBuilder builder)
     {
@@ -51,5 +57,12 @@ public class LodSettings
             IKey.raw("Intel (QSV)")
         );
         snapPlayerToPreview = builder.getBoolean("snap_player_to_preview", true);
+
+        guidesActionSafe = builder.getBoolean("guides_action_safe", false);
+        guidesTitleSafe = builder.getBoolean("guides_title_safe", false);
+        guidesVertical = builder.getBoolean("guides_vertical", false);
+        guidesCinematic = builder.getBoolean("guides_cinematic", false);
+        guidesColor = builder.getInt("guides_color", 0x88FFFFFF).colorAlpha();
+        guidesShowLabels = builder.getBoolean("guides_show_labels", false);
     }
 }

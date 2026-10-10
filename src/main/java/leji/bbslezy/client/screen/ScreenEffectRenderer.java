@@ -9,6 +9,8 @@ import leji.bbslezy.camera.clips.screen.HalftoneEffect;
 import leji.bbslezy.camera.clips.screen.LetterboxClip;
 import leji.bbslezy.camera.clips.screen.LayeredEffect;
 import leji.bbslezy.camera.clips.screen.LetterboxEffect;
+import leji.bbslezy.camera.clips.screen.TintClip;
+import leji.bbslezy.camera.clips.screen.TintEffect;
 import mchorse.bbs_mod.ui.framework.elements.utils.Batcher2D;
 import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.clips.ClipContext;
@@ -44,8 +46,9 @@ public class ScreenEffectRenderer
         List<LetterboxEffect> letterboxEffects = LetterboxClip.getEffects(context);
         List<GrainEffect> grainEffects = CinematicClip.getGrainEffects(context);
         List<HalftoneEffect> halftoneEffects = HalftoneClip.getEffects(context);
+        List<TintEffect> tintEffects = TintClip.getTints(context);
 
-        if (effects.isEmpty() && letterboxEffects.isEmpty() && grainEffects.isEmpty() && halftoneEffects.isEmpty())
+        if (effects.isEmpty() && letterboxEffects.isEmpty() && grainEffects.isEmpty() && halftoneEffects.isEmpty() && tintEffects.isEmpty())
         {
             return;
         }
@@ -54,15 +57,16 @@ public class ScreenEffectRenderer
         GL11.glGetIntegerv(GL11.GL_VIEWPORT, prevViewport);
         RenderSystem.disableDepthTest();
 
-        for (int layer : collectLayers(effects, letterboxEffects, grainEffects, halftoneEffects))
+        for (int layer : collectLayers(effects, letterboxEffects, grainEffects, halftoneEffects, tintEffects))
         {
-            renderLayer(batcher, layer, screenW, screenH, effects, letterboxEffects, grainEffects, halftoneEffects);
+            renderLayer(batcher, layer, screenW, screenH, effects, letterboxEffects, grainEffects, halftoneEffects, tintEffects);
         }
 
         effects.clear();
         letterboxEffects.clear();
         grainEffects.clear();
         halftoneEffects.clear();
+        tintEffects.clear();
 
         GL11.glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
         RenderSystem.enableDepthTest();
@@ -78,6 +82,14 @@ public class ScreenEffectRenderer
     public static void renderLayer(Batcher2D batcher, int layer, int screenW, int screenH,
         List<ColorEffect> effects, List<LetterboxEffect> letterboxEffects, List<GrainEffect> grainEffects,
         List<HalftoneEffect> halftoneEffects)
+    {
+        renderLayer(batcher, layer, screenW, screenH, effects, letterboxEffects, grainEffects, halftoneEffects, List.of());
+    }
+
+    /** One track's worth of the frame: the tint it lays down, the pass over it, the bars on top, tints on top. */
+    public static void renderLayer(Batcher2D batcher, int layer, int screenW, int screenH,
+        List<ColorEffect> effects, List<LetterboxEffect> letterboxEffects, List<GrainEffect> grainEffects,
+        List<HalftoneEffect> halftoneEffects, List<TintEffect> tintEffects)
     {
         List<ColorEffect> shaderEffects = new ArrayList<>();
         List<GrainEffect> layerGrain = new ArrayList<>();
@@ -124,6 +136,7 @@ public class ScreenEffectRenderer
             ColorGradeRenderer.apply(shaderEffects, layerGrain, layerHalftone);
             ColorGradeRenderer.resyncMinecraftState(batcher);
         }
+
         /* Letterbox bars, over the frame, on an ortho projection matrix of our own. */
         for (LetterboxEffect le : letterboxEffects)
         {
@@ -135,11 +148,52 @@ public class ScreenEffectRenderer
             Matrix4f cache = new Matrix4f(RenderSystem.getProjectionMatrix());
             Matrix4f ortho = new Matrix4f().ortho(0, screenW, screenH, 0, -1000, 3000);
             RenderSystem.setProjectionMatrix(ortho, VertexSorter.BY_Z);
+            RenderSystem.depthFunc(GL11.GL_ALWAYS);
+            RenderSystem.disableCull();
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
 
             renderLetterbox(batcher, le, screenW, screenH);
 
             batcher.flush();
             RenderSystem.setProjectionMatrix(cache, VertexSorter.BY_Z);
+            RenderSystem.enableCull();
+        }
+
+        /* Fullscreen tints (transitions, impact flash) composite over letterbox */
+        boolean hasTint = false;
+        for (TintEffect te : tintEffects)
+        {
+            if (te.layer() == layer)
+            {
+                hasTint = true;
+                break;
+            }
+        }
+
+        if (hasTint)
+        {
+            Matrix4f cache = new Matrix4f(RenderSystem.getProjectionMatrix());
+            Matrix4f ortho = new Matrix4f().ortho(0, screenW, screenH, 0, -100, 100);
+            RenderSystem.setProjectionMatrix(ortho, VertexSorter.BY_Z);
+            RenderSystem.depthFunc(GL11.GL_ALWAYS);
+            RenderSystem.disableCull();
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+
+            for (TintEffect te : tintEffects)
+            {
+                if (te.layer() != layer)
+                {
+                    continue;
+                }
+
+                batcher.box(0, 0, screenW, screenH, te.color);
+            }
+
+            batcher.flush();
+            RenderSystem.setProjectionMatrix(cache, VertexSorter.BY_Z);
+            RenderSystem.enableCull();
         }
     }
 
@@ -158,12 +212,19 @@ public class ScreenEffectRenderer
     static List<Integer> collectLayers(List<ColorEffect> effects, List<LetterboxEffect> letterboxEffects,
         List<GrainEffect> grainEffects, List<HalftoneEffect> halftoneEffects)
     {
+        return collectLayers(effects, letterboxEffects, grainEffects, halftoneEffects, List.of());
+    }
+
+    static List<Integer> collectLayers(List<ColorEffect> effects, List<LetterboxEffect> letterboxEffects,
+        List<GrainEffect> grainEffects, List<HalftoneEffect> halftoneEffects, List<TintEffect> tintEffects)
+    {
         List<Integer> layers = new ArrayList<>();
 
         collectLayers(layers, effects);
         collectLayers(layers, letterboxEffects);
         collectLayers(layers, grainEffects);
         collectLayers(layers, halftoneEffects);
+        collectLayers(layers, tintEffects);
 
         layers.sort(null);
 
@@ -190,14 +251,17 @@ public class ScreenEffectRenderer
 
     private static void renderLetterbox(Batcher2D batcher, LetterboxEffect effect, int screenW, int screenH)
     {
-        if (effect.width <= 0F)
+        if (effect.width <= 0F && effect.size <= 0F)
         {
             return;
         }
 
         int barH = (int) (screenH * effect.size);
+        float barWidthFactor = effect.width;
+        int barW = Math.max(1, Math.round(screenW * barWidthFactor));
+        int barX = (screenW - barW) / 2;
 
-        if (barH <= 0)
+        if (barH <= 0 && barX <= 0)
         {
             return;
         }
@@ -232,21 +296,48 @@ public class ScreenEffectRenderer
         int barW = Math.max(1, Math.round(screenW * barWidthFactor));
         int barX = (screenW - barW) / 2;
 
-        if (smoothH > 0)
+        /* Pillarbox (vertical side bars) when barX > 0 */
+        if (barX > 0)
         {
-            int solidH = barH - smoothH;
-            int transparent = Colors.setA(color, 0F);
+            int smoothW = (int) (barX * MathUtils.clamp(effect.smoothness, 0F, 1F));
 
-            batcher.box(barX, 0, barX + barW, solidH, color);
-            batcher.gradientVBox(barX, solidH, barX + barW, barH, color, transparent);
+            if (smoothW > 0)
+            {
+                int solidW = barX - smoothW;
+                int transparent = Colors.setA(color, 0F);
 
-            batcher.gradientVBox(barX, screenH - barH, barX + barW, screenH - solidH, transparent, color);
-            batcher.box(barX, screenH - solidH, barX + barW, screenH, color);
+                batcher.box(0, 0, solidW, screenH, color);
+                batcher.gradientHBox(solidW, 0, barX, screenH, color, transparent);
+
+                batcher.gradientHBox(screenW - barX, 0, screenW - solidW, screenH, transparent, color);
+                batcher.box(screenW - solidW, 0, screenW, screenH, color);
+            }
+            else
+            {
+                batcher.box(0, 0, barX, screenH, color);
+                batcher.box(screenW - barX, 0, screenW, screenH, color);
+            }
         }
-        else
+
+        /* Letterbox (horizontal top/bottom bars) when barH > 0 */
+        if (barH > 0)
         {
-            batcher.box(barX, 0, barX + barW, barH, color);
-            batcher.box(barX, screenH - barH, barX + barW, screenH, color);
+            if (smoothH > 0)
+            {
+                int solidH = barH - smoothH;
+                int transparent = Colors.setA(color, 0F);
+
+                batcher.box(barX, 0, barX + barW, solidH, color);
+                batcher.gradientVBox(barX, solidH, barX + barW, barH, color, transparent);
+
+                batcher.gradientVBox(barX, screenH - barH, barX + barW, screenH - solidH, transparent, color);
+                batcher.box(barX, screenH - solidH, barX + barW, screenH, color);
+            }
+            else
+            {
+                batcher.box(barX, 0, barX + barW, barH, color);
+                batcher.box(barX, screenH - barH, barX + barW, screenH, color);
+            }
         }
     }
 }

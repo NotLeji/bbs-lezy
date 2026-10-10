@@ -2,6 +2,8 @@ package leji.bbslezy.camera.clips.screen;
 
 import leji.bbslezy.actions.LezyDamageActionClip;
 import leji.bbslezy.utils.keyframes.factories.LensRadiusSettingsKeyframeFactory;
+import leji.bbslezy.camera.clips.modifiers.ProceduralShakeClip;
+import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.camera.data.Position;
 import mchorse.bbs_mod.utils.clips.ClipContext;
 import mchorse.bbs_mod.utils.clips.Clip;
@@ -10,6 +12,12 @@ import mchorse.bbs_mod.utils.interps.Interpolations;
 import org.junit.jupiter.api.Test;
 import mchorse.bbs_mod.utils.keyframes.factories.KeyframeFactories;
 import static org.junit.jupiter.api.Assertions.*;
+import mchorse.bbs_mod.settings.values.numeric.ValueDouble;
+import mchorse.bbs_mod.settings.values.core.ValueColor;
+import mchorse.bbs_mod.settings.values.core.ValueGroup;
+import mchorse.bbs_mod.utils.keyframes.KeyframeChannel;
+import mchorse.bbs_mod.data.types.MapType;
+import mchorse.bbs_mod.data.types.ListType;
 
 class ScreenClipsTest
 {
@@ -236,4 +244,167 @@ class ScreenClipsTest
         assertEquals(200F, effect.cells, 1e-4F);
         assertEquals(30F, effect.angle, 1e-4F);
     }
+
+    @Test
+    void letterboxClip_aspectRatioPresetMath()
+    {
+        LetterboxClip clip = new LetterboxClip();
+        float canvasRatio = 16F / 9F; // ~1.7778
+
+        // SCOPE 2.39: wider than canvas -> horizontal bars
+        clip.aspectPreset.set(AspectRatioPreset.SCOPE_239.ordinal());
+        clip.applyAspectRatioPreset(canvasRatio);
+        double expectedHeight = 2D * (1D - (double) canvasRatio / 2.39D);
+        assertEquals(expectedHeight, clip.height.get(), 1e-3D);
+        assertEquals(1.0D, clip.width.get(), 1e-3D);
+
+        // SHORTS 9:16 (0.5625): narrower than canvas -> pillarbox (height = 0, width < 1)
+        clip.aspectPreset.set(AspectRatioPreset.SHORTS_916.ordinal());
+        clip.applyAspectRatioPreset(canvasRatio);
+        assertEquals(0.0D, clip.height.get(), 1e-3D);
+        double expectedWidth = (9D / 16D) / (double) canvasRatio;
+        assertEquals(expectedWidth, clip.width.get(), 1e-3D);
+        // Pillarbox effect is added to context even when height is 0
+        ClipContext context = dummyContext(0, 0F);
+        LetterboxClip.getEffects(context).clear();
+        Position position = new Position();
+        clip.apply(context, position);
+        assertEquals(1, LetterboxClip.getEffects(context).size());
+        assertEquals(0F, LetterboxClip.getEffects(context).get(0).size);
+        assertEquals((float) expectedWidth, LetterboxClip.getEffects(context).get(0).width, 1e-3F);
+
+        // CUSTOM: leaves manual height/width completely untouched
+        clip.aspectPreset.set(AspectRatioPreset.CUSTOM.ordinal());
+        clip.height.set(0.35D);
+        clip.width.set(0.80D);
+        clip.applyAspectRatioPreset(canvasRatio);
+        assertEquals(0.35D, clip.height.get(), 1e-3D, "Custom preset must leave height untouched");
+        assertEquals(0.80D, clip.width.get(), 1e-3D, "Custom preset must leave width untouched");
+    }
+
+    @Test
+    void letterboxClip_channelGroupAndSmoothness()
+    {
+        LetterboxClip clip = new LetterboxClip();
+
+        // Ensure static properties are registered at root without keyframe channel collisions
+        assertInstanceOf(ValueDouble.class, clip.get("height"), "height must be ValueDouble at root");
+        assertInstanceOf(ValueDouble.class, clip.get("width"), "width must be ValueDouble at root");
+        assertInstanceOf(ValueDouble.class, clip.get("smoothness"), "smoothness must be ValueDouble at root");
+        assertInstanceOf(ValueColor.class, clip.get("color"), "color must be ValueColor at root");
+        assertInstanceOf(ValueGroup.class, clip.get("channels"), "channels must be ValueGroup sub-group");
+
+        // Keyframe channels live inside channelsGroup with their expected channel IDs
+        assertInstanceOf(KeyframeChannel.class, clip.channelsGroup.get("height"));
+        assertInstanceOf(KeyframeChannel.class, clip.channelsGroup.get("smoothness"));
+
+        // Smoothness can be adjusted and propagates to LetterboxEffect
+        clip.smoothness.set(0.65D);
+        assertEquals(0.65D, clip.smoothness.get(), 1e-4D);
+
+        ClipContext context = dummyContext(0, 0F);
+        LetterboxClip.getEffects(context).clear();
+        Position position = new Position();
+        clip.apply(context, position);
+
+        assertEquals(1, LetterboxClip.getEffects(context).size());
+        assertEquals(0.65F, LetterboxClip.getEffects(context).get(0).smoothness, 1e-4F);
+
+        // Backward compatibility: fromData loading root-level keyframe lists
+        MapType data = new MapType();
+        data.putDouble("smoothness", 0.35D);
+        data.putDouble("height", 0.50D);
+        ListType kfList = new ListType();
+        data.put("height", kfList); // old format had channel at root
+
+        LetterboxClip loaded = new LetterboxClip();
+        loaded.fromData(data);
+        assertEquals(0.35D, loaded.smoothness.get(), 1e-4D);
+    }
+
+
+    @Test
+    void impactClip_punchInFov()
+    {
+        ImpactClip clip = new ImpactClip();
+        clip.duration.set(30);
+        clip.punchInEnabled.set(true);
+        clip.punchInFov.set(20F);
+        clip.punchInDuration.set(10);
+        clip.freezeEnabled.set(false);
+        clip.shakeEnabled.set(false);
+        clip.flashEnabled.set(false);
+
+        ClipContext context = dummyContext(0, 0F);
+        Position position = new Position();
+        position.angle.fov = 70F;
+
+        // at t=0, punch-in is maximum (fov drops by 20 -> 50)
+        context.setup(0, 0, 0F);
+        clip.apply(context, position);
+        assertEquals(50F, position.angle.fov, 1e-3F);
+
+        // at t=10 (end of punchInDuration), decay is (1-1)^2 = 0 -> fov unaffected
+        position.angle.fov = 70F;
+        context.setup(10, 10, 0F);
+        assertEquals(70F, position.angle.fov, 1e-3F);
+    }
+
+    @Test
+    void proceduralShakeClip_presetsAndDeterminism()
+    {
+        ProceduralShakeClip clip = new ProceduralShakeClip();
+        clip.applyPreset(ProceduralShakeClip.PRESET_EXPLOSION);
+
+        assertEquals(3.0F, clip.frequency.get());
+        assertEquals(2.0F, clip.intensity.get());
+        assertEquals(0.25F, clip.posX.get());
+
+        clip.duration.set(30);
+        ClipContext context = dummyContext(5, 0.5F);
+        context.count = 1;
+        Position pos1 = new Position();
+        clip.apply(context, pos1);
+
+        Position pos2 = new Position();
+        clip.apply(context, pos2);
+
+        assertEquals(pos1.angle.yaw, pos2.angle.yaw, 1e-6F, "Shake must be deterministic");
+        assertEquals(pos1.angle.pitch, pos2.angle.pitch, 1e-6F, "Shake must be deterministic");
+    }
+    @Test
+    void proceduralShakeClip_preventsRunawayDriftWithoutBaseClip()
+    {
+        ProceduralShakeClip clip = new ProceduralShakeClip();
+        clip.duration.set(30);
+
+        // When running past base clips (context.count == 0, no clip underneath), position is untouched
+        ClipContext emptyContext = dummyContext(5, 0.5F);
+        emptyContext.count = 0;
+
+        Position pos = new Position();
+        float initialYaw = pos.angle.yaw;
+        float initialPitch = pos.angle.pitch;
+
+        clip.apply(emptyContext, pos);
+
+        assertEquals(initialYaw, pos.angle.yaw, 1e-6F, "Shake must not mutate orientation without a base camera clip");
+        assertEquals(initialPitch, pos.angle.pitch, 1e-6F, "Shake must not mutate orientation without a base camera clip");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static ClipContext dummyContext(int ticks, float transition)
+    {
+        ClipContext context = new ClipContext()
+        {
+            @Override
+            public boolean apply(Clip clip, Object position)
+            {
+                return false;
+            }
+        };
+        context.setup(ticks, ticks, transition);
+        return context;
+    }
+
 }
