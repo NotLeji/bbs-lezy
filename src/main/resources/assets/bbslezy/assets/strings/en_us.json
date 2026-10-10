@@ -24,8 +24,6 @@
 	"bbslezy.config.general.gpu_vendor-comment": "Hardware encoder to use: Auto-Detect (uses current OpenGL GPU; QSV/VA-API on Linux, AMF/QSV on Windows), NVIDIA (NVENC), AMD (AMF / VA-API), or Intel (QSV / VA-API).",
 	"bbslezy.config.general.snap_player_to_preview": "Snap player to camera preview",
 	"bbslezy.config.general.snap_player_to_preview-comment": "Silently moves player to preview camera position so Minecraft renders chunk/particles/audio there, and restores player position upon exit.",
-	"bbslezy.config.general.guides_enabled": "Guides: Master Toggle",
-	"bbslezy.config.general.guides_enabled-comment": "Master toggle for camera framing guides and safe area overlays in the preview.",
 	"bbslezy.config.general.guides_action_safe": "Guides: Action Safe (90%)",
 	"bbslezy.config.general.guides_action_safe-comment": "Draw a 90% boundary rectangle showing the safe area for critical visual action.",
 	"bbslezy.config.general.guides_title_safe": "Guides: Title Safe (80%)",

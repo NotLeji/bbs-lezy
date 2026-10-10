@@ -1,6 +1,7 @@
 package leji.bbslezy.ui.film;
 
 import leji.bbslezy.LodSettings;
+import mchorse.bbs_mod.BBSSettings;
 import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.ui.film.UIFilmPreview;
 import mchorse.bbs_mod.ui.framework.UIContext;
@@ -17,73 +18,99 @@ public class UIGuidesOverlay extends UIElement
     private final UIFilmPreview preview;
     private final UIIcon guidesBtn;
 
+    private boolean savedActionSafe;
+    private boolean savedTitleSafe;
+    private boolean savedVertical;
+    private boolean savedCinematic;
+    private boolean savedCenterLines;
+    private boolean savedCrosshair;
+
     public UIGuidesOverlay(UIFilmPreview preview)
     {
         this.preview = preview;
         this.full(preview);
-        this.guidesBtn = new UIIcon(Icons.CROPS, (b) ->
-        {
-            if (this.isGuidesVisible())
-            {
-                LodSettings.guidesEnabled.set(false);
-            }
-            else
-            {
-                LodSettings.guidesEnabled.set(true);
-                if (!this.hasAnyActiveGuide())
-                {
-                    LodSettings.guidesActionSafe.set(true);
-                }
-            }
-        });
+        this.guidesBtn = new UIIcon(Icons.CROPS, (b) -> this.toggleAllGuides());
         this.guidesBtn.context(this::createGuidesMenu);
         this.guidesBtn.tooltip(IKey.raw("Framing Guides / Safe Areas (Left-click: toggle, Right-click: options)"), Direction.BOTTOM);
-        this.guidesBtn.highlight(this::isGuidesVisible, Direction.BOTTOM);
+        this.guidesBtn.highlight(this::hasAnyActiveGuide, Direction.BOTTOM);
+
         preview.icons.add(this.guidesBtn);
     }
 
-    private boolean hasAnyActiveGuide()
+    public boolean hasAnyActiveGuide()
     {
         return LodSettings.guidesActionSafe.get()
             || LodSettings.guidesTitleSafe.get()
             || LodSettings.guidesVertical.get()
-            || LodSettings.guidesCinematic.get();
+            || LodSettings.guidesCinematic.get()
+            || BBSSettings.editorCenterLines.get()
+            || BBSSettings.editorCrosshair.get();
     }
 
-    private boolean isGuidesVisible()
+    private void toggleAllGuides()
     {
-        return LodSettings.guidesEnabled.get() && this.hasAnyActiveGuide();
+        if (this.hasAnyActiveGuide())
+        {
+            this.savedActionSafe = LodSettings.guidesActionSafe.get();
+            this.savedTitleSafe = LodSettings.guidesTitleSafe.get();
+            this.savedVertical = LodSettings.guidesVertical.get();
+            this.savedCinematic = LodSettings.guidesCinematic.get();
+            this.savedCenterLines = BBSSettings.editorCenterLines.get();
+            this.savedCrosshair = BBSSettings.editorCrosshair.get();
+
+            LodSettings.guidesActionSafe.set(false);
+            LodSettings.guidesTitleSafe.set(false);
+            LodSettings.guidesVertical.set(false);
+            LodSettings.guidesCinematic.set(false);
+            BBSSettings.editorCenterLines.set(false);
+            BBSSettings.editorCrosshair.set(false);
+        }
+        else
+        {
+            boolean anySaved = this.savedActionSafe || this.savedTitleSafe || this.savedVertical
+                || this.savedCinematic || this.savedCenterLines || this.savedCrosshair;
+
+            if (anySaved)
+            {
+                LodSettings.guidesActionSafe.set(this.savedActionSafe);
+                LodSettings.guidesTitleSafe.set(this.savedTitleSafe);
+                LodSettings.guidesVertical.set(this.savedVertical);
+                LodSettings.guidesCinematic.set(this.savedCinematic);
+                BBSSettings.editorCenterLines.set(this.savedCenterLines);
+                BBSSettings.editorCrosshair.set(this.savedCrosshair);
+            }
+            else
+            {
+                BBSSettings.editorCenterLines.set(true);
+            }
+        }
     }
 
     private void createGuidesMenu(ContextMenuManager menu)
     {
+        menu.action(Icons.CROPS, IKey.raw("Center Lines"), BBSSettings.editorCenterLines.get(), () ->
+        {
+            BBSSettings.editorCenterLines.set(!BBSSettings.editorCenterLines.get());
+        });
+        menu.action(Icons.CROPS, IKey.raw("Crosshair"), BBSSettings.editorCrosshair.get(), () ->
+        {
+            BBSSettings.editorCrosshair.set(!BBSSettings.editorCrosshair.get());
+        });
         menu.action(Icons.CROPS, IKey.raw("Action Safe (90%)"), LodSettings.guidesActionSafe.get(), () ->
         {
-            boolean next = !LodSettings.guidesActionSafe.get();
-            LodSettings.guidesActionSafe.set(next);
-            if (next) LodSettings.guidesEnabled.set(true);
+            LodSettings.guidesActionSafe.set(!LodSettings.guidesActionSafe.get());
         });
         menu.action(Icons.CROPS, IKey.raw("Title Safe (80%)"), LodSettings.guidesTitleSafe.get(), () ->
         {
-            boolean next = !LodSettings.guidesTitleSafe.get();
-            LodSettings.guidesTitleSafe.set(next);
-            if (next) LodSettings.guidesEnabled.set(true);
+            LodSettings.guidesTitleSafe.set(!LodSettings.guidesTitleSafe.get());
         });
         menu.action(Icons.CROPS, IKey.raw("9:16 Vertical"), LodSettings.guidesVertical.get(), () ->
         {
-            boolean next = !LodSettings.guidesVertical.get();
-            LodSettings.guidesVertical.set(next);
-            if (next) LodSettings.guidesEnabled.set(true);
+            LodSettings.guidesVertical.set(!LodSettings.guidesVertical.get());
         });
         menu.action(Icons.CROPS, IKey.raw("2.39:1 Scope"), LodSettings.guidesCinematic.get(), () ->
         {
-            boolean next = !LodSettings.guidesCinematic.get();
-            LodSettings.guidesCinematic.set(next);
-            if (next) LodSettings.guidesEnabled.set(true);
-        });
-        menu.action(Icons.MORE, IKey.raw("Show Labels"), LodSettings.guidesShowLabels.get(), () ->
-        {
-            LodSettings.guidesShowLabels.set(!LodSettings.guidesShowLabels.get());
+            LodSettings.guidesCinematic.set(!LodSettings.guidesCinematic.get());
         });
     }
 
@@ -93,7 +120,7 @@ public class UIGuidesOverlay extends UIElement
     {
         super.render(context);
 
-        if (!this.isGuidesVisible())
+        if (!this.hasAnyActiveGuide())
         {
             return;
         }
