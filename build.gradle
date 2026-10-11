@@ -50,6 +50,15 @@ dependencies {
 	 * declared above instead so the dev client runs with it. */
 	modImplementation("mchorse:bbs:${project.bbs_version}") { transitive = false }
 
+	// NVIDIA PhysX 5 JNI bindings (mode physics DestructionBox — fase D1).
+	// Native windows + linux ikut; jar include natives taruh dalam mod jar.
+	implementation "de.fabmax:physx-jni:2.7.1"
+	runtimeOnly "de.fabmax:physx-jni:2.7.1:natives-windows"
+	runtimeOnly "de.fabmax:physx-jni:2.7.1:natives-linux"
+	include "de.fabmax:physx-jni:2.7.1"
+	include "de.fabmax:physx-jni:2.7.1:natives-windows"
+	include "de.fabmax:physx-jni:2.7.1:natives-linux"
+
 	testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"
 	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }

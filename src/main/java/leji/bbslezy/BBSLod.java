@@ -16,6 +16,7 @@ import leji.bbslezy.forms.values.ValueIllusion;
 import leji.bbslezy.utils.keyframes.factories.IllusionKeyframeFactory;
 import leji.bbslezy.utils.keyframes.factories.LensRadiusSettingsKeyframeFactory;
 import mchorse.bbs_mod.api.events.RegisterActionClipsEvent;
+import leji.bbslezy.vfx.resources.LezyVfxSourcePack;
 import mchorse.bbs_mod.api.events.RegisterCameraClipsEvent;
 import mchorse.bbs_mod.api.events.RegisterFormModifiersEvent;
 import mchorse.bbs_mod.api.events.RegisterKeyframeFactoriesEvent;
@@ -47,6 +48,7 @@ public class BBSLod implements BBSAddonMod
 
         /* Makes this addon's own assets addressable as bbslezy:... links. */
         event.registerAddon(MOD_ID, BBSLod.class);
+        event.provider.registerFirst(new LezyVfxSourcePack());
     }
 
     @Subscribe
