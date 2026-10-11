@@ -32,6 +32,8 @@ import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.camera.clips.ClipFactoryData;
 import mchorse.bbs_mod.utils.colors.Colors;
+import leji.bbslezy.vfx.forms.LezyWindForm;
+
 /**
  * The common half of the BBS Lezy addon — registered under the {@code bbs-addon} entry point and
  * loaded on both sides.
@@ -86,6 +88,7 @@ public class BBSLod implements BBSAddonMod
         event.forms.register(Link.create(MOD_ID + ":explosion"), ExplosionForm.class);
         event.forms.register(Link.create(MOD_ID + ":beam"), BeamForm.class);
         event.forms.register(Link.create(MOD_ID + ":dome"), DomeForm.class);
+        event.forms.register(Link.create(MOD_ID + ":wind"), LezyWindForm.class);
     }
     @Subscribe
     public void onCameraClips(RegisterCameraClipsEvent event)

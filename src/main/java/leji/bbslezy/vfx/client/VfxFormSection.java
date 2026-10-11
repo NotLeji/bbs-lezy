@@ -3,6 +3,7 @@ import leji.bbslezy.vfx.forms.BeamForm;
 import leji.bbslezy.vfx.forms.DestructionBoxForm;
 import leji.bbslezy.vfx.forms.DomeForm;
 import leji.bbslezy.vfx.forms.ExplosionForm;
+import leji.bbslezy.vfx.forms.LezyWindForm;
 import mchorse.bbs_mod.forms.FormCategories;
 import mchorse.bbs_mod.forms.categories.FormCategory;
 import mchorse.bbs_mod.forms.sections.FormSection;
@@ -30,6 +31,7 @@ public class VfxFormSection extends FormSection
         this.vfxCategory.addForm(new ExplosionForm());
         this.vfxCategory.addForm(new BeamForm());
         this.vfxCategory.addForm(new DomeForm());
+        this.vfxCategory.addForm(new LezyWindForm());
     }
 
     @Override

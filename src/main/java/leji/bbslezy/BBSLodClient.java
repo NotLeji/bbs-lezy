@@ -25,6 +25,11 @@ import leji.bbslezy.vfx.client.SmokeVolume;
 import leji.bbslezy.vfx.client.UIBeamForm;
 import leji.bbslezy.vfx.client.UIDestructionKeyframeFactory;
 import leji.bbslezy.vfx.client.UIDomeForm;
+import leji.bbslezy.vfx.client.LezyWindFoliage;
+import leji.bbslezy.vfx.client.LezyWindFormRenderer;
+import leji.bbslezy.vfx.client.LezyWindVolume;
+import leji.bbslezy.vfx.client.UIWindForm;
+import leji.bbslezy.vfx.forms.LezyWindForm;
 import mchorse.bbs_mod.api.client.editor.TrackCategory;
 import mchorse.bbs_mod.api.client.events.RegisterTrackCategoriesEvent;
 import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
@@ -227,10 +232,12 @@ public class BBSLodClient implements BBSAddonMod
             (FormUtilsClient.IFormRendererFactory) form -> new DestructionBoxFormRenderer((DestructionBoxForm) form));
         FormUtilsClient.register(BeamForm.class, BeamFormRenderer::new);
         FormUtilsClient.register(DomeForm.class, DomeFormRenderer::new);
+        FormUtilsClient.register(LezyWindForm.class, LezyWindFormRenderer::new);
         UIFormEditor.register(DestructionBoxForm.class, UIDestructionBoxForm::new);
         UIFormEditor.register(ExplosionForm.class, UIExplosionForm::new);
         UIFormEditor.register(BeamForm.class, UIBeamForm::new);
         UIFormEditor.register(DomeForm.class, UIDomeForm::new);
+        UIFormEditor.register(LezyWindForm.class, UIWindForm::new);
         TrackStyle.register("destruction", LezyVfxIcons.DESTRUCTION, Colors.NEGATIVE);
         TrackStyle.registerLabel("destruction", IKey.constant("Destruction"));
         TrackStyle.register("progress", LezyVfxIcons.DOME, Colors.POSITIVE);
@@ -271,6 +278,10 @@ public class BBSLodClient implements BBSAddonMod
             ctx.register(new Identifier(BBSLod.MOD_ID, "dome_level_inst"),
                 VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL,
                 prog -> DestructionShader.DOME = prog));
+        CoreShaderRegistrationCallback.EVENT.register(ctx ->
+            ctx.register(new Identifier(BBSLod.MOD_ID, "wind_volume"),
+                VertexFormats.POSITION_TEXTURE,
+                prog -> LezyWindVolume.PROGRAM = prog));
 
         WorldRenderEvents.LAST.register(LezyVfxExplosionFx::drawDeferred);
         WorldRenderEvents.LAST.register(BeamHeat::captureDepth);
@@ -279,6 +290,8 @@ public class BBSLodClient implements BBSAddonMod
         WorldRenderEvents.LAST.register(CracksVolume::captureDepth);
         WorldRenderEvents.LAST.register(SmokeVolume::captureDepth);
         WorldRenderEvents.LAST.register(ExplosionSmokeVolume::captureDepth);
+        WorldRenderEvents.LAST.register(LezyWindVolume::captureDepth);
+        WorldRenderEvents.LAST.register(context -> LezyWindFoliage.tick());
         FormRenderEvents.AFTER.register(FormIllusionRenderer::render);
         FilmEvents.SHUTDOWN.register((film) -> LezyAudioReverse.clear());
         FilmEvents.SHUTDOWN.register((film) -> leji.bbslezy.client.screen.ColorGradeRenderer.clearTrail());

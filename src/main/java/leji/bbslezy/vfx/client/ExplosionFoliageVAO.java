@@ -838,7 +838,7 @@ public class ExplosionFoliageVAO
 
         /* Tip the tops ALONG the wind: axis ⟂ wind, horizontal (matches render()'s (rz,-rx) convention). */
         float ax = windZ, az = -windX;
-        WindField.Sample fs = vortex ? new WindField.Sample() : null;
+        LezyWindField.Sample fs = vortex ? new LezyWindField.Sample() : null;
 
         /* NO interleave here (unlike the blast render): BBS renders the form several times per frame, so a
          * per-call frame counter has an even stride and would freeze half the units permanently (the "hard
@@ -853,7 +853,7 @@ public class ExplosionFoliageVAO
             {
                 /* The pivot is already in the form's LOCAL frame (proxies are stored as x−origin), which is
                  * exactly the frame the field is defined in. */
-                WindField.sample(this.unitPivot[u * 3], this.unitPivot[u * 3 + 2], true,
+                LezyWindField.sample(this.unitPivot[u * 3], this.unitPivot[u * 3 + 2], true,
                     windX, windZ, coreR, swirl, suction, updraft, fs);
 
                 uax = fs.z;

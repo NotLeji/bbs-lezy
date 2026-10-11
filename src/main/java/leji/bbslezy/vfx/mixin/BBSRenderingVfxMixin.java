@@ -24,6 +24,7 @@ public abstract class BBSRenderingVfxMixin
     {
         MinecraftClient mc = MinecraftClient.getInstance();
 
+        leji.bbslezy.vfx.client.LezyWindVolume.render(mc.getFramebuffer());
         BeamVolume.render(mc.getFramebuffer());
         CracksVolume.render(mc.getFramebuffer());
         DomeVolume.render(mc.getFramebuffer());
