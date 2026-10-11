@@ -16,12 +16,7 @@ on:
   workflow_dispatch:  # boleh di-trigger manual dari tab Actions
 
 env:
-  # Pin commit bbs-fs (fork sendiri: https://github.com/NotLeji/bbs-fs-F6-Fix).
-  # JANGAN pakai Wemppy4/bbs-fs langsung — dia rajin push, versi bisa berubah.
-  # Pakai BBS fix yang dipakai lokal. BBS cuma tersedia
-  # via mavenLocal (tidak ada repo publik), jadi CI harus clone + publish
-  # sendiri. UPDATE pin ini kalau BBS di-update di lokal.
-  BBS_REF: 998c9d585427b4cf0061940496ae1f6a7df1bb03
+  BBS_VERSION: 2.7-1.20.1
   FABRIC_API: 0.92.12+1.20.1  # versi terbaru buat 1.20.1 di Modrinth
 
 jobs:
@@ -31,29 +26,27 @@ jobs:
       - name: Checkout bbs-lezy
         uses: actions/checkout@v6
 
-      - name: Checkout BBS (dependency, mavenLocal-only)
-        uses: actions/checkout@v6
-        with:
-          repository: NotLeji/bbs-fs-F6-Fix
-          ref: ${{ env.BBS_REF }}
-          path: bbs-fs
-
-      - name: Set up Java (17 buat BBS & jalanin MC, 25 buat build bbs-lezy)
+      - name: Set up Java 25 (buat build bbs-lezy)
         uses: actions/setup-java@v5
         with:
           distribution: microsoft
-          java-version: |
-            17
-            25
+          java-version: 25
 
-      - name: Validate Gradle wrappers
+      - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v6
 
-      - name: Publish BBS ke Maven Local
+      # BBS cuma tersedia via mavenLocal (tidak ada repo publik) dan source-nya
+      # tidak di-maintain di GitHub — jadi jar hasil build lokal di-vendor ke
+      # repo (vendor/bbs-*.jar + .pom). Step ini install ke ~/.m2 supaya
+      # ./gradlew build bisa resolve mchorse:bbs.
+      # Kalau BBS di-update: rebuild lokal, timpa vendor/bbs-*.jar + .pom,
+      # update BBS_VERSION di atas, commit.
+      - name: Install BBS ke Maven Local (dari vendor/)
         run: |
-          cd bbs-fs
-          chmod +x ./gradlew
-          ./gradlew publishToMavenLocal --no-daemon
+          BBS_DIR=~/.m2/repository/mchorse/bbs/${{ env.BBS_VERSION }}
+          mkdir -p "$BBS_DIR"
+          cp vendor/bbs-${{ env.BBS_VERSION }}.jar vendor/bbs-${{ env.BBS_VERSION }}.pom "$BBS_DIR/"
+          ls -la "$BBS_DIR/"
 
       - name: Build bbs-lezy
         run: |
@@ -64,7 +57,7 @@ jobs:
         run: |
           mkdir -p run/mods
           cp build/libs/bbs-lezy-*.jar run/mods/
-          cp bbs-fs/build/libs/bbs-*.jar run/mods/
+          cp vendor/bbs-${{ env.BBS_VERSION }}.jar run/mods/
           rm -f run/mods/*-sources.jar run/mods/*-javadoc.jar
           ls -la run/mods/
 
