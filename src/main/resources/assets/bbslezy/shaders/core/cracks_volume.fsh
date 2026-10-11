@@ -23,8 +23,8 @@ uniform float uDepth;         /* how deep the fissures sink into the ground (blo
 uniform float uTime;
 uniform vec3  uColor;         /* magma colour */
 
-const int   MARCH_STEPS = 64;
-const float MARCH_DS = 0.3;       /* world step along the view ray */
+const int   MARCH_STEPS = 24;
+const float MARCH_DS = 0.5;       /* world step along the view ray */
 
 in vec2 vUv;
 
@@ -52,14 +52,14 @@ float vnoise(vec2 p)
     return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
-float fbm6(vec2 p)
+float fbm4(vec2 p)
 {
     float s = 0.0, a = 0.5;
 
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 4; i++)
     {
         s += a * vnoise(p);
-        p = p * 2.03 + 7.1;
+        p = p * 2.02 + vec2(7.3, 11.1);
         a *= 0.5;
     }
 
@@ -87,7 +87,7 @@ float ridgedField(vec2 c)
     vec2 w = vec2(fbm3(c * 0.5 + 11.3), fbm3(c * 0.5 + 37.7)) - 0.5;
     c += w * 1.6;
 
-    return abs(fbm6(c) * 2.0 - 1.0);
+    return abs(fbm4(c) * 2.0 - 1.0);
 }
 
 vec3 viewPos(vec2 uv, float d)

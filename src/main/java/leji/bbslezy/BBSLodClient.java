@@ -168,6 +168,7 @@ public class BBSLodClient implements BBSAddonMod
     {
         event.register(IllusionKeyframeFactory.INSTANCE, UIIllusionKeyframeFactory::new);
         event.registerProperty("destruction", UIDestructionKeyframeFactory::new);
+        event.registerProperty("progress", UIDestructionKeyframeFactory::new);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -188,7 +189,7 @@ public class BBSLodClient implements BBSAddonMod
             if (trackId == null) return false;
             String p = trackId.subject();
             if (p.isEmpty()) p = trackId.property();
-            return "destruction".equals(p) || p.startsWith("phys_") || p.startsWith("wind_");
+            return "destruction".equals(p) || "progress".equals(p) || p.startsWith("phys_") || p.startsWith("wind_");
         });
     }
 
@@ -232,6 +233,8 @@ public class BBSLodClient implements BBSAddonMod
         UIFormEditor.register(DomeForm.class, UIDomeForm::new);
         TrackStyle.register("destruction", LezyVfxIcons.DESTRUCTION, Colors.NEGATIVE);
         TrackStyle.registerLabel("destruction", IKey.constant("Destruction"));
+        TrackStyle.register("progress", LezyVfxIcons.DOME, Colors.POSITIVE);
+        TrackStyle.registerLabel("progress", IKey.constant("Progress"));
         CoreShaderRegistrationCallback.EVENT.register(ctx ->
             ctx.register(new Identifier(BBSLod.MOD_ID, "destruction_box"),
                 VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL,

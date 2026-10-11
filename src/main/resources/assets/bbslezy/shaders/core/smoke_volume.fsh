@@ -24,7 +24,7 @@ uniform float uCrackReach;    /* crack spread radius (blocks) */
 uniform float uTime;
 uniform vec3  uColor;         /* smoke colour (cool grey) */
 
-const int STEPS = 40;
+const int STEPS = 20;
 
 in vec2 vUv;
 
@@ -135,10 +135,10 @@ float crackSource(float u, float v, float heightFrac)
     float widen = 1.0 + heightFrac * 1.8;
     vec2 c = vec2(u, v) * (uCrackScale / widen) + vec2(0.0, uTime * 0.05);
 
-    vec2 w = vec2(fbm2(c * 0.5 + 11.3, 3), fbm2(c * 0.5 + 37.7, 3)) - 0.5;
+    vec2 w = vec2(fbm2(c * 0.5 + 11.3, 2), fbm2(c * 0.5 + 37.7, 2)) - 0.5;
     c += w * 1.6;
 
-    float field = abs(fbm2(c, 6) * 2.0 - 1.0);
+    float field = abs(fbm2(c, 3) * 2.0 - 1.0);
 
     /* open wider than the visible crack line so smoke has a mouth to rise from, wider still with height */
     float width = hole * (0.9 + heightFrac * 0.6);

@@ -87,6 +87,32 @@ public class BeamForm extends Form
     {
         super();
         this.blocks.invisible();
+        this.opacity.invisible();
+        this.duration.invisible();
+        this.height.invisible();
+        this.radius.invisible();
+        this.direction.invisible();
+        this.color.invisible();
+        this.rimColor.invisible();
+        this.strands.invisible();
+        this.softness.invisible();
+        this.helix.invisible();
+        this.helixCount.invisible();
+        this.helixRadius.invisible();
+        this.helixTurns.invisible();
+        this.helixThickness.invisible();
+        this.helixSpin.invisible();
+        this.rings.invisible();
+        this.ringMax.invisible();
+        this.ringRise.invisible();
+        this.ringThickness.invisible();
+        this.dashes.invisible();
+        this.dashSpeed.invisible();
+        this.groundRadius.invisible();
+        this.destruction.invisible();
+        this.destructRadius.invisible();
+        this.destructDepth.invisible();
+        this.impactAt.invisible();
 
         this.add(this.progress);
         this.add(this.opacity);
