@@ -65,9 +65,20 @@ public class ReplaysListPanelMixin
                     this.replays.refreshReplayList();
                     this.replays.panel.getController().createEntities();
                 });
+                menu.action(LezyVfxIcons.BEAM, IKey.constant("Capture devouring Beam"), () ->
+                {
+                    DestructionCapture.captureBeam(this.replays.panel.getData());
+                    this.replays.refreshReplayList();
+                    this.replays.panel.getController().createEntities();
+                });
+                menu.action(LezyVfxIcons.DOME, IKey.constant("Capture levelling Dome"), () ->
+                {
+                    DestructionCapture.captureDome(this.replays.panel.getData());
+                    this.replays.refreshReplayList();
+                    this.replays.panel.getController().createEntities();
+                });
                 menu.action(Icons.UNDO, IKey.constant("Undo the last cut"), DestructionCapture::undo);
             }));
-        capture.tooltip(IKey.constant("Capture from wand selection…"));
         capture.relative(self.bar).x(22).y(0).w(SCROLL_ICON_SIZE).h(20);
 
         self.bar.add(capture, toTop, toBottom);
