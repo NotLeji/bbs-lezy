@@ -177,7 +177,8 @@ public class BBSLodClient implements BBSAddonMod
         event.register(vfx, (trackId, owned) ->
         {
             if (trackId == null) return false;
-            String p = trackId.property();
+            String p = trackId.subject();
+            if (p.isEmpty()) p = trackId.property();
             return "destruction".equals(p) || p.startsWith("phys_") || p.startsWith("wind_");
         });
     }
@@ -216,7 +217,7 @@ public class BBSLodClient implements BBSAddonMod
             (FormUtilsClient.IFormRendererFactory) form -> new DestructionBoxFormRenderer((DestructionBoxForm) form));
         UIFormEditor.register(DestructionBoxForm.class, UIDestructionBoxForm::new);
         UIFormEditor.register(ExplosionForm.class, UIExplosionForm::new);
-        TrackStyle.register("destruction", Icons.BLOCK, Colors.NEGATIVE);
+        TrackStyle.register("destruction", LezyVfxIcons.DESTRUCTION, Colors.NEGATIVE);
         TrackStyle.registerLabel("destruction", IKey.constant("Destruction"));
         CoreShaderRegistrationCallback.EVENT.register(ctx ->
             ctx.register(new Identifier(BBSLod.MOD_ID, "destruction_box"),

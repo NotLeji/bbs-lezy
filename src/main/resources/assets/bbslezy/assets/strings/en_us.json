@@ -40,6 +40,8 @@
 	"bbslezy.config.general.destruction_roughness-comment": "Destruction wand: feather the selection edges with noise so the cut hole and the structure get an organic ragged outline instead of a perfect box. 0 = exact selection.",
 	"bbslezy.ui.film.replays.category.vfx": "VFX",
 	"bbslezy.ui.film.replays.category.vfx.tooltip": "VFX tracks (Destruction, Physics, Wind)",
+	"bbs.ui.film.replays.category.vfx": "VFX",
+	"bbs.ui.film.replays.category.vfx.tooltip": "VFX tracks (Destruction, Physics, Wind)",
 	"bbslezy.ui.video.gpu_unsupported_title": "GPU Encoding Unsupported",
 	"bbslezy.ui.video.gpu_unsupported_message": "Hardware acceleration is enabled, but the GPU (%s) — or the ffmpeg build it uses — does not support hardware encoding for the selected codec (%s).\n\nWould you like to render this video using the CPU instead?",
 	"bbslezy.ui.video.render_cpu": "Render with CPU",

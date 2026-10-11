@@ -168,6 +168,7 @@ public class DestructionBoxForm extends Form
     {
         super();
 
+        this.blocks.invisible();
         this.dirYaw.invisible();
         this.dirPitch.invisible();
         this.dirStrength.invisible();
