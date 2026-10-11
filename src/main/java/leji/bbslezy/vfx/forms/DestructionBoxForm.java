@@ -168,6 +168,41 @@ public class DestructionBoxForm extends Form
     {
         super();
 
+        this.dirYaw.invisible();
+        this.dirPitch.invisible();
+        this.dirStrength.invisible();
+        this.radialStrength.invisible();
+        this.randomAmount.invisible();
+        this.seed.invisible();
+        this.rotationAmount.invisible();
+        this.pointX.invisible();
+        this.pointY.invisible();
+        this.pointZ.invisible();
+        this.pointStrength.invisible();
+        this.stagger.invisible();
+        this.pointMode.invisible();
+        this.pointAway.invisible();
+        this.invertOrder.invisible();
+        this.physicsMode.invisible();
+        this.physDuration.invisible();
+        this.physGravity.invisible();
+        this.physFriction.invisible();
+        this.physBounciness.invisible();
+        this.physGround.invisible();
+        this.physWorld.invisible();
+        this.physWorldMargin.invisible();
+        this.physExplosionStrength.invisible();
+        this.physExplosionRadius.invisible();
+        this.physExplosionCone.invisible();
+        this.physWave.invisible();
+        this.physWaveTime.invisible();
+        this.physSupport.invisible();
+        this.physClusterSize.invisible();
+        this.physClusterStrength.invisible();
+        this.physShatter.invisible();
+        this.physShatterStrength.invisible();
+        this.physMaxBodies.invisible();
+
         this.add(this.blocks);
         this.add(this.destruction);
         this.add(this.dirYaw);

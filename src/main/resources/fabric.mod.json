@@ -12,7 +12,6 @@
 		"bbslezy.vfx.mixins.json"
 	],
 	"entrypoints": {
-		"main": ["leji.bbslezy.BBSLodMain"],
 		"bbs-addon": ["leji.bbslezy.BBSLod"],
 		"bbs-client-addon": ["leji.bbslezy.BBSLodClient"]
 	},

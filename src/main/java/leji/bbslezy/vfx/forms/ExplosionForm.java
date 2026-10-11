@@ -197,6 +197,48 @@ public class ExplosionForm extends DestructionBoxForm
     {
         super();
 
+        this.scanRadius.invisible();
+        this.scanHemisphere.invisible();
+        this.windStrength.invisible();
+        this.windFrontSpeed.invisible();
+        this.windDecay.invisible();
+        this.windHold.invisible();
+        this.windAmbientYaw.invisible();
+        this.windAmbientStrength.invisible();
+        this.windSuction.invisible();
+        this.fireCount.invisible();
+        this.fireDuration.invisible();
+        this.fireSize.invisible();
+        this.smokeScale.invisible();
+        this.dustScale.invisible();
+        this.mushroomScale.invisible();
+        this.shape.invisible();
+        this.sphereRadius.invisible();
+        this.sphereExpand.invisible();
+        this.sphereHeat.invisible();
+        this.sphereScale.invisible();
+        this.sparkCount.invisible();
+        this.sparkSize.invisible();
+        this.sparkSpeed.invisible();
+        this.sparkGravity.invisible();
+        this.sparkLife.invisible();
+        this.sparkSpread.invisible();
+        this.sparkColorR.invisible();
+        this.sparkColorG.invisible();
+        this.sparkColorB.invisible();
+        this.groundWave.invisible();
+        this.worldReach.invisible();
+        this.hazeScale.invisible();
+        this.birdCount.invisible();
+        this.windStreaks.invisible();
+        this.bendScanRadius.invisible();
+        this.bendRadius.invisible();
+        this.bendAmount.invisible();
+        this.bendFell.invisible();
+        this.bendGusts.invisible();
+        this.bendLeaves.invisible();
+        this.foliage.invisible();
+
         this.add(this.scanRadius);
         this.add(this.scanHemisphere);
         this.add(this.windStrength);
@@ -212,6 +254,7 @@ public class ExplosionForm extends DestructionBoxForm
         this.add(this.smokeScale);
         this.add(this.dustScale);
         this.add(this.mushroomScale);
+        this.shape.invisible();
         this.add(this.shape);
         this.add(this.sphereRadius);
         this.add(this.sphereExpand);

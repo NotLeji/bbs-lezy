@@ -11,6 +11,8 @@ import leji.bbslezy.camera.clips.screen.HalftoneClip;
 import leji.bbslezy.camera.clips.modifiers.ProceduralShakeClip;
 import leji.bbslezy.camera.clips.screen.ImpactClip;
 import leji.bbslezy.client.screen.ScreenEffectRenderer;
+import leji.bbslezy.vfx.client.VfxFormSection;
+import mchorse.bbs_mod.api.client.events.RegisterFormSectionsEvent;
 import leji.bbslezy.vfx.DestructionSelection;
 import leji.bbslezy.vfx.client.DestructionBoxFormRenderer;
 import leji.bbslezy.vfx.client.UIDestructionBoxForm;
@@ -155,6 +157,12 @@ public class BBSLodClient implements BBSAddonMod
     public void onFormPanels(RegisterFormPanelsEvent event)
     {
         event.register(BBSLodClient::registerIllusionPanel);
+    }
+
+    @Subscribe
+    public void onFormSections(RegisterFormSectionsEvent event)
+    {
+        event.register(VfxFormSection::new);
     }
 
     /**
