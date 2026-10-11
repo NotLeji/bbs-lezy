@@ -1,11 +1,18 @@
 {
 	"required": false,
 	"minVersion": "0.8",
-	"package": "leji.bbslezy.vfx.mixin.client",
+	"package": "leji.bbslezy.vfx.mixin",
 	"compatibilityLevel": "JAVA_17",
 	"plugin": "leji.bbslezy.vfx.LezyVfxMixinPlugin",
 	"injectors": {
 		"defaultRequire": 0
 	},
-	"client": []
+	"client": [
+		"DamageControlFoliageMixin",
+		"ExtraFormSectionMixin",
+		"SmearReplayBridgeMixin"
+	],
+	"mixins": [
+		"ActionManagerAccessor"
+	]
 }

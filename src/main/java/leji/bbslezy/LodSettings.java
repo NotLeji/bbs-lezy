@@ -33,6 +33,7 @@ public class LodSettings
     public static ValueInt guidesColor;
     public static ValueBoolean guidesShowLabels;
 
+    public static ValueInt destructionRoughness;
     public static void register(SettingsBuilder builder)
     {
         builder.category("general", Icons.GEAR);
@@ -64,5 +65,6 @@ public class LodSettings
         guidesCinematic = builder.getBoolean("guides_cinematic", false);
         guidesColor = builder.getInt("guides_color", 0x88FFFFFF).colorAlpha();
         guidesShowLabels = builder.getBoolean("guides_show_labels", false);
+        destructionRoughness = builder.getInt("destruction_roughness", 0, 0, 100);
     }
 }

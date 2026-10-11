@@ -24,7 +24,7 @@ public class LezyVfxSourcePack implements ISourcePack
 
     /** Path asset (di bawah {@link Link#ASSETS}) yang di-overwrite; hidup per fase sesuai kebutuhan. */
     private static final Set<String> OVERRIDES = Set.of(
-        /* fase D6: textures/bbsvfx_icons.png hadir sementara — dihapus saat port */
+        "textures/bbsvfx_icons.png"
     );
 
     @Override

@@ -11,6 +11,22 @@ import leji.bbslezy.camera.clips.screen.HalftoneClip;
 import leji.bbslezy.camera.clips.modifiers.ProceduralShakeClip;
 import leji.bbslezy.camera.clips.screen.ImpactClip;
 import leji.bbslezy.client.screen.ScreenEffectRenderer;
+import leji.bbslezy.vfx.DestructionSelection;
+import leji.bbslezy.vfx.client.DestructionBoxFormRenderer;
+import leji.bbslezy.vfx.client.UIDestructionBoxForm;
+import leji.bbslezy.vfx.client.UIExplosionForm;
+import leji.bbslezy.vfx.forms.DestructionBoxForm;
+import leji.bbslezy.vfx.forms.ExplosionForm;
+import mchorse.bbs_mod.forms.FormUtilsClient;
+import mchorse.bbs_mod.ui.forms.editors.UIFormEditor;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.WorldRenderer;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import leji.bbslezy.ui.film.clips.UICinematicClip;
 import leji.bbslezy.ui.film.clips.UIColorClip;
 import leji.bbslezy.ui.film.clips.UILetterboxClip;
@@ -158,6 +174,41 @@ public class BBSLodClient implements BBSAddonMod
         TrackStyle.registerLabel("bbslezy_volume", IKey.constant("Volume"));
         TrackStyle.register("volume", Icons.SOUND, Colors.ACTIVE);
         TrackStyle.registerLabel("volume", IKey.constant("Volume"));
+        FormUtilsClient.register(DestructionBoxForm.class, DestructionBoxFormRenderer::new);
+        FormUtilsClient.register((Class) ExplosionForm.class,
+            (FormUtilsClient.IFormRendererFactory) form -> new DestructionBoxFormRenderer((DestructionBoxForm) form));
+        UIFormEditor.register(DestructionBoxForm.class, UIDestructionBoxForm::new);
+        UIFormEditor.register(ExplosionForm.class, UIExplosionForm::new);
+        TrackStyle.register("destruction", Icons.BLOCK, Colors.NEGATIVE);
+        TrackStyle.registerLabel("destruction", IKey.constant("Destruction"));
+        WorldRenderEvents.LAST.register((context) ->
+        {
+            if (!DestructionSelection.isComplete())
+            {
+                return;
+            }
+            BlockPos min = DestructionSelection.min();
+            BlockPos max = DestructionSelection.max();
+            Vec3d cam = context.camera().getPos();
+            MatrixStack stack = context.matrixStack();
+            VertexConsumerProvider consumers = context.consumers();
+            if (stack == null || consumers == null)
+            {
+                return;
+            }
+            stack.push();
+            stack.translate(-cam.x, -cam.y, -cam.z);
+            VertexConsumer lines = consumers.getBuffer(RenderLayer.getLines());
+            WorldRenderer.drawBox(stack, lines,
+                min.getX(), min.getY(), min.getZ(),
+                max.getX() + 1, max.getY() + 1, max.getZ() + 1,
+                1F, 0.25F, 0.25F, 1F);
+            if (consumers instanceof VertexConsumerProvider.Immediate immediate)
+            {
+                immediate.draw(RenderLayer.getLines());
+            }
+            stack.pop();
+        });
         FormRenderEvents.AFTER.register(FormIllusionRenderer::render);
         FilmEvents.SHUTDOWN.register((film) -> LezyAudioReverse.clear());
         FilmEvents.SHUTDOWN.register((film) -> leji.bbslezy.client.screen.ColorGradeRenderer.clearTrail());
