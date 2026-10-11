@@ -30,8 +30,8 @@ uniform vec2  uWind;          /* wind direction in the local (u,v) ground basis,
 uniform float uTime;
 uniform vec3  uColor;
 
-const int STEPS = 24;
-const int STEPS_VORTEX = 48;
+const int STEPS = 12;
+const int STEPS_VORTEX = 20;
 
 in vec2 vUv;
 
@@ -66,16 +66,7 @@ float vnoise3(vec3 x)
 
 float fbm3d(vec3 p)
 {
-    float s = 0.0, a = 0.5;
-
-    for (int i = 0; i < 3; i++)
-    {
-        s += a * vnoise3(p);
-        p = p * 2.02 + vec3(11.0, 17.0, 23.0);
-        a *= 0.5;
-    }
-
-    return s;
+    return vnoise3(p) * 0.65 + vnoise3(p * 2.02 + vec3(11.0, 17.0, 23.0)) * 0.35;
 }
 
 vec3 viewPos(vec2 uv, float d)
@@ -183,13 +174,9 @@ vec2 density(float u, float v, float h)
     float hf = smoothstep(uHeight, uHeight * 0.35, h) * smoothstep(-0.4, 0.6, h);
 
     vec3 nc = vec3((along - uTime * uSpeed) * 0.12, acrs * 0.85, h * 0.65) * uScale;
-    float w1 = smoothstep(0.52, 0.80, fbm3d(nc));
+    float w1 = smoothstep(0.48, 0.78, fbm3d(nc));
 
-    vec3 nc2 = vec3((along - uTime * uSpeed * 1.6) * 0.10, acrs * 1.10, h * 0.80) * (uScale * 1.9)
-        + vec3(31.7, 11.3, 7.9);
-    float w2 = smoothstep(0.58, 0.85, fbm3d(nc2));
-
-    float wisp = (w1 + 0.55 * w2) * edge * hf;
+    float wisp = w1 * edge * hf;
 
     /* DUST: low brown haze skittering along the ground, coarser and slower than the wisps. */
     float dust = 0.0;

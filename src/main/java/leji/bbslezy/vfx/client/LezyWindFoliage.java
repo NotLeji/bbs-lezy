@@ -35,6 +35,7 @@ public final class LezyWindFoliage
 
     private LezyWindFoliage()
     {}
+    private static int healCooldown;
 
     public static void tick()
     {
@@ -171,15 +172,19 @@ public final class LezyWindFoliage
             return;
         }
 
-        /* Self-heal: re-apply the client cut to anything the server re-sent as a real block. */
-        for (int i = 0; i < CUT_POS.size(); i++)
+        /* Self-heal throttled to once every 20 frames to avoid querying/setting hundreds of blocks per frame */
+        if (++healCooldown >= 20)
         {
-            BlockPos pos = CUT_POS.get(i);
-            BlockState fill = fillFor(CUT_OLD.get(i));
-
-            if (world.getBlockState(pos) != fill)
+            healCooldown = 0;
+            for (int i = 0; i < CUT_POS.size(); i++)
             {
-                world.setBlockState(pos, fill, 2);
+                BlockPos pos = CUT_POS.get(i);
+                BlockState fill = fillFor(CUT_OLD.get(i));
+
+                if (world.getBlockState(pos) != fill)
+                {
+                    world.setBlockState(pos, fill, 2);
+                }
             }
         }
     }

@@ -35,7 +35,7 @@ import java.util.Map;
  */
 public final class LezyWindLeaves
 {
-    private static final int MAX_LEAVES = 120;
+    private static final int MAX_LEAVES = 60;
 
     private static final Identifier WHITE_TEX = new Identifier(BBSLod.MOD_ID, "wind_leaf_white");
     private static boolean texReady;
