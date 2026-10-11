@@ -1,0 +1,81 @@
+# MC runtime test — jalanin Minecraft client beneran di CI (headless)
+# via headlesshq/mc-runtime-test. Nangkep bug yang cuma muncul pas game
+# jalan (crash pas init, mixin conflict, dependency hilang), bukan pas compile.
+#
+# Kenapa di CI, bukan lokal: laptop dev kentang (Intel UHD 620, tanpa GPU
+# diskrit). Runtime test download Minecraft + boot game headless — berat dan
+# ganggu aktivitas lain. Di GitHub Actions gratis (repo publik) dan runner-nya
+# lebih kenceng. Panduan run lokal manual tetap ada di AGENTS.md
+# (## Testing & QA -> Full Test Runtime via mc-runtime-test).
+
+name: mc-runtime-test
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:  # boleh di-trigger manual dari tab Actions
+
+env:
+  # Pin commit bbs-fs (https://github.com/Wemppy4/bbs-fs). BBS cuma tersedia
+  # via mavenLocal (tidak ada repo publik), jadi CI harus clone + publish
+  # sendiri. UPDATE pin ini kalau BBS di-update di lokal.
+  BBS_REF: 998c9d585427b4cf0061940496ae1f6a7df1bb03
+  FABRIC_API: 0.92.12+1.20.1  # versi terbaru buat 1.20.1 di Modrinth
+
+jobs:
+  runtime-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout bbs-lezy
+        uses: actions/checkout@v6
+
+      - name: Checkout BBS (dependency, mavenLocal-only)
+        uses: actions/checkout@v6
+        with:
+          repository: Wemppy4/bbs-fs
+          ref: ${{ env.BBS_REF }}
+          path: bbs-fs
+
+      - name: Set up Java (17 buat BBS & jalanin MC, 25 buat build bbs-lezy)
+        uses: actions/setup-java@v5
+        with:
+          distribution: microsoft
+          java-version: |
+            17
+            25
+
+      - name: Validate Gradle wrappers
+        uses: gradle/actions/wrapper-validation@v6
+
+      - name: Publish BBS ke Maven Local
+        run: |
+          cd bbs-fs
+          chmod +x ./gradlew
+          ./gradlew publishToMavenLocal --no-daemon
+
+      - name: Build bbs-lezy
+        run: |
+          chmod +x ./gradlew
+          ./gradlew build --no-daemon
+
+      - name: Stage mods buat test client
+        run: |
+          mkdir -p run/mods
+          cp build/libs/bbs-lezy-*.jar run/mods/
+          cp bbs-fs/build/libs/bbs-*.jar run/mods/
+          rm -f run/mods/*-sources.jar run/mods/*-javadoc.jar
+          ls -la run/mods/
+
+      - name: Run Minecraft test client (headless)
+        uses: headlesshq/mc-runtime-test@4.5.2
+        with:
+          mc: 1.20.1
+          modloader: fabric
+          regex: .*fabric.* # WAJIB — input ini required di action.yml
+          java: 17 # 1.20.1 jalan di Java 17
+          mc-runtime-test: fabric
+          fabric-api: ${{ env.FABRIC_API }}
+          # --- opsional: buka kalau udah nulis GameTest sendiri ---
+          # Maksa CI gagal kalau ternyata NOL test yang kejalan
+          # (biar nggak lolos diam-diam):
+          # headlessmc-command: --jvm "-DMcRuntimeGameTestMinExpectedGameTests=1"
