@@ -11,6 +11,19 @@ import leji.bbslezy.camera.clips.screen.HalftoneClip;
 import leji.bbslezy.camera.clips.modifiers.ProceduralShakeClip;
 import leji.bbslezy.camera.clips.screen.ImpactClip;
 import leji.bbslezy.client.screen.ScreenEffectRenderer;
+import leji.bbslezy.vfx.client.CracksVolume;
+import leji.bbslezy.vfx.client.DestructionShader;
+import leji.bbslezy.vfx.client.ExplosionSmokeVolume;
+import leji.bbslezy.vfx.client.LezyVfxExplosionFx;
+import leji.bbslezy.vfx.client.LezyVfxIcons;
+import leji.bbslezy.vfx.client.SmokeVolume;
+import leji.bbslezy.vfx.client.UIDestructionKeyframeFactory;
+import mchorse.bbs_mod.api.client.editor.TrackCategory;
+import mchorse.bbs_mod.api.client.events.RegisterTrackCategoriesEvent;
+import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.util.Identifier;
 import leji.bbslezy.vfx.client.VfxFormSection;
 import mchorse.bbs_mod.api.client.events.RegisterFormSectionsEvent;
 import leji.bbslezy.vfx.DestructionSelection;
@@ -145,12 +158,28 @@ public class BBSLodClient implements BBSAddonMod
     public void onKeyframeEditors(RegisterKeyframeEditorsEvent event)
     {
         event.register(IllusionKeyframeFactory.INSTANCE, UIIllusionKeyframeFactory::new);
+        event.registerProperty("destruction", UIDestructionKeyframeFactory::new);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static void registerIllusionPanel(mchorse.bbs_mod.ui.forms.editors.forms.UIForm uiForm)
     {
         uiForm.registerPanel(new UIIllusionFormPanel(uiForm), L10n.lang("bbslezy.ui.forms.editors.illusion"), Icons.POSE);
+    }
+
+    @Subscribe
+    public void onTrackCategories(RegisterTrackCategoriesEvent event)
+    {
+        TrackCategory vfx = new TrackCategory("bbslezy:vfx", LezyVfxIcons.EXPLOSION,
+            () -> L10n.lang("bbslezy.ui.film.replays.category.vfx").get(),
+            () -> L10n.lang("bbslezy.ui.film.replays.category.vfx.tooltip").get());
+
+        event.register(vfx, (trackId, owned) ->
+        {
+            if (trackId == null) return false;
+            String p = trackId.property();
+            return "destruction".equals(p) || p.startsWith("phys_") || p.startsWith("wind_");
+        });
     }
 
     @Subscribe
@@ -189,6 +218,31 @@ public class BBSLodClient implements BBSAddonMod
         UIFormEditor.register(ExplosionForm.class, UIExplosionForm::new);
         TrackStyle.register("destruction", Icons.BLOCK, Colors.NEGATIVE);
         TrackStyle.registerLabel("destruction", IKey.constant("Destruction"));
+        CoreShaderRegistrationCallback.EVENT.register(ctx ->
+            ctx.register(new Identifier(BBSLod.MOD_ID, "destruction_box"),
+                VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL,
+                prog -> DestructionShader.PROGRAM = prog));
+        CoreShaderRegistrationCallback.EVENT.register(ctx ->
+            ctx.register(new Identifier(BBSLod.MOD_ID, "destruction_ballistic"),
+                VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL,
+                prog -> DestructionShader.BALLISTIC = prog));
+        CoreShaderRegistrationCallback.EVENT.register(ctx ->
+            ctx.register(new Identifier(BBSLod.MOD_ID, "cracks_volume"),
+                VertexFormats.POSITION_TEXTURE,
+                prog -> CracksVolume.PROGRAM = prog));
+        CoreShaderRegistrationCallback.EVENT.register(ctx ->
+            ctx.register(new Identifier(BBSLod.MOD_ID, "smoke_volume"),
+                VertexFormats.POSITION_TEXTURE,
+                prog -> SmokeVolume.PROGRAM = prog));
+        CoreShaderRegistrationCallback.EVENT.register(ctx ->
+            ctx.register(new Identifier(BBSLod.MOD_ID, "explosion_smoke"),
+                VertexFormats.POSITION_TEXTURE,
+                prog -> ExplosionSmokeVolume.PROGRAM = prog));
+
+        WorldRenderEvents.LAST.register(LezyVfxExplosionFx::drawDeferred);
+        WorldRenderEvents.LAST.register(CracksVolume::captureDepth);
+        WorldRenderEvents.LAST.register(SmokeVolume::captureDepth);
+        WorldRenderEvents.LAST.register(ExplosionSmokeVolume::captureDepth);
         FormRenderEvents.AFTER.register(FormIllusionRenderer::render);
         FilmEvents.SHUTDOWN.register((film) -> LezyAudioReverse.clear());
         FilmEvents.SHUTDOWN.register((film) -> leji.bbslezy.client.screen.ColorGradeRenderer.clearTrail());

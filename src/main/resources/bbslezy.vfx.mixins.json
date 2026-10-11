@@ -9,7 +9,8 @@
 	},
 	"client": [
 		"DamageControlFoliageMixin",
-		"SmearReplayBridgeMixin"
+		"SmearReplayBridgeMixin",
+		"BBSRenderingVfxMixin"
 	],
 	"mixins": [
 		"ActionManagerAccessor"
