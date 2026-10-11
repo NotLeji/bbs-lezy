@@ -1,6 +1,7 @@
 package leji.bbslezy.vfx.client;
-
+import leji.bbslezy.vfx.forms.BeamForm;
 import leji.bbslezy.vfx.forms.DestructionBoxForm;
+import leji.bbslezy.vfx.forms.DomeForm;
 import leji.bbslezy.vfx.forms.ExplosionForm;
 import mchorse.bbs_mod.forms.FormCategories;
 import mchorse.bbs_mod.forms.categories.FormCategory;
@@ -27,6 +28,8 @@ public class VfxFormSection extends FormSection
 
         this.vfxCategory.addForm(new DestructionBoxForm());
         this.vfxCategory.addForm(new ExplosionForm());
+        this.vfxCategory.addForm(new BeamForm());
+        this.vfxCategory.addForm(new DomeForm());
     }
 
     @Override

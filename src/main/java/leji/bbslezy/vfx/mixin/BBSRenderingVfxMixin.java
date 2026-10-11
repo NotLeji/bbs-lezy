@@ -1,6 +1,8 @@
 package leji.bbslezy.vfx.mixin;
-
+import leji.bbslezy.vfx.client.BeamHeat;
+import leji.bbslezy.vfx.client.BeamVolume;
 import leji.bbslezy.vfx.client.CracksVolume;
+import leji.bbslezy.vfx.client.DomeVolume;
 import leji.bbslezy.vfx.client.ExplosionSmokeVolume;
 import leji.bbslezy.vfx.client.SmokeVolume;
 import mchorse.bbs_mod.client.BBSRendering;
@@ -22,8 +24,11 @@ public abstract class BBSRenderingVfxMixin
     {
         MinecraftClient mc = MinecraftClient.getInstance();
 
+        BeamVolume.render(mc.getFramebuffer());
         CracksVolume.render(mc.getFramebuffer());
+        DomeVolume.render(mc.getFramebuffer());
         SmokeVolume.render(mc.getFramebuffer());
         ExplosionSmokeVolume.render(mc.getFramebuffer());
+        BeamHeat.render(mc.getFramebuffer());
     }
 }

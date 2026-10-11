@@ -126,6 +126,7 @@ public class DomeForm extends Form
     public DomeForm()
     {
         super();
+        this.blocks.invisible();
 
         this.add(this.progress);
         this.add(this.opacity);

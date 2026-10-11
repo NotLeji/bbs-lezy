@@ -11,13 +11,20 @@ import leji.bbslezy.camera.clips.screen.HalftoneClip;
 import leji.bbslezy.camera.clips.modifiers.ProceduralShakeClip;
 import leji.bbslezy.camera.clips.screen.ImpactClip;
 import leji.bbslezy.client.screen.ScreenEffectRenderer;
+import leji.bbslezy.vfx.client.BeamFormRenderer;
+import leji.bbslezy.vfx.client.BeamHeat;
+import leji.bbslezy.vfx.client.BeamVolume;
 import leji.bbslezy.vfx.client.CracksVolume;
 import leji.bbslezy.vfx.client.DestructionShader;
+import leji.bbslezy.vfx.client.DomeFormRenderer;
+import leji.bbslezy.vfx.client.DomeVolume;
 import leji.bbslezy.vfx.client.ExplosionSmokeVolume;
 import leji.bbslezy.vfx.client.LezyVfxExplosionFx;
 import leji.bbslezy.vfx.client.LezyVfxIcons;
 import leji.bbslezy.vfx.client.SmokeVolume;
+import leji.bbslezy.vfx.client.UIBeamForm;
 import leji.bbslezy.vfx.client.UIDestructionKeyframeFactory;
+import leji.bbslezy.vfx.client.UIDomeForm;
 import mchorse.bbs_mod.api.client.editor.TrackCategory;
 import mchorse.bbs_mod.api.client.events.RegisterTrackCategoriesEvent;
 import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
@@ -30,7 +37,9 @@ import leji.bbslezy.vfx.DestructionSelection;
 import leji.bbslezy.vfx.client.DestructionBoxFormRenderer;
 import leji.bbslezy.vfx.client.UIDestructionBoxForm;
 import leji.bbslezy.vfx.client.UIExplosionForm;
+import leji.bbslezy.vfx.forms.BeamForm;
 import leji.bbslezy.vfx.forms.DestructionBoxForm;
+import leji.bbslezy.vfx.forms.DomeForm;
 import leji.bbslezy.vfx.forms.ExplosionForm;
 import mchorse.bbs_mod.forms.FormUtilsClient;
 import mchorse.bbs_mod.ui.forms.editors.UIFormEditor;
@@ -215,8 +224,12 @@ public class BBSLodClient implements BBSAddonMod
         FormUtilsClient.register(DestructionBoxForm.class, DestructionBoxFormRenderer::new);
         FormUtilsClient.register((Class) ExplosionForm.class,
             (FormUtilsClient.IFormRendererFactory) form -> new DestructionBoxFormRenderer((DestructionBoxForm) form));
+        FormUtilsClient.register(BeamForm.class, BeamFormRenderer::new);
+        FormUtilsClient.register(DomeForm.class, DomeFormRenderer::new);
         UIFormEditor.register(DestructionBoxForm.class, UIDestructionBoxForm::new);
         UIFormEditor.register(ExplosionForm.class, UIExplosionForm::new);
+        UIFormEditor.register(BeamForm.class, UIBeamForm::new);
+        UIFormEditor.register(DomeForm.class, UIDomeForm::new);
         TrackStyle.register("destruction", LezyVfxIcons.DESTRUCTION, Colors.NEGATIVE);
         TrackStyle.registerLabel("destruction", IKey.constant("Destruction"));
         CoreShaderRegistrationCallback.EVENT.register(ctx ->
@@ -239,8 +252,27 @@ public class BBSLodClient implements BBSAddonMod
             ctx.register(new Identifier(BBSLod.MOD_ID, "explosion_smoke"),
                 VertexFormats.POSITION_TEXTURE,
                 prog -> ExplosionSmokeVolume.PROGRAM = prog));
+        CoreShaderRegistrationCallback.EVENT.register(ctx ->
+            ctx.register(new Identifier(BBSLod.MOD_ID, "beam_heat"),
+                VertexFormats.POSITION_COLOR_TEXTURE,
+                prog -> BeamHeat.PROGRAM = prog));
+        CoreShaderRegistrationCallback.EVENT.register(ctx ->
+            ctx.register(new Identifier(BBSLod.MOD_ID, "beam_volume"),
+                VertexFormats.POSITION_TEXTURE,
+                prog -> BeamVolume.PROGRAM = prog));
+        CoreShaderRegistrationCallback.EVENT.register(ctx ->
+            ctx.register(new Identifier(BBSLod.MOD_ID, "dome_volume"),
+                VertexFormats.POSITION_TEXTURE,
+                prog -> DomeVolume.PROGRAM = prog));
+        CoreShaderRegistrationCallback.EVENT.register(ctx ->
+            ctx.register(new Identifier(BBSLod.MOD_ID, "dome_level_inst"),
+                VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL,
+                prog -> DestructionShader.DOME = prog));
 
         WorldRenderEvents.LAST.register(LezyVfxExplosionFx::drawDeferred);
+        WorldRenderEvents.LAST.register(BeamHeat::captureDepth);
+        WorldRenderEvents.LAST.register(BeamVolume::captureDepth);
+        WorldRenderEvents.LAST.register(DomeVolume::captureDepth);
         WorldRenderEvents.LAST.register(CracksVolume::captureDepth);
         WorldRenderEvents.LAST.register(SmokeVolume::captureDepth);
         WorldRenderEvents.LAST.register(ExplosionSmokeVolume::captureDepth);

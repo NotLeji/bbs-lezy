@@ -86,6 +86,7 @@ public class BeamForm extends Form
     public BeamForm()
     {
         super();
+        this.blocks.invisible();
 
         this.add(this.progress);
         this.add(this.opacity);

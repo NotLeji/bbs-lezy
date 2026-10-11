@@ -11,7 +11,9 @@ import leji.bbslezy.camera.clips.screen.VignetteClip;
 import leji.bbslezy.camera.clips.screen.HalftoneClip;
 import leji.bbslezy.camera.clips.modifiers.ProceduralShakeClip;
 import leji.bbslezy.camera.clips.screen.ImpactClip;
+import leji.bbslezy.vfx.forms.BeamForm;
 import leji.bbslezy.vfx.forms.DestructionBoxForm;
+import leji.bbslezy.vfx.forms.DomeForm;
 import leji.bbslezy.vfx.forms.ExplosionForm;
 import mchorse.bbs_mod.api.events.RegisterFormsEvent;
 import leji.bbslezy.forms.utils.Illusion;
@@ -82,6 +84,8 @@ public class BBSLod implements BBSAddonMod
     {
         event.forms.register(Link.create(MOD_ID + ":destruction_box"), DestructionBoxForm.class);
         event.forms.register(Link.create(MOD_ID + ":explosion"), ExplosionForm.class);
+        event.forms.register(Link.create(MOD_ID + ":beam"), BeamForm.class);
+        event.forms.register(Link.create(MOD_ID + ":dome"), DomeForm.class);
     }
     @Subscribe
     public void onCameraClips(RegisterCameraClipsEvent event)
