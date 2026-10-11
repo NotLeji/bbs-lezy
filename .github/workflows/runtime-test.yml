@@ -16,7 +16,9 @@ on:
   workflow_dispatch:  # boleh di-trigger manual dari tab Actions
 
 env:
-  # Pin commit bbs-fs (https://github.com/Wemppy4/bbs-fs). BBS cuma tersedia
+  # Pin commit bbs-fs (fork sendiri: https://github.com/NotLeji/bbs-fs-F6-Fix).
+  # JANGAN pakai Wemppy4/bbs-fs langsung — dia rajin push, versi bisa berubah.
+  # Pakai BBS fix yang dipakai lokal. BBS cuma tersedia
   # via mavenLocal (tidak ada repo publik), jadi CI harus clone + publish
   # sendiri. UPDATE pin ini kalau BBS di-update di lokal.
   BBS_REF: 998c9d585427b4cf0061940496ae1f6a7df1bb03
@@ -32,7 +34,7 @@ jobs:
       - name: Checkout BBS (dependency, mavenLocal-only)
         uses: actions/checkout@v6
         with:
-          repository: Wemppy4/bbs-fs
+          repository: NotLeji/bbs-fs-F6-Fix
           ref: ${{ env.BBS_REF }}
           path: bbs-fs
 
