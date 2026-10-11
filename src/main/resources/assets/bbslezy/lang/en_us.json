@@ -1,0 +1,6 @@
+{
+	"item.bbslezy.destruction_wand": "Destruction Wand",
+	"item.bbslezy.destruction_wand.tooltip.corners": "Left / right click — corners A and B",
+	"item.bbslezy.destruction_wand.tooltip.faces": "Wheel on a face — push it, with Alt — move the box",
+	"item.bbslezy.destruction_wand.tooltip.save": "Alt + right click — capture into film actor, Alt + left — clear"
+}

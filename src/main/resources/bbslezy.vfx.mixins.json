@@ -10,7 +10,8 @@
 	"client": [
 		"DamageControlFoliageMixin",
 		"ExtraFormSectionMixin",
-		"SmearReplayBridgeMixin"
+		"SmearReplayBridgeMixin",
+		"StructureWandMixin"
 	],
 	"mixins": [
 		"ActionManagerAccessor"

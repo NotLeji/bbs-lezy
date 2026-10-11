@@ -181,34 +181,6 @@ public class BBSLodClient implements BBSAddonMod
         UIFormEditor.register(ExplosionForm.class, UIExplosionForm::new);
         TrackStyle.register("destruction", Icons.BLOCK, Colors.NEGATIVE);
         TrackStyle.registerLabel("destruction", IKey.constant("Destruction"));
-        WorldRenderEvents.LAST.register((context) ->
-        {
-            if (!DestructionSelection.isComplete())
-            {
-                return;
-            }
-            BlockPos min = DestructionSelection.min();
-            BlockPos max = DestructionSelection.max();
-            Vec3d cam = context.camera().getPos();
-            MatrixStack stack = context.matrixStack();
-            VertexConsumerProvider consumers = context.consumers();
-            if (stack == null || consumers == null)
-            {
-                return;
-            }
-            stack.push();
-            stack.translate(-cam.x, -cam.y, -cam.z);
-            VertexConsumer lines = consumers.getBuffer(RenderLayer.getLines());
-            WorldRenderer.drawBox(stack, lines,
-                min.getX(), min.getY(), min.getZ(),
-                max.getX() + 1, max.getY() + 1, max.getZ() + 1,
-                1F, 0.25F, 0.25F, 1F);
-            if (consumers instanceof VertexConsumerProvider.Immediate immediate)
-            {
-                immediate.draw(RenderLayer.getLines());
-            }
-            stack.pop();
-        });
         FormRenderEvents.AFTER.register(FormIllusionRenderer::render);
         FilmEvents.SHUTDOWN.register((film) -> LezyAudioReverse.clear());
         FilmEvents.SHUTDOWN.register((film) -> leji.bbslezy.client.screen.ColorGradeRenderer.clearTrail());
