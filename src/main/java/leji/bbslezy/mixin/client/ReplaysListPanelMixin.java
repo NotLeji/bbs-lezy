@@ -1,5 +1,8 @@
 package leji.bbslezy.mixin.client;
 
+import leji.bbslezy.vfx.client.DestructionCapture;
+import leji.bbslezy.vfx.client.LezyVfxIcons;
+import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.ui.film.replays.UIReplayList;
 import mchorse.bbs_mod.ui.film.replays.UIReplaysListPanel;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIIcon;
@@ -13,13 +16,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Two buttons on the replay list's toolbar that jump to the top and the bottom of the list, so
- * reaching the end of a thousand replays does not mean a scroll that takes one.
- *
- * <p>Both set the scroll directly rather than animating it, because "instant" was the point: the
- * target is a position, not a motion. The bottom is computed from the row height, so it stays
- * right when the list grows between two presses. The two icons cost the search box 44px of its
- * width, which the toolbar's own layout already sizes by remaining space.</p>
+ * Two buttons on the replay list's toolbar that jump to the top and the bottom of the list,
+ * plus a wand capture button to turn the wand selection into a Destruction Box or Explosion replay actor.
  */
 @Mixin(value = UIReplaysListPanel.class, remap = false)
 public class ReplaysListPanelMixin
@@ -52,7 +50,27 @@ public class ReplaysListPanelMixin
         toTop.relative(self.bar).x(1F, -2 * SCROLL_ICON_SIZE - SCROLL_ICON_MARGIN).y(0).w(SCROLL_ICON_SIZE).h(20);
         toBottom.relative(self.bar).x(1F, -SCROLL_ICON_SIZE).y(0).w(SCROLL_ICON_SIZE).h(20);
 
-        self.bar.add(toTop, toBottom);
-        self.search.relative(self.bar).w(1F, -SCROLL_ICON_SIZE - SCROLL_ICON_MARGIN - 2 * SCROLL_ICON_SIZE - SCROLL_ICON_MARGIN);
+        UIIcon capture = new UIIcon(LezyVfxIcons.DESTRUCTION, (b) ->
+            b.getContext().replaceContextMenu((menu) ->
+            {
+                menu.action(LezyVfxIcons.DESTRUCTION, IKey.constant("Capture Destruction Box"), () ->
+                {
+                    DestructionCapture.capture(this.replays.panel.getData());
+                    this.replays.refreshReplayList();
+                    this.replays.panel.getController().createEntities();
+                });
+                menu.action(LezyVfxIcons.EXPLOSION, IKey.constant("Capture Explosion (sphere)"), () ->
+                {
+                    DestructionCapture.captureExplosion(this.replays.panel.getData());
+                    this.replays.refreshReplayList();
+                    this.replays.panel.getController().createEntities();
+                });
+                menu.action(Icons.UNDO, IKey.constant("Undo the last cut"), DestructionCapture::undo);
+            }));
+        capture.tooltip(IKey.constant("Capture from wand selection…"));
+        capture.relative(self.bar).x(22).y(0).w(SCROLL_ICON_SIZE).h(20);
+
+        self.bar.add(capture, toTop, toBottom);
+        self.search.relative(self.bar).x(44).w(1F, -44 - 2 * SCROLL_ICON_SIZE - SCROLL_ICON_MARGIN);
     }
 }
