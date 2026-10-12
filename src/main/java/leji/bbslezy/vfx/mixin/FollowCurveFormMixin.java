@@ -20,6 +20,13 @@ public abstract class FollowCurveFormMixin
     {
         ValueGroup self = (ValueGroup) (Object) this;
 
-        self.add(new ValueFloat("follow_offset", 0F, 0F, 1F));
+        self.add(new ValueFloat("follow_offset", 0F, 0F, 1F)
+        {
+            @Override
+            public void setRuntimeValue(Float value)
+            {
+                super.setRuntimeValue(value == null ? null : Math.max(0F, Math.min(1F, value)));
+            }
+        });
     }
 }

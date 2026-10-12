@@ -1,5 +1,8 @@
 package leji.bbslezy;
 
+import mchorse.bbs_mod.BBSMod;
+import mchorse.bbs_mod.camera.clips.ClipFactoryData;
+import mchorse.bbs_mod.ui.film.clips.UIClip;
 import leji.bbslezy.actions.LezyDamageActionClip;
 import leji.bbslezy.client.screen.LezyFrameOverlays;
 import leji.bbslezy.audio.LezyCopyAudioImporter;
@@ -147,7 +150,6 @@ public class BBSLodClient implements BBSAddonMod
         event.register(HalftoneClip.class, UIHalftoneClip::new);
         event.register(ProceduralShakeClip.class, UIProceduralShakeClip::new);
         event.register(ImpactClip.class, UIImpactClip::new);
-        event.register(FollowCurveClientClip.class, UIFollowCurveClip::new);
     }
     @Subscribe
     public void onFrameOverlays(RegisterFrameOverlaysEvent event)
@@ -245,10 +247,14 @@ public class BBSLodClient implements BBSAddonMod
         UIFormEditor.register(ExplosionForm.class, UIExplosionForm::new);
         UIFormEditor.register(BeamForm.class, UIBeamForm::new);
         UIFormEditor.register(DomeForm.class, UIDomeForm::new);
+        BBSMod.getFactoryCameraClips().register(Link.create(BBSLod.MOD_ID + ":follow_curve"), FollowCurveClientClip.class, new ClipFactoryData(Icons.ARC, 0x4ba3ff));
+        UIClip.register(FollowCurveClientClip.class, UIFollowCurveClip::new);
         UIFormEditor.register(LezyWindForm.class, UIWindForm::new);
         TrackStyle.register("destruction", LezyVfxIcons.DESTRUCTION, Colors.NEGATIVE);
         TrackStyle.registerLabel("destruction", IKey.constant("Destruction"));
         TrackStyle.register("progress", LezyVfxIcons.DOME, Colors.POSITIVE);
+        TrackStyle.register("follow_offset", Icons.ARC, 0x4ba3ff);
+        TrackStyle.registerLabel("follow_offset", IKey.constant("Follow offset"));
         TrackStyle.registerLabel("progress", IKey.constant("Progress"));
         CoreShaderRegistrationCallback.EVENT.register(ctx ->
             ctx.register(new Identifier(BBSLod.MOD_ID, "destruction_box"),

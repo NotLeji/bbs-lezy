@@ -69,7 +69,8 @@ public class LodEngine
     private static void before(Form form, FormRenderingContext context)
     {
         if (context.ui || !budgetValid || !LodSettings.enabled.get() || !form.visible.get()
-            || form instanceof leji.bbslezy.vfx.forms.LezyWindForm)
+            || form instanceof leji.bbslezy.vfx.forms.LezyWindForm
+            || form instanceof leji.bbslezy.vfx.forms.CurveForm)
         {
             return;
         }
@@ -153,7 +154,7 @@ public class LodEngine
         {
             Form form = entity.getForm();
 
-            if (form == null || form.anchor.get().hasTarget() || form instanceof leji.bbslezy.vfx.forms.LezyWindForm)
+            if (form == null || form.anchor.get().hasTarget() || form instanceof leji.bbslezy.vfx.forms.LezyWindForm || form instanceof leji.bbslezy.vfx.forms.CurveForm)
             {
                 continue;
             }

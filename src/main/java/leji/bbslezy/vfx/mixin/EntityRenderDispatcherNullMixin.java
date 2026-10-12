@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import leji.bbslezy.vfx.forms.CurveForm;
 import leji.bbslezy.vfx.forms.LezyWindForm;
 
 /**
@@ -34,7 +35,7 @@ public abstract class EntityRenderDispatcherNullMixin
 
         if (entity instanceof mchorse.bbs_mod.entity.ActorEntity actor)
         {
-            if (actor.getForm() instanceof LezyWindForm)
+            if (actor.getForm() instanceof LezyWindForm || actor.getForm() instanceof CurveForm)
             {
                 cir.setReturnValue(true);
             }

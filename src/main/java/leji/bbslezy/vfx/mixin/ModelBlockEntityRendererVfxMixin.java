@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import leji.bbslezy.vfx.forms.CurveForm;
 import leji.bbslezy.vfx.forms.LezyWindForm;
 
 /**
@@ -23,7 +24,7 @@ public abstract class ModelBlockEntityRendererVfxMixin
         {
             Form form = blockEntity.getProperties().getForm();
 
-            if (form instanceof LezyWindForm)
+            if (form instanceof LezyWindForm || form instanceof CurveForm)
             {
                 cir.setReturnValue(true);
             }
@@ -36,7 +37,7 @@ public abstract class ModelBlockEntityRendererVfxMixin
         {
             Form form = entity.getProperties().getForm();
 
-            if (form instanceof LezyWindForm && entity.getProperties().isEnabled())
+            if ((form instanceof LezyWindForm || form instanceof CurveForm) && entity.getProperties().isEnabled())
             {
                 cir.setReturnValue(true);
             }

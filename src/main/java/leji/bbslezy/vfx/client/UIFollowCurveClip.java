@@ -12,8 +12,6 @@ import mchorse.bbs_mod.ui.framework.elements.buttons.UIButton;
 import mchorse.bbs_mod.ui.framework.elements.buttons.UIToggle;
 import mchorse.bbs_mod.ui.framework.elements.input.keyframes.UIKeyframeEditor;
 import mchorse.bbs_mod.ui.framework.elements.input.keyframes.factories.UIAnchorKeyframeFactory;
-import mchorse.bbs_mod.ui.utils.UI;
-import mchorse.bbs_mod.ui.utils.UIConstants;
 import mchorse.bbs_mod.utils.clips.Clips;
 import mchorse.bbs_mod.utils.colors.Colors;
 import leji.bbslezy.vfx.camera.FollowCurveClip;
@@ -52,6 +50,7 @@ public class UIFollowCurveClip extends UIClip<FollowCurveClip>
 
         this.align = new UIToggle(IKey.constant("Align to curve"), (b) -> this.clip.align.set(b.getValue()));
         this.offset = this.bind(new UIPointModule(this.editor, IKey.constant("Offset")).contextMenu(), () -> this.offset.fill(this.clip.offset));
+        this.keyframes = new UIKeyframeEditor((consumer) -> new UIFilmKeyframes(this.editor, consumer));
         this.keyframes.view.rulerRenderer((context) ->
             UIReplaysEditor.renderRuler(context, this.keyframes.view, (UIClipsPanel) this.editor,
                 (Clips) this.clip.getParent(), this.clip.tick.get()));

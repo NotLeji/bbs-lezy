@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import leji.bbslezy.vfx.forms.CurveForm;
 import leji.bbslezy.vfx.forms.LezyWindForm;
 
 /**
@@ -26,7 +27,7 @@ public abstract class BaseFilmControllerVfxMixin
         {
             Form form = entity.getForm();
 
-            if (form instanceof LezyWindForm)
+            if (form instanceof LezyWindForm || form instanceof CurveForm)
             {
                 cir.setReturnValue(false);
             }
