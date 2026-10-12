@@ -3,9 +3,11 @@ package leji.bbslezy;
 import mchorse.bbs_mod.api.client.events.FilmEvents;
 import mchorse.bbs_mod.api.client.events.FormRenderEvents;
 import mchorse.bbs_mod.client.BBSRendering;
+import mchorse.bbs_mod.entity.ActorEntity;
 import mchorse.bbs_mod.film.BaseFilmController;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.forms.entities.IEntity;
+import mchorse.bbs_mod.forms.entities.MCEntity;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.renderers.FormRenderingContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
@@ -15,6 +17,7 @@ import org.joml.Vector3d;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,23 +36,17 @@ public class LodEngine
     /** Forms whose visible runtimeValue was set to false this frame, restored on RENDER_AFTER. */
     private static final Set<Form> touched = Collections.newSetFromMap(new IdentityHashMap<>());
 
-    /** Forms determined by the latest ranking to be outside the render limit / focus window. */
+    /** Union of every live controller's culled forms. `before()` has no controller, so it reads this. */
     private static final Set<Form> culled = Collections.newSetFromMap(new IdentityHashMap<>());
 
-    private static final List<Candidate> candidates = new ArrayList<>();
+    /** Union of every live controller's culled replay keys (`filmId + replayId`), for real ActorEntity bodies. */
+    private static final Set<String> culledReplays = new HashSet<>();
 
-    private static BaseFilmController lastController;
-    private static double lastCamX = Double.NaN;
-    private static double lastCamY = Double.NaN;
-    private static double lastCamZ = Double.NaN;
-    private static float lastYaw = Float.NaN;
-    private static float lastPitch = Float.NaN;
-    private static double lastFocus = -1D;
-    private static int lastLimit = -1;
-    private static boolean lastEnabled = false;
-    private static int lastEntityCount = -1;
-    private static int lastTick = -1;
+    /** Per-controller ranking state. A single shared state thrashes when two controllers render one frame. */
+    private static final Map<BaseFilmController, ControllerState> states = new IdentityHashMap<>();
+
     private static boolean budgetValid = false;
+
     /** Movement deadband: ~0.1 blocks. */
     private static final double MOVE_THRESHOLD_SQ = 0.01D;
 
@@ -80,6 +77,19 @@ public class LodEngine
         {
             form.visible.setRuntimeValue(Boolean.FALSE);
             touched.add(form);
+
+            return;
+        }
+
+        /* Real ActorEntity bodies (world playback via Right Ctrl) carry a different Form instance
+         * than the controller's copy, so identity matching above never fires for them. Match by replay key. */
+        if (context.entity instanceof MCEntity mc && mc.getMcEntity() instanceof ActorEntity actor && !actor.getReplayId().isEmpty())
+        {
+            if (culledReplays.contains(actor.getFilmId() + "\0" + actor.getReplayId()))
+            {
+                form.visible.setRuntimeValue(Boolean.FALSE);
+                touched.add(form);
+            }
         }
     }
 
@@ -93,27 +103,30 @@ public class LodEngine
             return;
         }
 
-        clearOverrides(controller);
+        clearOverrides();
 
         boolean enabled = LodSettings.enabled.get();
         int limit = LodSettings.renderLimit.get();
-
-        if (controller != lastController)
-        {
-            if (lastController != null)
-            {
-                clearOverrides(lastController);
-            }
-            lastController = controller;
-            reset();
-        }
 
         budgetValid = enabled && limit > 0;
 
         if (!budgetValid)
         {
-            culled.clear();
+            if (!states.isEmpty())
+            {
+                states.clear();
+                rebuildUnions();
+            }
+
             return;
+        }
+
+        ControllerState state = states.get(controller);
+
+        if (state == null)
+        {
+            state = new ControllerState();
+            states.put(controller, state);
         }
 
         Camera camera = context.camera();
@@ -124,35 +137,35 @@ public class LodEngine
         int entityCount = controller.getEntities().size();
         int tick = controller.getTick();
 
-        double dx = camPos.x - lastCamX;
-        double dy = camPos.y - lastCamY;
-        double dz = camPos.z - lastCamZ;
+        double dx = camPos.x - state.lastCamX;
+        double dy = camPos.y - state.lastCamY;
+        double dz = camPos.z - state.lastCamZ;
         double distSq = dx * dx + dy * dy + dz * dz;
 
-        float dYaw = Math.abs(yaw - lastYaw);
-        float dPitch = Math.abs(pitch - lastPitch);
+        float dYaw = Math.abs(yaw - state.lastYaw);
+        float dPitch = Math.abs(pitch - state.lastPitch);
 
-        boolean tickChanged = tick != lastTick;
-        boolean settingsChanged = enabled != lastEnabled || limit != lastLimit || focus != lastFocus || entityCount != lastEntityCount || tickChanged;
+        boolean tickChanged = tick != state.lastTick;
+        boolean settingsChanged = enabled != state.lastEnabled || limit != state.lastLimit || focus != state.lastFocus || entityCount != state.lastEntityCount || tickChanged;
         boolean camMoved = distSq >= MOVE_THRESHOLD_SQ;
         boolean camRotated = dYaw >= ROTATION_THRESHOLD || dPitch >= ROTATION_THRESHOLD;
 
         /* Skip re-ranking only when camera is completely stationary and settings are unchanged */
-        if (!settingsChanged && !camMoved && !camRotated && !candidates.isEmpty())
+        if (!settingsChanged && !camMoved && !camRotated && !state.candidates.isEmpty())
         {
             return;
         }
 
-        lastCamX = camPos.x;
-        lastCamY = camPos.y;
-        lastCamZ = camPos.z;
-        lastYaw = yaw;
-        lastPitch = pitch;
-        lastFocus = focus;
-        lastLimit = limit;
-        lastEnabled = enabled;
-        lastEntityCount = entityCount;
-        lastTick = tick;
+        state.lastCamX = camPos.x;
+        state.lastCamY = camPos.y;
+        state.lastCamZ = camPos.z;
+        state.lastYaw = yaw;
+        state.lastPitch = pitch;
+        state.lastFocus = focus;
+        state.lastLimit = limit;
+        state.lastEnabled = enabled;
+        state.lastEntityCount = entityCount;
+        state.lastTick = tick;
 
         /* Compute forward gaze direction from camera yaw and pitch */
         float yawRad = (float) Math.toRadians(yaw);
@@ -211,60 +224,74 @@ public class LodEngine
                 score = err + (1.0D - dot) * 0.5D;
             }
 
-            if (count < candidates.size())
+            if (count < state.candidates.size())
             {
-                candidates.get(count).set(form, score);
+                state.candidates.get(count).set(form, replayKey(controller, entry.getKey()), score);
             }
             else
             {
-                candidates.add(new Candidate(form, score));
+                state.candidates.add(new Candidate(form, replayKey(controller, entry.getKey()), score));
             }
             count++;
         }
 
-        while (candidates.size() > count)
+        while (state.candidates.size() > count)
         {
-            candidates.remove(candidates.size() - 1);
+            state.candidates.remove(state.candidates.size() - 1);
         }
 
-        candidates.sort(null);
+        state.candidates.sort(null);
 
-        /* Update culled set for the next frame's BEFORE pass */
-        culled.clear();
+        /* Update this controller's culled set for the next frame's BEFORE pass */
+        state.culledForms.clear();
+        state.culledKeys.clear();
         int effectiveLimit = Math.min(limit, count);
         for (int i = effectiveLimit; i < count; i++)
         {
-            culled.add(candidates.get(i).form);
+            Candidate candidate = state.candidates.get(i);
+            state.culledForms.add(candidate.form);
+            if (candidate.replayKey != null)
+            {
+                state.culledKeys.add(candidate.replayKey);
+            }
         }
+
+        rebuildUnions();
     }
 
     private static void onShutdown(BaseFilmController controller)
     {
-        clearOverrides(controller);
-        lastController = null;
-        reset();
+        clearOverrides();
+        states.remove(controller);
+        rebuildUnions();
     }
 
-    private static void reset()
+    private static String replayKey(BaseFilmController controller, String replayId)
     {
-        lastCamX = Double.NaN;
-        lastCamY = Double.NaN;
-        lastCamZ = Double.NaN;
-        lastYaw = Float.NaN;
-        lastPitch = Float.NaN;
-        lastFocus = -1D;
-        lastLimit = -1;
-        lastEntityCount = -1;
-        lastTick = -1;
-        lastEnabled = false;
-        budgetValid = false;
+        if (controller == null || controller.film == null || replayId == null)
+        {
+            return null;
+        }
+
+        return controller.film.getId() + "\0" + replayId;
+    }
+
+    private static void rebuildUnions()
+    {
         culled.clear();
+        culledReplays.clear();
+
+        for (ControllerState state : states.values())
+        {
+            culled.addAll(state.culledForms);
+            culledReplays.addAll(state.culledKeys);
+        }
     }
 
     /**
-     * Clears every runtime override the controller's root forms carry.
+     * Clears every runtime override this frame carried.
      */
-    private static void clearOverrides(BaseFilmController controller)
+    private static void clearOverrides()
     {
         for (Form form : touched)
         {
@@ -274,20 +301,40 @@ public class LodEngine
         touched.clear();
     }
 
+    private static class ControllerState
+    {
+        public final List<Candidate> candidates = new ArrayList<>();
+        public final Set<Form> culledForms = Collections.newSetFromMap(new IdentityHashMap<>());
+        public final Set<String> culledKeys = new HashSet<>();
+        public double lastCamX = Double.NaN;
+        public double lastCamY = Double.NaN;
+        public double lastCamZ = Double.NaN;
+        public float lastYaw = Float.NaN;
+        public float lastPitch = Float.NaN;
+        public double lastFocus = -1D;
+        public int lastLimit = -1;
+        public boolean lastEnabled = false;
+        public int lastEntityCount = -1;
+        public int lastTick = -1;
+    }
+
     private static class Candidate implements Comparable<Candidate>
     {
         public Form form;
+        public String replayKey;
         public double score;
 
-        public Candidate(Form form, double score)
+        public Candidate(Form form, String replayKey, double score)
         {
             this.form = form;
+            this.replayKey = replayKey;
             this.score = score;
         }
 
-        public void set(Form form, double score)
+        public void set(Form form, String replayKey, double score)
         {
             this.form = form;
+            this.replayKey = replayKey;
             this.score = score;
         }
 
