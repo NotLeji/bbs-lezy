@@ -1,0 +1,34 @@
+name: ✨ Feature request
+description: Usulkan fitur baru
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: deskripsi
+    attributes:
+      label: Fitur yang diinginkan
+      description: Apa yang mau ditambah atau diubah
+      placeholder: "Contoh: tombol duplicate di replay panel biar nggak perlu klik kanan"
+    validations:
+      required: true
+
+  - type: textarea
+    id: usecase
+    attributes:
+      label: Use case
+      description: Buat apa? Skenario pemakaian konkret
+      placeholder: "Contoh: pas bikin scene rame, sering duplicate actor yang sama berkali-kali"
+    validations:
+      required: true
+
+  - type: textarea
+    id: usulan
+    attributes:
+      label: Usulan implementasi (opsional)
+      description: Kalau ada ide cara implementasinya, tulis di sini
+
+  - type: textarea
+    id: referensi
+    attributes:
+      label: Referensi (opsional)
+      description: Link, screenshot, atau contoh dari mod lain
