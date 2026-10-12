@@ -24,14 +24,14 @@ class LezyPreviewSnapTest
     }
 
     @Test
-    void testManualTeleportCancelsRestore()
+    void testManualTeleportKeepsActive()
     {
         LezyPreviewSnap.snapshot = new double[] {1, 2, 3, 0, 0};
         LezyPreviewSnap.active = true;
 
         LezyPreviewSnap.onManualTeleport();
 
-        assertFalse(LezyPreviewSnap.active);
-        org.junit.jupiter.api.Assertions.assertNull(LezyPreviewSnap.snapshot);
+        assertTrue(LezyPreviewSnap.active);
+        org.junit.jupiter.api.Assertions.assertNotNull(LezyPreviewSnap.snapshot);
     }
 }

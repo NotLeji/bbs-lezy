@@ -24,10 +24,32 @@ public class LezyPreviewSnap
         return setting && hasContext && !controlling;
     }
 
+    public static void onManualTeleport(UIFilmPanel panel)
+    {
+        if (panel == null)
+        {
+            return;
+        }
+
+        Camera camera = panel.getWorldCamera();
+        if (camera == null || camera.position == null)
+        {
+            return;
+        }
+
+        snapshot = new double[] {
+            camera.position.x,
+            camera.position.y,
+            camera.position.z,
+            MathUtils.toDeg(camera.rotation.y) - 180F,
+            MathUtils.toDeg(camera.rotation.x)
+        };
+        active = true;
+    }
+
     public static void onManualTeleport()
     {
-        snapshot = null;
-        active = false;
+        active = true;
     }
 
     public static void onEnter(UIFilmPanel panel)

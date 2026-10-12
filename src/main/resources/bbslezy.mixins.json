@@ -34,7 +34,8 @@
         "SoundManagerMixin",
         "AudioRendererMixin",
         "FormStableIdsMixin",
-        "UIClipsMixin"
+        "UIClipsMixin",
+        "FilmKeyframeInsertionMixin"
     ],
     "injectors": {
         "defaultRequire": 0

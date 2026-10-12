@@ -81,7 +81,7 @@ public abstract class UIFilmPanelMixin
     @Inject(method = "teleportToCamera", at = @At("HEAD"))
     private void bbslezy$onTeleportToCamera(CallbackInfo ci)
     {
-        leji.bbslezy.ui.LezyPreviewSnap.onManualTeleport();
+        leji.bbslezy.ui.LezyPreviewSnap.onManualTeleport((UIFilmPanel) (Object) this);
     }
 
     @Inject(method = "setPlayerToCamera", at = @At("HEAD"))
@@ -89,7 +89,7 @@ public abstract class UIFilmPanelMixin
     {
         if (value)
         {
-            leji.bbslezy.ui.LezyPreviewSnap.onManualTeleport();
+            leji.bbslezy.ui.LezyPreviewSnap.onManualTeleport((UIFilmPanel) (Object) this);
         }
     }
 }
