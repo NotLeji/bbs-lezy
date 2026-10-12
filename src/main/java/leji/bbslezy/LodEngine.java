@@ -50,6 +50,8 @@ public class LodEngine
     public static void register()
     {
         FormRenderEvents.BEFORE.register(LodEngine::before);
+        FilmEvents.CREATED.register(LodEngine::onCreated);
+        FilmEvents.TICK_AFTER.register(LodEngine::onTickAfter);
         FilmEvents.RENDER_AFTER.register(LodEngine::onRenderAfter);
         FilmEvents.SHUTDOWN.register(LodEngine::onShutdown);
     }
@@ -75,6 +77,24 @@ public class LodEngine
     }
 
     /**
+     * Seeds the budget the moment a film's scene is built, before the first tick and the
+     * first frame — otherwise world playback draws everything once before ranking exists.
+     */
+    private static void onCreated(BaseFilmController controller)
+    {
+        rankFromGameCamera(controller);
+    }
+
+    /**
+     * Re-ranks every tick from the live game camera, so playback that moves actors re-culls
+     * before the next frame instead of one frame late.
+     */
+    private static void onTickAfter(BaseFilmController controller, int ticks)
+    {
+        rankFromGameCamera(controller);
+    }
+
+    /**
      * Ranks this controller's forms by distance/focus to the camera with view-direction weighting.
      */
     private static void onRenderAfter(BaseFilmController controller, WorldRenderContext context)
@@ -86,22 +106,63 @@ public class LodEngine
 
         clearOverrides();
 
+        if (!refreshBudget())
+        {
+            return;
+        }
+
+        Camera camera = context.camera();
+        Vec3d camPos = camera.getPos();
+
+        rank(controller, camPos.x, camPos.y, camPos.z, camera.getYaw(), camera.getPitch(), false);
+    }
+
+    private static void rankFromGameCamera(BaseFilmController controller)
+    {
+        if (BBSRendering.isIrisShadowPass())
+        {
+            return;
+        }
+
+        net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
+
+        if (mc == null || mc.gameRenderer == null || mc.gameRenderer.getCamera() == null)
+        {
+            return;
+        }
+
+        if (!refreshBudget())
+        {
+            return;
+        }
+
+        net.minecraft.client.render.Camera camera = mc.gameRenderer.getCamera();
+        Vec3d camPos = camera.getPos();
+
+        /* Tick/created handlers run outside the frame: overrides from the last frame are stale,
+         * and the RENDER_AFTER clear hasn't run yet for this one. Force a fresh ranking. */
+        rank(controller, camPos.x, camPos.y, camPos.z, camera.getYaw(), camera.getPitch(), true);
+    }
+
+    private static boolean refreshBudget()
+    {
         boolean enabled = LodSettings.enabled.get();
         int limit = LodSettings.renderLimit.get();
 
         budgetValid = enabled && limit > 0;
 
-        if (!budgetValid)
+        if (!budgetValid && !states.isEmpty())
         {
-            if (!states.isEmpty())
-            {
-                states.clear();
-                rebuildUnions();
-            }
-
-            return;
+            states.clear();
+            rebuildUnions();
         }
 
+        return budgetValid;
+    }
+    private static void rank(BaseFilmController controller, double camX, double camY, double camZ, float yaw, float pitch, boolean force)
+    {
+        boolean enabled = LodSettings.enabled.get();
+        int limit = LodSettings.renderLimit.get();
         ControllerState state = states.get(controller);
 
         if (state == null)
@@ -110,17 +171,13 @@ public class LodEngine
             states.put(controller, state);
         }
 
-        Camera camera = context.camera();
-        Vec3d camPos = camera.getPos();
-        float yaw = camera.getYaw();
-        float pitch = camera.getPitch();
         double focus = LodSettings.focusDistance.get();
         int entityCount = controller.getEntities().size();
         int tick = controller.getTick();
 
-        double dx = camPos.x - state.lastCamX;
-        double dy = camPos.y - state.lastCamY;
-        double dz = camPos.z - state.lastCamZ;
+        double dx = camX - state.lastCamX;
+        double dy = camY - state.lastCamY;
+        double dz = camZ - state.lastCamZ;
         double distSq = dx * dx + dy * dy + dz * dz;
 
         float dYaw = Math.abs(yaw - state.lastYaw);
@@ -132,14 +189,14 @@ public class LodEngine
         boolean camRotated = dYaw >= ROTATION_THRESHOLD || dPitch >= ROTATION_THRESHOLD;
 
         /* Skip re-ranking only when camera is completely stationary and settings are unchanged */
-        if (!settingsChanged && !camMoved && !camRotated && !state.candidates.isEmpty())
+        if (!force && !settingsChanged && !camMoved && !camRotated && !state.candidates.isEmpty())
         {
             return;
         }
 
-        state.lastCamX = camPos.x;
-        state.lastCamY = camPos.y;
-        state.lastCamZ = camPos.z;
+        state.lastCamX = camX;
+        state.lastCamY = camY;
+        state.lastCamZ = camZ;
         state.lastYaw = yaw;
         state.lastPitch = pitch;
         state.lastFocus = focus;
@@ -183,9 +240,9 @@ public class LodEngine
                 }
             }
 
-            double fx = ex - camPos.x;
-            double fy = ey - camPos.y;
-            double fz = ez - camPos.z;
+            double fx = ex - camX;
+            double fy = ey - camY;
+            double fz = ez - camZ;
             double dist = Math.sqrt(fx * fx + fy * fy + fz * fz);
             double invDist = dist > 0.0001D ? 1.0D / dist : 0.0D;
             double dot = (fx * lookX + fy * lookY + fz * lookZ) * invDist;
