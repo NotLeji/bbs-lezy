@@ -13,9 +13,14 @@
 		"BBSRenderingVfxMixin",
 		"EntityRenderDispatcherNullMixin",
 		"BaseFilmControllerVfxMixin",
-		"ModelBlockEntityRendererVfxMixin"
+		"ModelBlockEntityRendererVfxMixin",
+		"FollowCurveControllerMixin",
+		"RunnerFollowCurveEndMixin",
+		"UIReplayPropertiesPanelMixin"
 	],
 	"mixins": [
-		"ActionManagerAccessor"
+		"ActionManagerAccessor",
+		"FollowCurveFormMixin",
+		"ReplayFollowMixin"
 	]
 }

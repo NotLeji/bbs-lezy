@@ -1,4 +1,5 @@
 package leji.bbslezy.vfx.client;
+import leji.bbslezy.vfx.forms.CurveForm;
 import leji.bbslezy.vfx.forms.BeamForm;
 import leji.bbslezy.vfx.forms.DestructionBoxForm;
 import leji.bbslezy.vfx.forms.DomeForm;
@@ -32,8 +33,8 @@ public class VfxFormSection extends FormSection
         this.vfxCategory.addForm(new BeamForm());
         this.vfxCategory.addForm(new DomeForm());
         this.vfxCategory.addForm(new LezyWindForm());
+        this.vfxCategory.addForm(new CurveForm());
     }
-
     @Override
     public List<FormCategory> getCategories()
     {

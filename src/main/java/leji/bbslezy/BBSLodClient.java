@@ -12,6 +12,11 @@ import leji.bbslezy.camera.clips.modifiers.ProceduralShakeClip;
 import leji.bbslezy.camera.clips.screen.ImpactClip;
 import leji.bbslezy.client.screen.ScreenEffectRenderer;
 import leji.bbslezy.vfx.client.BeamFormRenderer;
+import leji.bbslezy.vfx.client.CurveFormRenderer;
+import leji.bbslezy.vfx.client.FollowCurveClientClip;
+import leji.bbslezy.vfx.client.UICurveForm;
+import leji.bbslezy.vfx.client.UIFollowCurveClip;
+import leji.bbslezy.vfx.forms.CurveForm;
 import leji.bbslezy.vfx.client.BeamHeat;
 import leji.bbslezy.vfx.client.BeamVolume;
 import leji.bbslezy.vfx.client.CracksVolume;
@@ -142,6 +147,7 @@ public class BBSLodClient implements BBSAddonMod
         event.register(HalftoneClip.class, UIHalftoneClip::new);
         event.register(ProceduralShakeClip.class, UIProceduralShakeClip::new);
         event.register(ImpactClip.class, UIImpactClip::new);
+        event.register(FollowCurveClientClip.class, UIFollowCurveClip::new);
     }
     @Subscribe
     public void onFrameOverlays(RegisterFrameOverlaysEvent event)
@@ -233,6 +239,8 @@ public class BBSLodClient implements BBSAddonMod
         FormUtilsClient.register(BeamForm.class, BeamFormRenderer::new);
         FormUtilsClient.register(DomeForm.class, DomeFormRenderer::new);
         FormUtilsClient.register(LezyWindForm.class, LezyWindFormRenderer::new);
+        FormUtilsClient.register(CurveForm.class, CurveFormRenderer::new);
+        UIFormEditor.register(CurveForm.class, UICurveForm::new);
         UIFormEditor.register(DestructionBoxForm.class, UIDestructionBoxForm::new);
         UIFormEditor.register(ExplosionForm.class, UIExplosionForm::new);
         UIFormEditor.register(BeamForm.class, UIBeamForm::new);

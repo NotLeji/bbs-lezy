@@ -11,6 +11,8 @@ import leji.bbslezy.camera.clips.screen.VignetteClip;
 import leji.bbslezy.camera.clips.screen.HalftoneClip;
 import leji.bbslezy.camera.clips.modifiers.ProceduralShakeClip;
 import leji.bbslezy.camera.clips.screen.ImpactClip;
+import leji.bbslezy.vfx.camera.FollowCurveClip;
+import leji.bbslezy.vfx.forms.CurveForm;
 import leji.bbslezy.vfx.forms.BeamForm;
 import leji.bbslezy.vfx.forms.DestructionBoxForm;
 import leji.bbslezy.vfx.forms.DomeForm;
@@ -89,6 +91,7 @@ public class BBSLod implements BBSAddonMod
         event.forms.register(Link.create(MOD_ID + ":beam"), BeamForm.class);
         event.forms.register(Link.create(MOD_ID + ":dome"), DomeForm.class);
         event.forms.register(Link.create(MOD_ID + ":wind"), LezyWindForm.class);
+        event.forms.register(Link.create(MOD_ID + ":curve"), CurveForm.class);
     }
     @Subscribe
     public void onCameraClips(RegisterCameraClipsEvent event)
@@ -100,5 +103,6 @@ public class BBSLod implements BBSAddonMod
         event.factory.register(Link.bbs("halftone"), HalftoneClip.class, new ClipFactoryData(Icons.MORE, 0x111111));
         event.factory.register(Link.bbs("shake"), ProceduralShakeClip.class, new ClipFactoryData(Icons.EXCHANGE, 0x950347));
         event.factory.register(Link.bbs("impact"), ImpactClip.class, new ClipFactoryData(Icons.FOUR_STAR, 0xe65b06));
+        event.factory.register(Link.create(MOD_ID + ":follow_curve"), FollowCurveClip.class, new ClipFactoryData(Icons.ARC, 0x4ba3ff));
     }
 }

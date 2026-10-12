@@ -1,0 +1,86 @@
+package leji.bbslezy.vfx.client;
+
+import mchorse.bbs_mod.camera.data.Angle;
+import mchorse.bbs_mod.camera.data.Position;
+import mchorse.bbs_mod.film.FilmMatrices;
+import mchorse.bbs_mod.forms.FormUtilsClient;
+import mchorse.bbs_mod.forms.entities.IEntity;
+import mchorse.bbs_mod.forms.forms.Form;
+import mchorse.bbs_mod.forms.renderers.FormRenderer;
+import mchorse.bbs_mod.utils.clips.Clip;
+import mchorse.bbs_mod.utils.clips.ClipContext;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import leji.bbslezy.vfx.camera.FollowCurveClip;
+import leji.bbslezy.vfx.forms.CurveForm;
+
+import java.util.List;
+
+/**
+ * Client side of {@link FollowCurveClip}: samples the targeted curve actor at an arc-length offset
+ * (advancing with the clip's progress) and drives the camera position there.
+ */
+public class FollowCurveClientClip extends FollowCurveClip
+{
+    @Override
+    protected void applyClip(ClipContext context, Position position)
+    {
+        List<IEntity> entities = this.getEntities(context);
+
+        if (entities.isEmpty())
+        {
+            return;
+        }
+
+        IEntity entity = entities.get(0);
+        Form form = entity == null ? null : entity.getForm();
+
+        if (!(form instanceof CurveForm curve))
+        {
+            return;
+        }
+
+        /* Keyframed arc-length offset along the curve (0..1). */
+        float offset = (float) Math.max(0D, Math.min(1D, this.progress.interpolate(context.relativeTick + context.transition)));
+
+        Vector3f localPos = new Vector3f();
+        Vector3f localTangent = new Vector3f();
+
+        curve.arcPoint(offset, localPos, localTangent);
+
+        /* The actor's absolute world matrix (camera-relative origin 0,0,0 -> world space). */
+        Matrix4f world = FilmMatrices.getMatrixForRenderWithRotation(entity, 0D, 0D, 0D, context.transition);
+
+        FormRenderer<?> renderer = FormUtilsClient.getRenderer(curve);
+
+        if (renderer instanceof CurveFormRenderer curveRenderer)
+        {
+            world.mul(curveRenderer.formTransformMatrix(context.transition));
+        }
+
+        Vector3f worldPos = world.transformPosition(new Vector3f(localPos));
+
+        /* Positional nudge (the inherited offset point), in world space. */
+        position.point.set(worldPos.x + this.offset.get().x, worldPos.y + this.offset.get().y, worldPos.z + this.offset.get().z);
+
+        if (this.align.get())
+        {
+            Vector3f worldTangent = world.transformDirection(new Vector3f(localTangent));
+
+            if (worldTangent.lengthSquared() > 1e-12F)
+            {
+                worldTangent.normalize();
+
+                float yaw = (float) Math.toDegrees(Math.atan2(-worldTangent.x, worldTangent.z));
+                float pitch = (float) Math.toDegrees(Math.asin(Math.max(-1F, Math.min(1F, -worldTangent.y))));
+                position.angle.set(yaw, pitch, position.angle.roll, position.angle.fov);
+            }
+        }
+    }
+
+    @Override
+    protected Clip create()
+    {
+        return new FollowCurveClientClip();
+    }
+}
