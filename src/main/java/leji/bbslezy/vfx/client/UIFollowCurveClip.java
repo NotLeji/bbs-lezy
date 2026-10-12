@@ -13,6 +13,8 @@ import mchorse.bbs_mod.ui.framework.elements.buttons.UIToggle;
 import mchorse.bbs_mod.ui.framework.elements.input.keyframes.UIKeyframeEditor;
 import mchorse.bbs_mod.ui.framework.elements.input.keyframes.factories.UIAnchorKeyframeFactory;
 import mchorse.bbs_mod.utils.clips.Clips;
+import mchorse.bbs_mod.ui.utils.UI;
+import mchorse.bbs_mod.ui.utils.UIConstants;
 import mchorse.bbs_mod.utils.colors.Colors;
 import leji.bbslezy.vfx.camera.FollowCurveClip;
 
@@ -49,7 +51,9 @@ public class UIFollowCurveClip extends UIClip<FollowCurveClip>
         });
 
         this.align = new UIToggle(IKey.constant("Align to curve"), (b) -> this.clip.align.set(b.getValue()));
-        this.offset = this.bind(new UIPointModule(this.editor, IKey.constant("Offset")).contextMenu(), () -> this.offset.fill(this.clip.offset));
+        this.offset = new UIPointModule(this.editor, IKey.constant("Offset")).contextMenu();
+
+        /* Keyframe editor for the along-curve offset (embedded into the timeline area on Edit). */
         this.keyframes = new UIKeyframeEditor((consumer) -> new UIFilmKeyframes(this.editor, consumer));
         this.keyframes.view.rulerRenderer((context) ->
             UIReplaysEditor.renderRuler(context, this.keyframes.view, (UIClipsPanel) this.editor,
@@ -71,9 +75,9 @@ public class UIFollowCurveClip extends UIClip<FollowCurveClip>
     {
         super.registerPanels();
 
-        this.panels.add(this.section(IKey.constant("Target"), this.selector, this.align));
-        this.panels.add(this.offset);
-        this.panels.add(this.section(IKey.constant("Progress"), this.edit));
+        this.panels.add(LezyVfxUI.section(IKey.constant("Follow curve"), this.selector, this.align));
+        this.panels.add(this.offset.marginTop(UIConstants.SECTION_GAP));
+        this.panels.add(LezyVfxUI.section(IKey.constant("Offset along curve"), this.edit));
     }
 
     @Override
@@ -82,6 +86,7 @@ public class UIFollowCurveClip extends UIClip<FollowCurveClip>
         super.fillData();
 
         this.align.setValue(this.clip.align.get());
+        this.offset.fill(this.clip.offset);
         this.keyframes.setChannel(this.clip.progress, Colors.ACTIVE);
     }
 }

@@ -67,13 +67,14 @@ public class FollowCurveClientClip extends FollowCurveClip
         {
             Vector3f worldTangent = world.transformDirection(new Vector3f(localTangent));
 
-            if (worldTangent.lengthSquared() > 1e-12F)
+            if (worldTangent.lengthSquared() > 1e-9F)
             {
                 worldTangent.normalize();
 
-                float yaw = (float) Math.toDegrees(Math.atan2(-worldTangent.x, worldTangent.z));
-                float pitch = (float) Math.toDegrees(Math.asin(Math.max(-1F, Math.min(1F, -worldTangent.y))));
-                position.angle.set(yaw, pitch, position.angle.roll, position.angle.fov);
+                Angle angle = Angle.angle(worldTangent.x, worldTangent.y, worldTangent.z);
+
+                position.angle.yaw = angle.yaw;
+                position.angle.pitch = angle.pitch;
             }
         }
     }
