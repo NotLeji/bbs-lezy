@@ -23,7 +23,7 @@ public class LezyWindForm extends Form
     /** Territory radius the wind reaches, in blocks (the read-only scan range). */
     public final ValueFloat scanRadius = new ValueFloat("scan_radius", 48F, 1F, 512F);
     /** Set true by the Scan button — gates the direction handle and the wind FX. */
-    public final ValueBoolean scanned = new ValueBoolean("scanned", false);
+    public final ValueBoolean scanned = new ValueBoolean("scanned", true);
 
     /** Flow field: 0 = directional, 1 = storm, 2 = tornado. */
     public final ValueInt windType = new ValueInt("wind_type", 0, 0, 2);

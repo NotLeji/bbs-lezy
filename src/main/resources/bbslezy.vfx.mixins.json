@@ -11,7 +11,9 @@
 		"DamageControlFoliageMixin",
 		"SmearReplayBridgeMixin",
 		"BBSRenderingVfxMixin",
-		"EntityRenderDispatcherNullMixin"
+		"EntityRenderDispatcherNullMixin",
+		"BaseFilmControllerVfxMixin",
+		"ModelBlockEntityRendererVfxMixin"
 	],
 	"mixins": [
 		"ActionManagerAccessor"

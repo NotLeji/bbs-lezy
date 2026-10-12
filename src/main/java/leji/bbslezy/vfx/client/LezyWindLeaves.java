@@ -252,6 +252,24 @@ public final class LezyWindLeaves
             scanCz = ozi;
         }
 
+        /* Fallback: if there are no tree leaves around (e.g. flat test world, void, indoor, or newly placed),
+         * generate virtual seed emitters in a circle so leaves are never invisible. */
+        if (CROWNS.isEmpty())
+        {
+            int fallbackRadius = Math.min(radius, 24);
+            int light = WorldRenderer.getLightmapCoordinates(world, new BlockPos(oxi, oyi, ozi));
+            for (int angle = 0; angle < 360; angle += 45)
+            {
+                double rad = Math.toRadians(angle);
+                float rx = (float) (Math.cos(rad) * fallbackRadius * 0.5);
+                float rz = (float) (Math.sin(rad) * fallbackRadius * 0.5);
+                CROWNS.add(new float[] {rx, 2.0F, rz, 0.32F, 0.55F, 0.22F, light});
+            }
+            scanCx = oxi;
+            scanCy = oyi;
+            scanCz = ozi;
+        }
+
         cx = ox;
         cy = oy;
         cz = oz;

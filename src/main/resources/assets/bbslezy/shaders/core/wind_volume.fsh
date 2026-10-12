@@ -30,8 +30,8 @@ uniform vec2  uWind;          /* wind direction in the local (u,v) ground basis,
 uniform float uTime;
 uniform vec3  uColor;
 
-const int STEPS = 12;
-const int STEPS_VORTEX = 20;
+const int STEPS = 16;
+const int STEPS_VORTEX = 28;
 
 in vec2 vUv;
 
@@ -48,9 +48,7 @@ float hash13(vec3 p)
 float vnoise3(vec3 x)
 {
     vec3 i = floor(x), f = fract(x);
-
-    f = f * f * (3.0 - 2.0 * f);
-
+    f = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
     float n000 = hash13(i + vec3(0.0, 0.0, 0.0));
     float n100 = hash13(i + vec3(1.0, 0.0, 0.0));
     float n010 = hash13(i + vec3(0.0, 1.0, 0.0));
@@ -252,8 +250,7 @@ void main()
     int steps = uMode > 0.5 ? STEPS_VORTEX : STEPS;
 
     float stepLen = (tExit - tEnter) / float(steps);
-    float dither = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453 + uTime);
-    float t = tEnter + stepLen * dither;
+    float t = tEnter + stepLen * 0.5;
 
     vec3 accum = vec3(0.0);
     float alpha = 0.0;

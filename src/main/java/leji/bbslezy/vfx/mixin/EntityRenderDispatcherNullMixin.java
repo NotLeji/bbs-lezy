@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import leji.bbslezy.vfx.forms.LezyWindForm;
 
 /**
  * Null-safe shouldRender: Iris's shadow pass iterates every entity in range through this, and a
@@ -29,6 +30,14 @@ public abstract class EntityRenderDispatcherNullMixin
             LogManager.getLogger("bbslezy").warn("[shadow] entity without renderer (skipped): {} ({})",
                 entity.getType().toString(), entity.getUuid());
             cir.setReturnValue(false);
+        }
+
+        if (entity instanceof mchorse.bbs_mod.entity.ActorEntity actor)
+        {
+            if (actor.getForm() instanceof LezyWindForm)
+            {
+                cir.setReturnValue(true);
+            }
         }
     }
 }
