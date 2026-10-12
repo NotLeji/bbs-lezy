@@ -22,4 +22,16 @@ class LezyPreviewSnapTest
         /* Must not snap if user is actively controlling the camera */
         assertFalse(LezyPreviewSnap.shouldSnap(true, true, true));
     }
+
+    @Test
+    void testManualTeleportCancelsRestore()
+    {
+        LezyPreviewSnap.snapshot = new double[] {1, 2, 3, 0, 0};
+        LezyPreviewSnap.active = true;
+
+        LezyPreviewSnap.onManualTeleport();
+
+        assertFalse(LezyPreviewSnap.active);
+        org.junit.jupiter.api.Assertions.assertNull(LezyPreviewSnap.snapshot);
+    }
 }

@@ -77,4 +77,19 @@ public abstract class UIFilmPanelMixin
     {
         leji.bbslezy.ui.LezyPreviewSnap.onUpdate((UIFilmPanel) (Object) this);
     }
+
+    @Inject(method = "teleportToCamera", at = @At("HEAD"))
+    private void bbslezy$onTeleportToCamera(CallbackInfo ci)
+    {
+        leji.bbslezy.ui.LezyPreviewSnap.onManualTeleport();
+    }
+
+    @Inject(method = "setPlayerToCamera", at = @At("HEAD"))
+    private void bbslezy$onSetPlayerToCamera(boolean value, CallbackInfo ci)
+    {
+        if (value)
+        {
+            leji.bbslezy.ui.LezyPreviewSnap.onManualTeleport();
+        }
+    }
 }

@@ -32,7 +32,9 @@
         "UIAudioClipMixin",
         "AudioClientClipMixin",
         "SoundManagerMixin",
-        "AudioRendererMixin"
+        "AudioRendererMixin",
+        "FormStableIdsMixin",
+        "UIClipsMixin"
     ],
     "injectors": {
         "defaultRequire": 0

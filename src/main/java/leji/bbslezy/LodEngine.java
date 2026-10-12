@@ -2,20 +2,23 @@ package leji.bbslezy;
 
 import mchorse.bbs_mod.api.client.events.FilmEvents;
 import mchorse.bbs_mod.api.client.events.FormRenderEvents;
+import mchorse.bbs_mod.client.BBSRendering;
 import mchorse.bbs_mod.film.BaseFilmController;
+import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.renderers.FormRenderingContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.render.Camera;
 import net.minecraft.util.math.Vec3d;
+import org.joml.Vector3d;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-
 /**
  * Caps how many of a scene's forms get drawn per frame with focus-distance support.
  *
@@ -45,8 +48,8 @@ public class LodEngine
     private static int lastLimit = -1;
     private static boolean lastEnabled = false;
     private static int lastEntityCount = -1;
+    private static int lastTick = -1;
     private static boolean budgetValid = false;
-
     /** Movement deadband: ~0.1 blocks. */
     private static final double MOVE_THRESHOLD_SQ = 0.01D;
 
@@ -68,7 +71,7 @@ public class LodEngine
      */
     private static void before(Form form, FormRenderingContext context)
     {
-        if (context.ui || !budgetValid || !LodSettings.enabled.get() || !form.visible.get())
+        if (context.ui || !budgetValid || !LodSettings.enabled.get() || !form.visible.get() || BBSRendering.isIrisShadowPass())
         {
             return;
         }
@@ -85,6 +88,11 @@ public class LodEngine
      */
     private static void onRenderAfter(BaseFilmController controller, WorldRenderContext context)
     {
+        if (BBSRendering.isIrisShadowPass())
+        {
+            return;
+        }
+
         clearOverrides(controller);
 
         boolean enabled = LodSettings.enabled.get();
@@ -92,6 +100,10 @@ public class LodEngine
 
         if (controller != lastController)
         {
+            if (lastController != null)
+            {
+                clearOverrides(lastController);
+            }
             lastController = controller;
             reset();
         }
@@ -110,6 +122,7 @@ public class LodEngine
         float pitch = camera.getPitch();
         double focus = LodSettings.focusDistance.get();
         int entityCount = controller.getEntities().size();
+        int tick = controller.getTick();
 
         double dx = camPos.x - lastCamX;
         double dy = camPos.y - lastCamY;
@@ -119,7 +132,8 @@ public class LodEngine
         float dYaw = Math.abs(yaw - lastYaw);
         float dPitch = Math.abs(pitch - lastPitch);
 
-        boolean settingsChanged = enabled != lastEnabled || limit != lastLimit || focus != lastFocus || entityCount != lastEntityCount;
+        boolean tickChanged = tick != lastTick;
+        boolean settingsChanged = enabled != lastEnabled || limit != lastLimit || focus != lastFocus || entityCount != lastEntityCount || tickChanged;
         boolean camMoved = distSq >= MOVE_THRESHOLD_SQ;
         boolean camRotated = dYaw >= ROTATION_THRESHOLD || dPitch >= ROTATION_THRESHOLD;
 
@@ -138,6 +152,7 @@ public class LodEngine
         lastLimit = limit;
         lastEnabled = enabled;
         lastEntityCount = entityCount;
+        lastTick = tick;
 
         /* Compute forward gaze direction from camera yaw and pitch */
         float yawRad = (float) Math.toRadians(yaw);
@@ -148,18 +163,34 @@ public class LodEngine
         double lookZ = Math.cos(yawRad) * cosPitch;
 
         int count = 0;
-        for (IEntity entity : controller.getEntities().values())
+        for (Map.Entry<String, IEntity> entry : controller.getEntities().entrySet())
         {
+            IEntity entity = entry.getValue();
             Form form = entity.getForm();
 
-            if (form == null || form.anchor.get().hasTarget())
+            if (form == null || form.anchor.get().hasTarget() || !form.visible.get())
             {
                 continue;
             }
+            Replay replay = controller.film != null ? controller.film.replays.getById(entry.getKey()) : null;
+            double ex = entity.getX();
+            double ey = entity.getY();
+            double ez = entity.getZ();
 
-            double fx = entity.getX() - camPos.x;
-            double fy = entity.getY() - camPos.y;
-            double fz = entity.getZ() - camPos.z;
+            if (replay != null && replay.relative.get())
+            {
+                Vector3d origin = replay.getRelativeOrigin();
+                if (origin != null)
+                {
+                    ex += origin.x;
+                    ey += origin.y;
+                    ez += origin.z;
+                }
+            }
+
+            double fx = ex - camPos.x;
+            double fy = ey - camPos.y;
+            double fz = ez - camPos.z;
             double dist = Math.sqrt(fx * fx + fy * fy + fz * fz);
             double invDist = dist > 0.0001D ? 1.0D / dist : 0.0D;
             double dot = (fx * lookX + fy * lookY + fz * lookZ) * invDist;
@@ -224,6 +255,7 @@ public class LodEngine
         lastFocus = -1D;
         lastLimit = -1;
         lastEntityCount = -1;
+        lastTick = -1;
         lastEnabled = false;
         budgetValid = false;
         culled.clear();
