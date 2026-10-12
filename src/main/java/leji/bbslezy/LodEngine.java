@@ -176,6 +176,7 @@ public class LodEngine
         double lookZ = Math.cos(yawRad) * cosPitch;
 
         int count = 0;
+        Map<String, Replay> replaysById = replaysById(controller);
         for (Map.Entry<String, IEntity> entry : controller.getEntities().entrySet())
         {
             IEntity entity = entry.getValue();
@@ -185,7 +186,7 @@ public class LodEngine
             {
                 continue;
             }
-            Replay replay = controller.film != null ? controller.film.replays.getById(entry.getKey()) : null;
+            Replay replay = replaysById == null ? null : replaysById.get(entry.getKey());
             double ex = entity.getX();
             double ey = entity.getY();
             double ez = entity.getZ();
@@ -207,22 +208,11 @@ public class LodEngine
             double dist = Math.sqrt(fx * fx + fy * fy + fz * fz);
             double invDist = dist > 0.0001D ? 1.0D / dist : 0.0D;
             double dot = (fx * lookX + fy * lookY + fz * lookZ) * invDist;
-
-            double err = focus > 0D ? Math.abs(dist - focus) : dist;
-            double score;
-
             /* Frustum weighting:
              * dot < 0.1 means the actor is behind or outside the camera's view — heavy penalty so it
              * never steals quota from actors the user is looking at.
              * dot >= 0.1 slightly favors actors toward screen center. */
-            if (dot < 0.1D)
-            {
-                score = err + 1000.0D * (0.1D - dot);
-            }
-            else
-            {
-                score = err + (1.0D - dot) * 0.5D;
-            }
+            double score = score(dist, dot, focus);
 
             if (count < state.candidates.size())
             {
@@ -274,6 +264,38 @@ public class LodEngine
         }
 
         return controller.film.getId() + "\0" + replayId;
+    }
+
+    /**
+     * ponytail: one HashMap build per re-rank; getById() scans the list so per-entity lookup is O(n²).
+     */
+    private static Map<String, Replay> replaysById(BaseFilmController controller)
+    {
+        if (controller == null || controller.film == null)
+        {
+            return null;
+        }
+
+        Map<String, Replay> map = new java.util.HashMap<>();
+
+        for (Replay replay : controller.film.replays.getList())
+        {
+            map.put(replay.getId(), replay);
+        }
+
+        return map;
+    }
+
+    static double score(double dist, double dot, double focus)
+    {
+        double err = focus > 0D ? Math.abs(dist - focus) : dist;
+
+        if (dot < 0.1D)
+        {
+            return err + 1000.0D * (0.1D - dot);
+        }
+
+        return err + (1.0D - dot) * 0.5D;
     }
 
     private static void rebuildUnions()
