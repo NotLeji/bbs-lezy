@@ -60,11 +60,21 @@ public class UIWindForm extends UIForm<LezyWindForm>
             return;
         }
 
-        this.form.pointX.set(this.pointTransform.translate.x);
+        float px = this.pointTransform.translate.x;
+        float pz = this.pointTransform.translate.z;
+        this.form.pointX.set(px);
         this.form.pointY.set(this.pointTransform.translate.y);
-        this.form.pointZ.set(this.pointTransform.translate.z);
-    }
+        this.form.pointZ.set(pz);
 
+        float deg = (float) Math.toDegrees(Math.atan2(pz, px));
+        float norm = (deg % 360F + 360F) % 360F;
+        this.form.angle.set(norm);
+        if (this.defaultPanel instanceof UIWindFormPanel panel)
+        {
+            panel.windAngle.setValue(norm);
+        }
+
+    }
     @Override
     public UIPropTransform getEditableTransform()
     {

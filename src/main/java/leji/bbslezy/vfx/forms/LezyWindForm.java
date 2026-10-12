@@ -30,6 +30,9 @@ public class LezyWindForm extends Form
     /** Wind acceleration, blocks per second squared. */
     public final ValueFloat strength = new ValueFloat("strength", 6F, 0F, Float.POSITIVE_INFINITY);
 
+    /** Wind direction in degrees (0°..360°), where 0° = +X (East), 90° = +Z (South), 180° = -X (West), 270° = -Z (North). */
+    public final ValueFloat angle = new ValueFloat("angle", 0F, 0F, 360F);
+
     /** Direction target (local offset from the actor); wind blows along {@code point() - origin}. */
     public final ValueFloat pointX = new ValueFloat("point_x", 8F);
     public final ValueFloat pointY = new ValueFloat("point_y", 0F);
@@ -73,6 +76,7 @@ public class LezyWindForm extends Form
         this.scanned.invisible();
         this.windType.invisible();
         this.strength.invisible();
+        this.angle.invisible();
         this.pointX.invisible();
         this.pointY.invisible();
         this.pointZ.invisible();
@@ -97,6 +101,7 @@ public class LezyWindForm extends Form
         this.add(this.windType);
         this.add(this.strength);
         this.add(this.pointX);
+        this.add(this.angle);
         this.add(this.pointY);
         this.add(this.pointZ);
         this.add(this.streaks);
@@ -182,6 +187,24 @@ public class LezyWindForm extends Form
     /** Direction target as a local offset from the actor origin. */
     public Vector3f point()
     {
+        /* If angle is set or user uses compass angle, compute direction from angle */
+        float a = this.angle.get();
+        if (a != 0F || (this.pointX.get() == 8F && this.pointZ.get() == 0F))
+        {
+            double rad = Math.toRadians(a);
+            return new Vector3f((float) Math.cos(rad) * 8F, this.pointY.get(), (float) Math.sin(rad) * 8F);
+        }
+
         return new Vector3f(this.pointX.get(), this.pointY.get(), this.pointZ.get());
+    }
+
+    /** Set wind direction by compass angle (degrees) and update vector offsets accordingly. */
+    public void setAngle(float degrees)
+    {
+        float norm = (degrees % 360F + 360F) % 360F;
+        this.angle.set(norm);
+        double rad = Math.toRadians(norm);
+        this.pointX.set((float) Math.cos(rad) * 8F);
+        this.pointZ.set((float) Math.sin(rad) * 8F);
     }
 }

@@ -21,6 +21,7 @@ public class UIWindFormPanel extends UIFormPanel<LezyWindForm>
     public final UIButton scan;
     public final UITrackpad scanRadius;
     public final UITrackpad strength;
+    public final UITrackpad windAngle;
     public final UITrackpad streaks;
     public final UITrackpad leaves;
     public final UITrackpad dust;
@@ -62,6 +63,15 @@ public class UIWindFormPanel extends UIFormPanel<LezyWindForm>
         this.scanRadius.limit(1F, 512F).increment(1);
         this.strength = new UITrackpad((v) -> this.form.strength.set(v.floatValue()));
         this.strength.limit(0F, Float.POSITIVE_INFINITY).values(0.5F);
+        this.windAngle = new UITrackpad((v) ->
+        {
+            if (this.form != null)
+            {
+                this.form.setAngle(v.floatValue());
+                ((UIWindForm) this.editor).syncPointWidget();
+            }
+        });
+        this.windAngle.limit(0F, 360F).values(5F);
         this.streaks = new UITrackpad((v) -> this.form.streaks.set(v.floatValue()));
         this.streaks.limit(0F, 1F).values(0.05F);
         this.leaves = new UITrackpad((v) -> this.form.leaves.set(v.floatValue()));
@@ -126,6 +136,7 @@ public class UIWindFormPanel extends UIFormPanel<LezyWindForm>
             UI.label(IKey.constant("Wind colour")), this.color);
 
         this.directionSection = LezyVfxUI.section("Direction",
+            UI.label(IKey.constant("Wind direction angle (0°-360°)")), this.windAngle,
             ((UIWindForm) this.editor).pointGizmo());
 
         this.sway = new UIToggle(IKey.constant("Sway foliage (film only)"), (b) ->
@@ -210,6 +221,7 @@ public class UIWindFormPanel extends UIFormPanel<LezyWindForm>
     {
         this.scanRadius.setValue(form.scanRadius.get());
         this.strength.setValue(form.strength.get());
+        this.windAngle.setValue(form.angle.get());
         this.streaks.setValue(form.streaks.get());
         this.leaves.setValue(form.leaves.get());
         this.dust.setValue(form.dust.get());
