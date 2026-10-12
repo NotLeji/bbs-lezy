@@ -3,11 +3,9 @@ package leji.bbslezy;
 import mchorse.bbs_mod.api.client.events.FilmEvents;
 import mchorse.bbs_mod.api.client.events.FormRenderEvents;
 import mchorse.bbs_mod.client.BBSRendering;
-import mchorse.bbs_mod.entity.ActorEntity;
 import mchorse.bbs_mod.film.BaseFilmController;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.forms.entities.IEntity;
-import mchorse.bbs_mod.forms.entities.MCEntity;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.renderers.FormRenderingContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
@@ -17,7 +15,6 @@ import org.joml.Vector3d;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,9 +35,6 @@ public class LodEngine
 
     /** Union of every live controller's culled forms. `before()` has no controller, so it reads this. */
     private static final Set<Form> culled = Collections.newSetFromMap(new IdentityHashMap<>());
-
-    /** Union of every live controller's culled replay keys (`filmId + replayId`), for real ActorEntity bodies. */
-    private static final Set<String> culledReplays = new HashSet<>();
 
     /** Per-controller ranking state. A single shared state thrashes when two controllers render one frame. */
     private static final Map<BaseFilmController, ControllerState> states = new IdentityHashMap<>();
@@ -77,19 +71,6 @@ public class LodEngine
         {
             form.visible.setRuntimeValue(Boolean.FALSE);
             touched.add(form);
-
-            return;
-        }
-
-        /* Real ActorEntity bodies (world playback via Right Ctrl) carry a different Form instance
-         * than the controller's copy, so identity matching above never fires for them. Match by replay key. */
-        if (context.entity instanceof MCEntity mc && mc.getMcEntity() instanceof ActorEntity actor && !actor.getReplayId().isEmpty())
-        {
-            if (culledReplays.contains(actor.getFilmId() + "\0" + actor.getReplayId()))
-            {
-                form.visible.setRuntimeValue(Boolean.FALSE);
-                touched.add(form);
-            }
         }
     }
 
@@ -216,11 +197,11 @@ public class LodEngine
 
             if (count < state.candidates.size())
             {
-                state.candidates.get(count).set(form, replayKey(controller, entry.getKey()), score);
+                state.candidates.get(count).set(form, score);
             }
             else
             {
-                state.candidates.add(new Candidate(form, replayKey(controller, entry.getKey()), score));
+                state.candidates.add(new Candidate(form, score));
             }
             count++;
         }
@@ -234,16 +215,10 @@ public class LodEngine
 
         /* Update this controller's culled set for the next frame's BEFORE pass */
         state.culledForms.clear();
-        state.culledKeys.clear();
         int effectiveLimit = Math.min(limit, count);
         for (int i = effectiveLimit; i < count; i++)
         {
-            Candidate candidate = state.candidates.get(i);
-            state.culledForms.add(candidate.form);
-            if (candidate.replayKey != null)
-            {
-                state.culledKeys.add(candidate.replayKey);
-            }
+            state.culledForms.add(state.candidates.get(i).form);
         }
 
         rebuildUnions();
@@ -254,16 +229,6 @@ public class LodEngine
         clearOverrides();
         states.remove(controller);
         rebuildUnions();
-    }
-
-    private static String replayKey(BaseFilmController controller, String replayId)
-    {
-        if (controller == null || controller.film == null || replayId == null)
-        {
-            return null;
-        }
-
-        return controller.film.getId() + "\0" + replayId;
     }
 
     /**
@@ -298,18 +263,6 @@ public class LodEngine
         return err + (1.0D - dot) * 0.5D;
     }
 
-    private static void rebuildUnions()
-    {
-        culled.clear();
-        culledReplays.clear();
-
-        for (ControllerState state : states.values())
-        {
-            culled.addAll(state.culledForms);
-            culledReplays.addAll(state.culledKeys);
-        }
-    }
-
     /**
      * Clears every runtime override this frame carried.
      */
@@ -323,11 +276,20 @@ public class LodEngine
         touched.clear();
     }
 
+    private static void rebuildUnions()
+    {
+        culled.clear();
+
+        for (ControllerState state : states.values())
+        {
+            culled.addAll(state.culledForms);
+        }
+    }
+
     private static class ControllerState
     {
         public final List<Candidate> candidates = new ArrayList<>();
         public final Set<Form> culledForms = Collections.newSetFromMap(new IdentityHashMap<>());
-        public final Set<String> culledKeys = new HashSet<>();
         public double lastCamX = Double.NaN;
         public double lastCamY = Double.NaN;
         public double lastCamZ = Double.NaN;
@@ -343,20 +305,17 @@ public class LodEngine
     private static class Candidate implements Comparable<Candidate>
     {
         public Form form;
-        public String replayKey;
         public double score;
 
-        public Candidate(Form form, String replayKey, double score)
+        public Candidate(Form form, double score)
         {
             this.form = form;
-            this.replayKey = replayKey;
             this.score = score;
         }
 
-        public void set(Form form, String replayKey, double score)
+        public void set(Form form, double score)
         {
             this.form = form;
-            this.replayKey = replayKey;
             this.score = score;
         }
 
