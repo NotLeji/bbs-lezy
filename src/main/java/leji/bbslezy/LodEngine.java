@@ -1,5 +1,7 @@
 package leji.bbslezy;
 
+import leji.bbslezy.ui.LezyEntityCulling;
+import leji.bbslezy.ui.LezyPov;
 import mchorse.bbs_mod.api.client.events.FilmEvents;
 import mchorse.bbs_mod.api.client.events.FormRenderEvents;
 import mchorse.bbs_mod.client.BBSRendering;
@@ -215,6 +217,7 @@ public class LodEngine
 
         int count = 0;
         Map<String, Replay> replaysById = replaysById(controller);
+        Map<String, Integer> actors = controller.getActors();
         for (Map.Entry<String, IEntity> entry : controller.getEntities().entrySet())
         {
             IEntity entity = entry.getValue();
@@ -224,6 +227,26 @@ public class LodEngine
             {
                 continue;
             }
+
+            /* BBS-POV drives some forms as first-person hands (cancels applyTransforms itself).
+             * Never cull those: LOD would fight POV's own visibility handling. */
+            if (LezyPov.isSuppressed(form))
+            {
+                continue;
+            }
+
+            /* EntityCulling already skips occluded ActorEntity bodies in world render. An occluded
+             * body must not eat LOD quota: skip it here so the budget goes to visible actors. */
+            if (actors != null && LezyEntityCulling.isLoaded())
+            {
+                Integer entityId = actors.get(entry.getKey());
+
+                if (entityId != null && LezyEntityCulling.isOccludedById(entityId))
+                {
+                    continue;
+                }
+            }
+
             Replay replay = replaysById == null ? null : replaysById.get(entry.getKey());
             double ex = entity.getX();
             double ey = entity.getY();
