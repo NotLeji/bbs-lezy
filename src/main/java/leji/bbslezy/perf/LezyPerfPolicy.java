@@ -12,6 +12,7 @@ import leji.bbslezy.LodEngine;
 import leji.bbslezy.LodSettings;
 import mchorse.bbs_mod.client.BBSRendering;
 import mchorse.bbs_mod.film.BaseFilmController;
+import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import mchorse.bbs_mod.forms.forms.Form;
@@ -36,7 +37,8 @@ public final class LezyPerfPolicy
         final Set<String> anchoredTargetIds = new HashSet<>();
         final Map<IEntity, Replay> entityToReplay = new IdentityHashMap<>();
 
-        List<Replay> lastReplayListRef;
+        int lastReplayCount = -1;
+        Film lastFilm;
         Map<String, IEntity> lastEntitiesRef;
     }
 
@@ -252,7 +254,7 @@ public final class LezyPerfPolicy
 
         ControllerState state = states.computeIfAbsent(controller, (k) -> new ControllerState());
 
-        updateAnchorCache(state, replays);
+        updateAnchorCache(state, controller, replays);
         updateEntityMapCache(state, controller, replays);
 
         int throttleDist = LodSettings.perf_throttle_distance != null ? LodSettings.perf_throttle_distance.get() : 32;
@@ -344,9 +346,9 @@ public final class LezyPerfPolicy
         return resultList;
     }
 
-    private static void updateAnchorCache(ControllerState state, List<Replay> replays)
+    private static void updateAnchorCache(ControllerState state, BaseFilmController controller, List<Replay> replays)
     {
-        if (state.lastReplayListRef == replays)
+        if (state.lastFilm == controller.film && state.lastReplayCount == replays.size())
         {
             return;
         }
@@ -368,7 +370,8 @@ public final class LezyPerfPolicy
             }
         }
 
-        state.lastReplayListRef = replays;
+        state.lastFilm = controller.film;
+        state.lastReplayCount = replays.size();
     }
 
     private static void updateEntityMapCache(ControllerState state, BaseFilmController controller, List<Replay> replays)
