@@ -75,6 +75,13 @@ public class LodEngine
             touched.add(form);
         }
     }
+    /**
+     * Read-only view of culled forms for policy engine.
+     */
+    public static Set<Form> getCulledForms()
+    {
+        return culled;
+    }
 
     /**
      * Seeds the budget the moment a film's scene is built, before the first tick and the
