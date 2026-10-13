@@ -8,6 +8,7 @@ import java.nio.file.StandardCopyOption;
 
 import mchorse.bbs_mod.BBSMod;
 import mchorse.bbs_mod.BBSModClient;
+import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.film.Films;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
@@ -116,13 +117,47 @@ public class ReplayBench
             max = 0;
 
             stageFilm(config.filmId());
-            Films.playFilm(config.filmId(), config.withCamera());
+
+            if (client.getServer() != null)
+            {
+                try
+                {
+                    client.getServer().getOverworld().getGameRules().get(BBSMod.BBS_EDITING_RULE).set(true, client.getServer());
+                }
+                catch (Throwable ignored)
+                {}
+            }
+
+            Film film = BBSMod.getFilms().load(config.filmId());
+
+            if (film != null)
+            {
+                film.setId(config.filmId());
+                Films.playFilm(film, config.withCamera());
+                System.out.println("BBSLezy[bench] film loaded successfully: replays=" + film.replays.getList().size());
+            }
+            else
+            {
+                System.out.println("BBSLezy[bench] BBSMod.getFilms().load returned null, fallback to Films.playFilm(id)");
+                Films.playFilm(config.filmId(), config.withCamera());
+            }
 
             return;
         }
 
         ticks++;
         keepRunning(client);
+
+        if (!BBSModClient.getFilms().has(config.filmId()))
+        {
+            Film film = BBSMod.getFilms().load(config.filmId());
+
+            if (film != null)
+            {
+                film.setId(config.filmId());
+                Films.playFilm(film, config.withCamera());
+            }
+        }
 
         if (ticks <= config.warmupTicks())
         {
