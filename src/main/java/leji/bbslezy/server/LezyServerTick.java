@@ -37,7 +37,7 @@ public class LezyServerTick
 
     public static boolean shouldRevive(int tickCounter)
     {
-        return tickCounter % REVIVE_EVERY_N == 0;
+        return tickCounter <= 1 || tickCounter % REVIVE_EVERY_N == 0;
     }
 
     public static boolean shouldCollide(double dx, double dy, double dz)

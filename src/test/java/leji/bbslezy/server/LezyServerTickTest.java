@@ -50,8 +50,9 @@ class LezyServerTickTest
     {
         assertTrue(LezyServerTick.shouldRevive(20));
         assertTrue(LezyServerTick.shouldRevive(40));
+        assertTrue(LezyServerTick.shouldRevive(1));
         assertFalse(LezyServerTick.shouldRevive(21));
-        assertFalse(LezyServerTick.shouldRevive(1));
+        assertFalse(LezyServerTick.shouldRevive(2));
     }
 
     @Test

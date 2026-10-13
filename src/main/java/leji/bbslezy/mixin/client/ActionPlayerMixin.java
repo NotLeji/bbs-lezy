@@ -30,6 +30,14 @@ public abstract class ActionPlayerMixin
     @Shadow
     public Film film;
 
+    @Shadow
+    private void reviveLostActors()
+    {
+    }
+
+    @Unique
+    private int bbslezy$tickCounter = 0;
+
     @Unique
     private final Map<String, Replay> bbslezy$replaysMap = new HashMap<>();
 
@@ -150,11 +158,51 @@ public abstract class ActionPlayerMixin
     }
 
     /**
+     * Throttle lost-actor scans to once per second.
+     * Loss is rare (removal/death); scanning every tick wastes
+     * a full actors-map pass plus replay lookups per tick.
+     */
+    @Redirect(
+        method = "tick",
+        at = @At(value = "INVOKE", target = "Lmchorse/bbs_mod/actions/ActionPlayer;reviveLostActors()V")
+    )
+    private void bbslezy$throttledRevive(ActionPlayer self)
+    {
+        try
+        {
+            this.bbslezy$tickCounter++;
+        }
+        catch (Throwable ignored)
+        {
+            try
+            {
+                this.reviveLostActors();
+            }
+            catch (Throwable ignored2)
+            {
+            }
+
+            return;
+        }
+
+        if (LezyServerTick.shouldRevive(this.bbslezy$tickCounter))
+        {
+            try
+            {
+                this.reviveLostActors();
+            }
+            catch (Throwable ignored)
+            {
+            }
+        }
+    }
+
+    /**
      * Redirects the O(N) linear scan `film.replays.get(key)` inside ActionPlayer.tick and goTo
      * to our O(1) cached map lookup.
      */
     @Redirect(
-        method = {"tick", "goTo(II)V"},
+        method = {"tick", "goTo(II)V", "reviveLostActors"},
         at = @At(value = "INVOKE", target = "Lmchorse/bbs_mod/film/replays/Replays;get(Ljava/lang/String;)Lmchorse/bbs_mod/settings/values/base/BaseValue;")
     )
     private mchorse.bbs_mod.settings.values.base.BaseValue bbslezy$fastReplayLookup(Replays instance, String key)
