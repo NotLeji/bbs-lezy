@@ -1,5 +1,6 @@
 package leji.bbslezy.mixin.client;
 
+import leji.bbslezy.server.LezyServerTick;
 import mchorse.bbs_mod.actions.ActionPlayer;
 import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.film.replays.Replay;
@@ -111,7 +112,7 @@ public abstract class ActionPlayerMixin
     )
     private void bbslezy$optimizedActorMove(net.minecraft.entity.LivingEntity actor, net.minecraft.entity.MovementType type, net.minecraft.util.math.Vec3d movement)
     {
-        if (movement.lengthSquared() > 1.0E-6D)
+        if (movement.lengthSquared() > LezyServerTick.MOVE_EPSILON_SQ)
         {
             actor.move(type, movement);
         }
