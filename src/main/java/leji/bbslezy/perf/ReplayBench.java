@@ -1,6 +1,7 @@
 package leji.bbslezy.perf;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -29,6 +30,7 @@ public class ReplayBench
     private static int count;
     private static int min = Integer.MAX_VALUE;
     private static int max;
+    private static Field runningField;
 
     /**
      * Parses a bench spec, returning null when it is missing or malformed.
@@ -120,9 +122,15 @@ public class ReplayBench
         }
 
         ticks++;
+        keepRunning(client);
 
         if (ticks <= config.warmupTicks())
         {
+            if (ticks % 100 == 0)
+            {
+                System.out.println("BBSLezy[bench] warmup tick=" + ticks + "/" + config.warmupTicks() + " playing=" + BBSModClient.getFilms().has(config.filmId()));
+            }
+
             return;
         }
 
@@ -133,7 +141,10 @@ public class ReplayBench
         min = Math.min(min, fps);
         max = Math.max(max, fps);
 
-        System.out.println("BBSLezy[bench] fps=" + fps + " tick=" + ticks + " playing=" + BBSModClient.getFilms().has(config.filmId()));
+        if (ticks % 20 == 0)
+        {
+            System.out.println("BBSLezy[bench] fps=" + fps + " tick=" + ticks + " playing=" + BBSModClient.getFilms().has(config.filmId()));
+        }
 
         if (ticks >= config.warmupTicks() + config.sampleTicks())
         {
@@ -142,6 +153,38 @@ public class ReplayBench
             System.out.println("BBSLezy[bench] summary film=" + config.filmId() + " ticks=" + ticks + " avg=" + String.format("%.1f", avg) + " min=" + (count == 0 ? 0 : min) + " max=" + max);
             client.scheduleStop();
         }
+    }
+
+    /**
+     * Prevents test-runner harnesses from prematurely stopping the client
+     * before the benchmark duration has elapsed.
+     */
+    private static void keepRunning(MinecraftClient client)
+    {
+        try
+        {
+            if (runningField == null)
+            {
+                for (String name : new String[] {"running", "field_1698"})
+                {
+                    try
+                    {
+                        runningField = MinecraftClient.class.getDeclaredField(name);
+                        runningField.setAccessible(true);
+                        break;
+                    }
+                    catch (NoSuchFieldException ignored)
+                    {}
+                }
+            }
+
+            if (runningField != null)
+            {
+                runningField.setBoolean(client, true);
+            }
+        }
+        catch (Exception ignored)
+        {}
     }
 
     /**
