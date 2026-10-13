@@ -37,6 +37,10 @@
         "UIClipsMixin",
         "FilmKeyframeInsertionMixin"
     ],
+    "mixins": [
+        "ActionPlayerMixin",
+        "ReplayMixin"
+    ],
     "injectors": {
         "defaultRequire": 0
     }
