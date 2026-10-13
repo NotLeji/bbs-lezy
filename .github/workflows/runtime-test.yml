@@ -74,7 +74,5 @@ jobs:
           java: 17 # 1.20.1 jalan di Java 17
           mc-runtime-test: fabric
           fabric-api: ${{ env.FABRIC_API }}
-          # --- opsional: buka kalau udah nulis GameTest sendiri ---
-          # Maksa CI gagal kalau ternyata NOL test yang kejalan
-          # (biar nggak lolos diam-diam):
-          # headlessmc-command: --jvm "-DMcRuntimeGameTestMinExpectedGameTests=1"
+          fabric-gametest-api: 1.2.15+1802ada577
+          headlessmc-command: --jvm "-Djava.awt.headless=true -DMcRuntimeGameTestMinExpectedGameTests=1"
