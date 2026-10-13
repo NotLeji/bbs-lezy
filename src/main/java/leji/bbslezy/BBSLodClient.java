@@ -151,6 +151,7 @@ public class BBSLodClient implements BBSAddonMod
         LodEngine.register();
         LezyEncoderProbe.startProbeAsync();
         ClientTickEvents.END_CLIENT_TICK.register((client) -> LezyIrisHelper.tick());
+        ClientTickEvents.END_CLIENT_TICK.register(leji.bbslezy.perf.ReplayBench::onClientTick);
         UIKeyframeFactory.register(LensRadiusSettingsKeyframeFactory.INSTANCE, UILensRadiusSettingsKeyframeFactory::new);
         TrackStyle.register("illusion", Icons.POSE, Colors.DEEP_PINK);
         TrackStyle.register("illusion_transform", Icons.ALL_DIRECTIONS, 0xdd66ff);
