@@ -112,7 +112,7 @@ public abstract class ActionPlayerMixin
     )
     private void bbslezy$optimizedActorMove(net.minecraft.entity.LivingEntity actor, net.minecraft.entity.MovementType type, net.minecraft.util.math.Vec3d movement)
     {
-        if (movement.lengthSquared() > LezyServerTick.MOVE_EPSILON_SQ)
+        if (LezyServerTick.shouldCollide(movement.x, movement.y, movement.z))
         {
             actor.move(type, movement);
         }

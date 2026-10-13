@@ -31,4 +31,26 @@ class LezyServerTickTest
         assertFalse(LezyServerTick.isIdentical(null, new float[5]));
         assertFalse(LezyServerTick.isIdentical(new float[5], null));
     }
+
+    @Test
+    void zeroDisplacementSkipsCollision()
+    {
+        assertFalse(LezyServerTick.shouldCollide(0.0D, 0.0D, 0.0D));
+        assertFalse(LezyServerTick.shouldCollide(1.0E-4D, 0.0D, 0.0D));
+    }
+
+    @Test
+    void realDisplacementCollides()
+    {
+        assertTrue(LezyServerTick.shouldCollide(0.5D, 0.0D, 0.0D));
+    }
+
+    @Test
+    void reviveThrottledToOncePerSecond()
+    {
+        assertTrue(LezyServerTick.shouldRevive(20));
+        assertTrue(LezyServerTick.shouldRevive(40));
+        assertFalse(LezyServerTick.shouldRevive(21));
+        assertFalse(LezyServerTick.shouldRevive(1));
+    }
 }
