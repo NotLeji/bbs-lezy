@@ -71,6 +71,51 @@ public abstract class ActionPlayerMixin
             this.bbslezy$lastReplayCount = currentCount;
         }
     }
+    /**
+     * Short-circuit applyAction() completely if the film has no action clips across all replays.
+     * Avoids looping through N replays, looking up actors, and flushing fake player lids.
+     */
+    @Inject(method = "applyAction", at = @At("HEAD"), cancellable = true)
+    private void bbslezy$skipApplyActionIfNoClips(CallbackInfo ci)
+    {
+        if (this.film == null)
+        {
+            ci.cancel();
+            return;
+        }
+
+        boolean hasAnyActions = false;
+        for (Replay replay : this.film.replays.getList())
+        {
+            if (replay != null && !replay.actions.get().isEmpty())
+            {
+                hasAnyActions = true;
+                break;
+            }
+        }
+
+        if (!hasAnyActions)
+        {
+            ci.cancel();
+        }
+    }
+
+    /**
+     * Optimize actor.move() inside ActionPlayer.apply().
+     * If displacement is near-zero (actor is stationary or moving infinitesimally),
+     * skip expensive world block collision checks.
+     */
+    @Redirect(
+        method = "apply",
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;move(Lnet/minecraft/entity/MovementType;Lnet/minecraft/util/math/Vec3d;)V")
+    )
+    private void bbslezy$optimizedActorMove(net.minecraft.entity.LivingEntity actor, net.minecraft.entity.MovementType type, net.minecraft.util.math.Vec3d movement)
+    {
+        if (movement.lengthSquared() > 1.0E-6D)
+        {
+            actor.move(type, movement);
+        }
+    }
 
     /**
      * Redirects the O(N) linear scan `film.replays.get(key)` inside ActionPlayer.tick and goTo
