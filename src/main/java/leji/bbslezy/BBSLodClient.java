@@ -162,6 +162,7 @@ public class BBSLodClient implements BBSAddonMod
         FormRenderEvents.AFTER.register(FormIllusionRenderer::render);
         FilmEvents.SHUTDOWN.register((film) -> LezyAudioReverse.clear());
         FilmEvents.SHUTDOWN.register((film) -> leji.bbslezy.client.screen.ColorGradeRenderer.clearTrail());
+        FilmEvents.SHUTDOWN.register(leji.bbslezy.perf.LezyPerfPolicy::onFilmShutdown);
         SkinFetcher.cleanupTempFolder();
         ClientLifecycleEvents.CLIENT_STOPPING.register((client) -> SkinFetcher.cleanupTempFolder());
     }

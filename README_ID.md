@@ -69,6 +69,14 @@ https://github.com/user-attachments/assets/169defa4-20fe-452a-8dac-c3a78e5c6c52
 
 Hal-hal kecil yang nggak dapat section sendiri: clip halftone, channel motion blur & pixelation, skin search dengan preview 3D, Look At batch baking, damage action clip, snap-player-to-preview, reverse audio dengan volume keyframes, open-folder-on-import, perbaikan cursor wrap Linux & Iris depth, toggle shader dashboard (K).
 
+**9. Replay performance budgeting**
+
+Untuk scene film raksasa dengan ratusan hingga ribuan replay actor:
+- **perf_enabled** (default: nonaktif) — mengaktifkan pembatasan evaluasi pose replay berdasarkan jarak kamera.
+- **perf_throttle_distance** (default: 32 blok) — replay di luar jarak ini di-update dengan interval tick bertingkat untuk menghemat CPU.
+- **perf_skip_distance** (default: 96 blok) — replay di luar jarak ini di-skip total evaluasi keyframe dan posenya setiap frame.
+- **perf_throttle_ticks** (default: 4 tick) — jeda interval evaluasi di pita jarak throttle.
+
 ## Dokumentasi
 
 ### Requirement

@@ -69,6 +69,14 @@ https://github.com/user-attachments/assets/169defa4-20fe-452a-8dac-c3a78e5c6c52
 
 Smaller stuff that didn't earn its own section: halftone screentone clip, motion blur and pixelation channels, skin search with 3D preview, Look At batch baking, damage action clip, snap-player-to-preview, reverse audio with volume keyframes, open-folder-on-import, Linux cursor wrap and Iris depth fixes, dashboard shader toggle (K).
 
+**9. Replay performance budgeting**
+
+For massive film scenes with hundreds or thousands of replay actors:
+- **perf_enabled** (default: off) — enables evaluation budgeting for replay playback.
+- **perf_throttle_distance** (default: 32 blocks) — replays beyond this distance update at a reduced tick interval to conserve CPU.
+- **perf_skip_distance** (default: 96 blocks) — replays beyond this distance skip per-frame keyframe/pose evaluation completely.
+- **perf_throttle_ticks** (default: 4 ticks) — interval between evaluations in the throttle distance band.
+
 ## Documentation
 
 ### Requirements
