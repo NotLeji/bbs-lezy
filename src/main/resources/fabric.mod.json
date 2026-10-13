@@ -12,8 +12,7 @@
 	],
 	"entrypoints": {
 		"bbs-addon": ["leji.bbslezy.BBSLod"],
-		"bbs-client-addon": ["leji.bbslezy.BBSLodClient"],
-		"fabric-gametest": ["leji.bbslezy.LezyLodBenchTest"]
+		"bbs-client-addon": ["leji.bbslezy.BBSLodClient"]
 	},
 	"depends": {
 		"fabricloader": ">=0.16.14",

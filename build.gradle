@@ -35,7 +35,6 @@ dependencies {
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-gametest-api-v1:1.2.15+1802ada577"
 
 	/* Sodium so the dev client matches a real setup: BBS's sodium mixins apply, and the form
 	 * render path goes through the sodium vertex pipeline. Iris is still excluded — add
