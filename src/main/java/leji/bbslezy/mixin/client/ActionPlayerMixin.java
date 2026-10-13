@@ -30,14 +30,6 @@ public abstract class ActionPlayerMixin
     @Shadow
     public Film film;
 
-    @Shadow
-    private void reviveLostActors()
-    {
-    }
-
-    @Unique
-    private int bbslezy$tickCounter = 0;
-
     @Unique
     private final Map<String, Replay> bbslezy$replaysMap = new HashMap<>();
 
@@ -111,8 +103,9 @@ public abstract class ActionPlayerMixin
 
     /**
      * Optimize actor.move() inside ActionPlayer.apply().
-     * If displacement is near-zero (actor is stationary or moving infinitesimally),
-     * skip expensive world block collision checks.
+     * Near-zero displacement skips world block collision, as does a
+     * pure gravity-probe step from a stationary grounded actor
+     * (setPosition + setOnGround in the body still apply).
      */
     @Redirect(
         method = "apply",
@@ -158,48 +151,8 @@ public abstract class ActionPlayerMixin
     }
 
     /**
-     * Throttle lost-actor scans to once per second.
-     * Loss is rare (removal/death); scanning every tick wastes
-     * a full actors-map pass plus replay lookups per tick.
-     */
-    @Redirect(
-        method = "tick",
-        at = @At(value = "INVOKE", target = "Lmchorse/bbs_mod/actions/ActionPlayer;reviveLostActors()V")
-    )
-    private void bbslezy$throttledRevive(ActionPlayer self)
-    {
-        try
-        {
-            this.bbslezy$tickCounter++;
-        }
-        catch (Throwable ignored)
-        {
-            try
-            {
-                this.reviveLostActors();
-            }
-            catch (Throwable ignored2)
-            {
-            }
-
-            return;
-        }
-
-        if (LezyServerTick.shouldRevive(this.bbslezy$tickCounter))
-        {
-            try
-            {
-                this.reviveLostActors();
-            }
-            catch (Throwable ignored)
-            {
-            }
-        }
-    }
-
-    /**
-     * Redirects the O(N) linear scan `film.replays.get(key)` inside ActionPlayer.tick and goTo
-     * to our O(1) cached map lookup.
+     * Redirects the O(N) linear scan `film.replays.get(key)` inside ActionPlayer tick, seeks
+     * and lost-actor scans to our O(1) cached map lookup.
      */
     @Redirect(
         method = {"tick", "goTo(II)V", "reviveLostActors"},
