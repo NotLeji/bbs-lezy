@@ -119,6 +119,37 @@ public abstract class ActionPlayerMixin
     }
 
     /**
+     * Skip equipment writes when both sides are empty.
+     * Crowd films (villagers) carry no gear: 6 equipStack writes
+     * per actor per tick become 6 isEmpty checks.
+     */
+    @Redirect(
+        method = "apply",
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;equipStack(Lnet/minecraft/entity/EquipmentSlot;Lnet/minecraft/item/ItemStack;)V")
+    )
+    private void bbslezy$equipOnlyOnChange(net.minecraft.entity.LivingEntity actor, net.minecraft.entity.EquipmentSlot slot, net.minecraft.item.ItemStack stack)
+    {
+        try
+        {
+            if (LezyServerTick.skipEquipWhenBothEmpty(actor.getEquippedStack(slot).isEmpty(), stack.isEmpty()))
+            {
+                return;
+            }
+        }
+        catch (Throwable ignored)
+        {
+        }
+
+        try
+        {
+            actor.equipStack(slot, stack);
+        }
+        catch (Throwable ignored)
+        {
+        }
+    }
+
+    /**
      * Redirects the O(N) linear scan `film.replays.get(key)` inside ActionPlayer.tick and goTo
      * to our O(1) cached map lookup.
      */

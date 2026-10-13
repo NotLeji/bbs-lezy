@@ -53,4 +53,18 @@ class LezyServerTickTest
         assertFalse(LezyServerTick.shouldRevive(21));
         assertFalse(LezyServerTick.shouldRevive(1));
     }
+
+    @Test
+    void bothEmptySkipsEquip()
+    {
+        assertTrue(LezyServerTick.skipEquipWhenBothEmpty(true, true));
+    }
+
+    @Test
+    void nonEmptyNeedsEquip()
+    {
+        assertFalse(LezyServerTick.skipEquipWhenBothEmpty(false, true));
+        assertFalse(LezyServerTick.skipEquipWhenBothEmpty(true, false));
+        assertFalse(LezyServerTick.skipEquipWhenBothEmpty(false, false));
+    }
 }

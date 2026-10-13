@@ -44,4 +44,9 @@ public class LezyServerTick
     {
         return dx * dx + dy * dy + dz * dz > MOVE_EPSILON_SQ;
     }
+
+    public static boolean skipEquipWhenBothEmpty(boolean currentEmpty, boolean incomingEmpty)
+    {
+        return currentEmpty && incomingEmpty;
+    }
 }
