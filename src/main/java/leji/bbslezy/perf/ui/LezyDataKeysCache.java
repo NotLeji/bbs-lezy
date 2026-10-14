@@ -29,6 +29,10 @@ public final class LezyDataKeysCache
         System::currentTimeMillis, WORKER, LezyDataKeysCache::minecraftExecute
     );
 
+    public static final LezyAsyncLoader LOADER = new LezyAsyncLoader(
+        WORKER, LezyDataKeysCache::minecraftExecute
+    );
+
     /**
      * Main-thread executor yang dievaluasi lambat: jangan bind
      * `MinecraftClient.getInstance()` saat class load karena bisa masih

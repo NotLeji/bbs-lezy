@@ -42,6 +42,7 @@ public class LodSettings
     public static ValueBoolean guidesShowLabels;
 
     public static ValueBoolean ui_async_keys;
+    public static ValueBoolean ui_async_film_load;
 
     public static void register(SettingsBuilder builder)
     {
@@ -84,5 +85,6 @@ public class LodSettings
         guidesShowLabels = builder.getBoolean("guides_show_labels", false);
 
         ui_async_keys = builder.getBoolean("ui_async_keys", true);
+        ui_async_film_load = builder.getBoolean("ui_async_film_load", true);
     }
 }

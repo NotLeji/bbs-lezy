@@ -40,4 +40,35 @@ public class FolderManagerRepositoryMixin<T extends ValueGroup>
             t.printStackTrace();
         }
     }
+
+    @Inject(method = "load(Ljava/lang/String;Ljava/util/function/Consumer;)V", at = @At("HEAD"), cancellable = true)
+    public void bbslezy$loadAsync(String id, Consumer<T> callback, CallbackInfo info)
+    {
+        try
+        {
+            if (LodSettings.ui_async_film_load == null || !LodSettings.ui_async_film_load.get())
+            {
+                return;
+            }
+
+            info.cancel();
+
+            LezyDataKeysCache.LOADER.load(
+                () -> this.manager.load(id),
+                (loaded) ->
+                {
+                    if (callback != null)
+                    {
+                        callback.accept(loaded);
+                    }
+                }
+            );
+        }
+        catch (Throwable t)
+        {
+            t.printStackTrace();
+
+            callback.accept(this.manager.load(id));
+        }
+    }
 }
