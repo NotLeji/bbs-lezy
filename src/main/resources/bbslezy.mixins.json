@@ -42,7 +42,10 @@
         "LightmapTextureManagerMixin",
         "GameRendererMixin",
         "BackgroundRendererMixin",
-        "MinecraftClientMixin"
+        "MinecraftClientMixin",
+        "FolderManagerRepositoryMixin",
+        "FolderManagerMutationsMixin",
+        "BaseManagerMutationsMixin"
     ],
     "injectors": {
         "defaultRequire": 0

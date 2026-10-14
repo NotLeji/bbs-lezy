@@ -41,6 +41,8 @@ public class LodSettings
     public static ValueInt guidesColor;
     public static ValueBoolean guidesShowLabels;
 
+    public static ValueBoolean ui_async_keys;
+
     public static void register(SettingsBuilder builder)
     {
         builder.category("general", Icons.GEAR);
@@ -80,5 +82,7 @@ public class LodSettings
         guidesCinematic = builder.getBoolean("guides_cinematic", false);
         guidesColor = builder.getInt("guides_color", 0x88FFFFFF).colorAlpha();
         guidesShowLabels = builder.getBoolean("guides_show_labels", false);
+
+        ui_async_keys = builder.getBoolean("ui_async_keys", true);
     }
 }
