@@ -25,11 +25,13 @@ import leji.bbslezy.ui.framework.elements.input.keyframes.factories.UIIllusionKe
 import leji.bbslezy.ui.framework.elements.input.keyframes.factories.UILensRadiusSettingsKeyframeFactory;
 import leji.bbslezy.utils.keyframes.factories.IllusionKeyframeFactory;
 import leji.bbslezy.ui.LezyIrisHelper;
+import leji.bbslezy.ui.LezyNightVision;
 import leji.bbslezy.utils.keyframes.factories.LensRadiusSettingsKeyframeFactory;
 import leji.bbslezy.video.LezyEncoderProbe;
 import mchorse.bbs_mod.api.client.events.FormRenderEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import leji.bbslezy.ui.skin.SkinFetcher;
 import mchorse.bbs_mod.api.client.events.RegisterClipPanelsEvent;
 import mchorse.bbs_mod.film.replays.tracks.TrackStyle;
@@ -43,6 +45,9 @@ import mchorse.bbs_mod.ui.film.clips.actions.UIDamageActionClip;
 import mchorse.bbs_mod.ui.framework.elements.input.keyframes.factories.UIKeyframeFactory;
 import mchorse.bbs_mod.utils.colors.Colors;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.util.InputUtil;
+import org.lwjgl.glfw.GLFW;
 import mchorse.bbs_mod.api.BBSAddonMod;
 import mchorse.bbs_mod.api.Subscribe;
 import mchorse.bbs_mod.api.client.events.BBSClientReadyEvent;
@@ -61,6 +66,8 @@ import mchorse.bbs_mod.api.client.events.FilmEvents;
  */
 public class BBSLodClient implements BBSAddonMod
 {
+    public static KeyBinding nightVisionKey;
+
     /**
      * Supplies the settings screen's labels from the addon's own strings file, so the two
      * settings read as what they do instead of as their raw ids.
@@ -98,6 +105,7 @@ public class BBSLodClient implements BBSAddonMod
         event.register(ProceduralShakeClip.class, UIProceduralShakeClip::new);
         event.register(ImpactClip.class, UIImpactClip::new);
     }
+
     @Subscribe
     public void onFrameOverlays(RegisterFrameOverlaysEvent event)
     {
@@ -150,6 +158,22 @@ public class BBSLodClient implements BBSAddonMod
     {
         LodEngine.register();
         LezyEncoderProbe.startProbeAsync();
+
+        nightVisionKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+            "key.bbslezy.night_vision",
+            InputUtil.Type.KEYSYM,
+            GLFW.GLFW_KEY_H,
+            "key.category.bbslezy"
+        ));
+
+        ClientTickEvents.END_CLIENT_TICK.register((client) ->
+        {
+            while (nightVisionKey != null && nightVisionKey.wasPressed())
+            {
+                LezyNightVision.toggle();
+            }
+        });
+
         ClientTickEvents.END_CLIENT_TICK.register((client) -> LezyIrisHelper.tick());
         ClientTickEvents.END_CLIENT_TICK.register(leji.bbslezy.perf.ReplayBench::onClientTick);
         UIKeyframeFactory.register(LensRadiusSettingsKeyframeFactory.INSTANCE, UILensRadiusSettingsKeyframeFactory::new);

@@ -38,7 +38,10 @@
         "FilmKeyframeInsertionMixin",
         "BaseFilmControllerMixin",
         "FilmEntityRendererMixin",
-        "FrustumInvoker"
+        "FrustumInvoker",
+        "LightmapTextureManagerMixin",
+        "GameRendererMixin",
+        "BackgroundRendererMixin"
     ],
     "injectors": {
         "defaultRequire": 0

@@ -1,6 +1,7 @@
 package leji.bbslezy.mixin.client;
 
 import leji.bbslezy.ui.LezyIrisHelper;
+import leji.bbslezy.ui.LezyNightVision;
 import mchorse.bbs_mod.l10n.L10n;
 import mchorse.bbs_mod.ui.UIKeys;
 import mchorse.bbs_mod.ui.dashboard.UIDashboard;
@@ -34,6 +35,13 @@ public abstract class UIDashboardMixin
 
             overlay.keys().register(toggleShaders, LezyIrisHelper::toggleShaders).category(UIKeys.DASHBOARD_CATEGORY);
 
+            KeyCombo toggleNightVision = new KeyCombo(
+                "toggle_night_vision",
+                L10n.lang("key.bbslezy.night_vision"),
+                GLFW.GLFW_KEY_H
+            ).categoryKey("dashboard");
+
+            overlay.keys().register(toggleNightVision, LezyNightVision::toggle).category(UIKeys.DASHBOARD_CATEGORY);
         }
         catch (Throwable ignored)
         {

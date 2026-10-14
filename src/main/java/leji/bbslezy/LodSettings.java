@@ -24,6 +24,8 @@ public class LodSettings
     public static ValueInt perf_skip_distance;
     public static ValueInt perf_throttle_ticks;
 
+    public static ValueBoolean nightVision;
+
     public static ValueBoolean separateAudioTracks;
     public static ValueBoolean openFolderOnImport;
     public static ValueInt bakingBatchPercent;
@@ -51,6 +53,8 @@ public class LodSettings
         perf_throttle_distance = builder.getInt("perf_throttle_distance", 32, 0, 512);
         perf_skip_distance = builder.getInt("perf_skip_distance", 96, 0, 1024);
         perf_throttle_ticks = builder.getInt("perf_throttle_ticks", 4, 0, 20);
+
+        nightVision = builder.getBoolean("night_vision", false);
 
         separateAudioTracks = builder.getBoolean("separate_audio_tracks", false);
         openFolderOnImport = builder.getBoolean("open_folder_on_import", false);
