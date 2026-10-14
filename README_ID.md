@@ -119,6 +119,19 @@ Semua setting bisa diubah dari dua tempat:
 
 File setting-nya ada di `<folder config BBS>/bbs/settings/bbslezy.json`.
 
+### Performa UI Dashboard
+
+BBS Lezy menghadirkan optimisasi khusus untuk navigasi dashboard dan panel BBS yang menjaga hasil visual tetap 100% identik tanpa mengubah tampilan satu pixel pun, sekaligus menghilangkan freeze/hitch di iGPU:
+
+| Setting | Default | Keterangan |
+|---|---|---|
+| `ui_async_keys` | nyala | Memindahkan pemindaian disk (folder film, model, partikel) ke background thread dengan cache 2 detik dan invalidasi otomatis saat ada perubahan (save, rename, delete), mencegah render thread tersendat saat membuka panel. |
+| `ui_async_film_load` | nyala | Memuat dan mem-parse data film `.dat` besar secara asinkron di worker thread, mencegah freeze saat memilih film berat. |
+| `ui_world_skip` | nyala | Melewati render dunia 3D hanya saat panel dashboard solid dan opak menutup layar penuh tanpa transparansi. |
+
+Benchmark Headless:
+Jalankan benchmark otomatis via flag `-Dbbslezy.uibench=true`. Hasil metrik per fase (`launch_wait`, `dashboard_open`, `film_panel`, `model_panel`) otomatis tersimpan di `build/uibench/summary.txt`.
+
 ### Build dari source
 
 ```bash

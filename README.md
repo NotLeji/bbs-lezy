@@ -119,6 +119,19 @@ Every setting is reachable from two places:
 
 The settings file lives at `<BBS config folder>/bbs/settings/bbslezy.json`.
 
+### Dashboard UI Performance
+
+BBS Lezy includes optimizations specifically for the BBS dashboard and panel navigation, maintaining 100% visual identity while eliminating frame freezes and hitches on integrated GPUs (Intel iGPU):
+
+| Setting | Default | Description |
+|---|---|---|
+| `ui_async_keys` | on | Scans disk directories (films, models, particles) on a background daemon worker thread with a 2-second cache and instant invalidation on mutations (saving, renaming, deleting), preventing render thread stalls. |
+| `ui_async_film_load` | on | Reads and parses large film `.dat` files asynchronously on worker threads, preventing editor freezes when opening complex films. |
+| `ui_world_skip` | on | Skips 3D world background rendering only when an opaque solid-color dashboard panel covers the screen completely. |
+
+Benchmarking:
+Run the automated headless UI benchmark harness via `-Dbbslezy.uibench=true`. Summary metrics per phase (`launch_wait`, `dashboard_open`, `film_panel`, `model_panel`) will be output to `build/uibench/summary.txt`.
+
 ### Build from source
 
 ```bash
