@@ -41,7 +41,8 @@
         "FrustumInvoker",
         "LightmapTextureManagerMixin",
         "GameRendererMixin",
-        "BackgroundRendererMixin"
+        "BackgroundRendererMixin",
+        "MinecraftClientMixin"
     ],
     "injectors": {
         "defaultRequire": 0
