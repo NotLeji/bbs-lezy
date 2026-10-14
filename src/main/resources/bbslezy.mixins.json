@@ -45,7 +45,8 @@
         "MinecraftClientMixin",
         "FolderManagerRepositoryMixin",
         "FolderManagerMutationsMixin",
-        "BaseManagerMutationsMixin"
+        "BaseManagerMutationsMixin",
+        "LivingEntityMixin"
     ],
     "injectors": {
         "defaultRequire": 0

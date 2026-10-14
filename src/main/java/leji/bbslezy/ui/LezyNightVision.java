@@ -2,6 +2,8 @@ package leji.bbslezy.ui;
 
 import leji.bbslezy.LodSettings;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.text.Text;
 
 /**
@@ -11,6 +13,15 @@ import net.minecraft.text.Text;
  */
 public final class LezyNightVision
 {
+    private static final StatusEffectInstance FAKE_NIGHT_VISION = new StatusEffectInstance(
+        StatusEffects.NIGHT_VISION,
+        32767,
+        0,
+        false,
+        false,
+        false
+    );
+
     private static boolean enabled = false;
 
     public static boolean isEnabled()
@@ -21,6 +32,11 @@ public final class LezyNightVision
         }
 
         return enabled;
+    }
+
+    public static StatusEffectInstance getFakeInstance()
+    {
+        return FAKE_NIGHT_VISION;
     }
 
     public static void setEnabled(boolean value)
