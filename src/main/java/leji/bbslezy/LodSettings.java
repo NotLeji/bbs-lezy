@@ -43,6 +43,7 @@ public class LodSettings
 
     public static ValueBoolean ui_async_keys;
     public static ValueBoolean ui_async_film_load;
+    public static ValueBoolean ui_world_skip;
 
     public static void register(SettingsBuilder builder)
     {
@@ -86,5 +87,6 @@ public class LodSettings
 
         ui_async_keys = builder.getBoolean("ui_async_keys", true);
         ui_async_film_load = builder.getBoolean("ui_async_film_load", true);
+        ui_world_skip = builder.getBoolean("ui_world_skip", true);
     }
 }
