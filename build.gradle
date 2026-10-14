@@ -14,6 +14,10 @@ repositories {
 	 * public repository for it. */
 	mavenLocal()
 	mavenCentral()
+	maven {
+		name = "Fabric"
+		url = "https://maven.fabricmc.net/"
+	}
 
 	/* Sodium lives on Modrinth's maven; the exclusiveContent filter keeps the repository from
 	 * being consulted for anything else. Same shape as BBS's own build file. */
@@ -64,6 +68,19 @@ test {
  * covers the integrated server the client starts. */
 tasks.named('runClient', JavaExec) {
 	useXvfb = false
+
+	/* Exclude headless test-runner jars so normal runClient doesn't auto-create test worlds */
+	doFirst {
+		fileTree('run/mods').matching {
+			include 'mc-runtime-test*.jar'
+		}.each { file ->
+			def target = new File(project.file('run/headless-mods'), file.name)
+			target.parentFile.mkdirs()
+			file.renameTo(target)
+			logger.lifecycle("Moved ${file.name} to run/headless-mods/ so runClient boots normally.")
+		}
+	}
+
 	if (System.getProperty('os.name').startsWith('Windows')) {
 		def socketDir = layout.projectDirectory.dir('.gradle/sockets').asFile
 		systemProperty 'jdk.net.unixdomain.tmpdir', socketDir.absolutePath
