@@ -1,0 +1,5 @@
+lezy.uibench summary
+phase=launch_wait frames=5 p50_ms=801.0 p95_ms=1929.0 p99_ms=1929.0 max_ms=1929.0 hitches>100ms=5 fps=1.0
+phase=dashboard_open frames=61 p50_ms=554.3 p95_ms=709.6 p99_ms=1834.1 max_ms=1834.1 hitches>100ms=61 fps=1.7
+phase=film_panel frames=34 p50_ms=452.6 p95_ms=631.1 p99_ms=639.9 max_ms=639.9 hitches>100ms=34 fps=2.2
+phase=model_panel frames=30 p50_ms=634.5 p95_ms=996.3 p99_ms=1013.8 max_ms=1013.8 hitches>100ms=30 fps=1.5

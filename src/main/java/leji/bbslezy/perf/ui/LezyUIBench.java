@@ -40,6 +40,11 @@ public class LezyUIBench
             return;
         }
 
+        if (mc.world == null || mc.player == null)
+        {
+            return;
+        }
+
         if (waitTicks > 0)
         {
             waitTicks--;
@@ -78,7 +83,7 @@ public class LezyUIBench
             case 0:
                 System.out.println("[BBSLezyUIBench] step 0: launch_wait");
                 startPhase("launch_wait");
-                waitTicks = 300;
+                waitTicks = 60;
                 break;
             case 1:
                 System.out.println("[BBSLezyUIBench] step 1: dashboard_open");

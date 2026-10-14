@@ -1,0 +1,39 @@
+Top Methods on Main / Render Thread (JFR ui-baseline.jfr):
+------------------------------------------------------------
+1. java.lang.StringLatin1.hashCode(byte[]) line: 196 (6.0%)
+2. java.util.zip.ZipFile$Source.getEntryPos(String, boolean) line: 1816 (5.4%)
+3. net.minecraft.class_4543.method_22393(class_2338) line: 573 (1.6%)
+4. java.lang.String.startsWith(String, int) line: 2270 (1.6%)
+5. java.util.jar.JarFile.getJarEntry(String) line: 473 (1.3%)
+6. org.objectweb.asm.ClassReader.readCode(MethodVisitor, Context, int) line: 2425 (1.1%)
+7. java.lang.invoke.VarHandleByteArrayAsInts$ArrayHandle.index(byte[], int) line: 103 (1.1%)
+8. it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap.get(long) line: 325 (1.0%)
+9. net.minecraft.class_631.method_20181(class_2818, int, int) line: 54 (1.0%)
+10. net.minecraft.class_3215.method_12121(int, int, class_2806, boolean) line: 1684 (1.0%)
+11. mchorse.bbs_mod.utils.resources.Pixels.fromSize(int, int) line: 108 (0.7%)
+12. mchorse.bbs_mod.ui.framework.elements.UIElement.resize() line: 1169 (1.6%)
+13. mchorse.bbs_mod.ui.utils.UIChalkboard.resize() line: 124 (1.5%)
+14. mchorse.bbs_mod.ui.framework.UIBaseMenu.resize(int, int) line: 170 (1.0%)
+
+Top Mchorse UI Hotspots in Main Thread Stack:
+---------------------------------------------
+- mchorse.bbs_mod.ui.framework.elements.UIElement.resize() line: 1169
+- mchorse.bbs_mod.ui.utils.UIChalkboard.resize() line: 124
+- mchorse.bbs_mod.utils.resources.Pixels.fromSize(int, int) line: 108-116
+- mchorse.bbs_mod.ui.framework.UIBaseMenu.resize(int, int) line: 170
+- mchorse.bbs_mod.ui.framework.UIScreen.method_25426() line: 131
+- mchorse.bbs_mod.ui.framework.elements.UIElement.render(UIContext) line: 1582
+- mchorse.bbs_mod.ui.framework.UIContext.flushLayout() line: 182
+- mchorse.bbs_mod.ui.framework.UIBaseMenu.renderMenu(UIRenderingContext, int, int) line: 371
+- mchorse.bbs_mod.ui.film.UIFilmPanel.renderInWorld(WorldRenderContext) line: 1831
+- mchorse.bbs_mod.data.DataParser.parse(String) line: 42
+- mchorse.bbs_mod.ui.utils.InterfaceBlur.run(class_283, float) line: 170 (1 sample, 0.1%)
+
+Object Allocations (Mchorse package: 474 / 31,301 samples = 1.5%):
+------------------------------------------------------------------
+- mchorse.bbs_mod.resources.Link.toString() line: 93 (105 samples)
+- mchorse.bbs_mod.utils.watchdog.WatchDog.pollEvents() line: 132 (22 samples)
+- mchorse.bbs_mod.settings.values.core.ValueGroup.add(BaseValue) line: 50 (20 samples)
+- mchorse.bbs_mod.resources.packs.ExternalAssetsSourcePack.getLinksFromPathRecursively (18 samples)
+- mchorse.bbs_mod.cubic.model.ModelManager.lambda$getAvailableKeys$0 (14 samples)
+- mchorse.bbs_mod.forms.sections.ModelFormSection.create(String) line: 63 (12 samples)
