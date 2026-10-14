@@ -18,6 +18,12 @@ public class LodSettings
     public static ValueBoolean enabled;
     public static ValueInt renderLimit;
     public static ValueDouble focusDistance;
+
+    public static ValueBoolean perf_enabled;
+    public static ValueInt perf_throttle_distance;
+    public static ValueInt perf_skip_distance;
+    public static ValueInt perf_throttle_ticks;
+
     public static ValueBoolean separateAudioTracks;
     public static ValueBoolean openFolderOnImport;
     public static ValueInt bakingBatchPercent;
@@ -33,11 +39,6 @@ public class LodSettings
     public static ValueInt guidesColor;
     public static ValueBoolean guidesShowLabels;
 
-    public static ValueBoolean perf_enabled;
-    public static ValueInt perf_throttle_distance;
-    public static ValueInt perf_skip_distance;
-    public static ValueInt perf_throttle_ticks;
-
     public static void register(SettingsBuilder builder)
     {
         builder.category("general", Icons.GEAR);
@@ -45,6 +46,12 @@ public class LodSettings
         enabled = builder.getBoolean("enabled", true);
         renderLimit = builder.getInt("render_limit", 100, 0, 2000);
         focusDistance = builder.getDouble("focus_distance", 0D, 0D, 256D);
+
+        perf_enabled = builder.getBoolean("perf_enabled", false);
+        perf_throttle_distance = builder.getInt("perf_throttle_distance", 32, 0, 512);
+        perf_skip_distance = builder.getInt("perf_skip_distance", 96, 0, 1024);
+        perf_throttle_ticks = builder.getInt("perf_throttle_ticks", 4, 0, 20);
+
         separateAudioTracks = builder.getBoolean("separate_audio_tracks", false);
         openFolderOnImport = builder.getBoolean("open_folder_on_import", false);
         bakingBatchPercent = builder.getInt("baking_batch_percent", 5, 1, 100);
@@ -69,10 +76,5 @@ public class LodSettings
         guidesCinematic = builder.getBoolean("guides_cinematic", false);
         guidesColor = builder.getInt("guides_color", 0x88FFFFFF).colorAlpha();
         guidesShowLabels = builder.getBoolean("guides_show_labels", false);
-
-        perf_enabled = builder.getBoolean("perf_enabled", false);
-        perf_throttle_distance = builder.getInt("perf_throttle_distance", 32, 0, 512);
-        perf_skip_distance = builder.getInt("perf_skip_distance", 96, 0, 1024);
-        perf_throttle_ticks = builder.getInt("perf_throttle_ticks", 4, 0, 20);
     }
 }
