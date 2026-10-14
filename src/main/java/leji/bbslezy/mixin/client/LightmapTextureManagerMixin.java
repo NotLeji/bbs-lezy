@@ -13,13 +13,19 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class LightmapTextureManagerMixin
 {
     @Redirect(method = "update(F)V", at = @At(value = "INVOKE",
-        target = "Lnet/minecraft/client/network/ClientPlayerEntity;hasStatusEffect(Lnet/minecraft/entity/effect/StatusEffect;)Z",
-        ordinal = 0))
+        target = "Lnet/minecraft/client/network/ClientPlayerEntity;hasStatusEffect(Lnet/minecraft/entity/effect/StatusEffect;)Z"))
     private boolean bbslezy$nightVisionStatus(ClientPlayerEntity player, StatusEffect effect)
     {
-        if (effect == StatusEffects.NIGHT_VISION && LezyNightVision.isEnabled())
+        if (LezyNightVision.isEnabled())
         {
-            return true;
+            if (effect == StatusEffects.NIGHT_VISION)
+            {
+                return true;
+            }
+            if (effect == StatusEffects.DARKNESS)
+            {
+                return false;
+            }
         }
 
         return player != null && player.hasStatusEffect(effect);

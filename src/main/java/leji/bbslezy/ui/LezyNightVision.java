@@ -31,6 +31,13 @@ public final class LezyNightVision
         {
             LodSettings.nightVision.set(value);
         }
+
+        MinecraftClient mc = MinecraftClient.getInstance();
+
+        if (mc != null && mc.gameRenderer != null && mc.gameRenderer.getLightmapTextureManager() != null)
+        {
+            mc.gameRenderer.getLightmapTextureManager().tick();
+        }
     }
 
     public static void toggle()
