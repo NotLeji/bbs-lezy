@@ -37,7 +37,8 @@
         "UIClipsMixin",
         "FilmKeyframeInsertionMixin",
         "BaseFilmControllerMixin",
-        "FilmEntityRendererMixin"
+        "FilmEntityRendererMixin",
+        "FrustumInvoker"
     ],
     "injectors": {
         "defaultRequire": 0
