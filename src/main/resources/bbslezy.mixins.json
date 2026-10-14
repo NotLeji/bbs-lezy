@@ -36,7 +36,8 @@
         "FormStableIdsMixin",
         "UIClipsMixin",
         "FilmKeyframeInsertionMixin",
-        "BaseFilmControllerMixin"
+        "BaseFilmControllerMixin",
+        "FilmEntityRendererMixin"
     ],
     "injectors": {
         "defaultRequire": 0
