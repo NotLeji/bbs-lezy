@@ -35,7 +35,7 @@ public final class LezyNightVision
 
     public static void toggle()
     {
-        setEnabled(!enabled);
+        setEnabled(!isEnabled());
 
         MinecraftClient mc = MinecraftClient.getInstance();
 

@@ -57,9 +57,7 @@ public class ReplayListMixin
             LezyReplayActions.selectAll(self);
         });
 
-        List<Replay> selected = LezyReplayActions.getSelectedOrFolderReplays(self, film);
-
-        if (!selected.isEmpty())
+        if (!self.selection.isEmpty())
         {
             menu.action(Icons.INVISIBLE, L10n.lang("bbslezy.ui.replays.disable_selected"), () ->
             {

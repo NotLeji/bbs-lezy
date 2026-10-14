@@ -35,12 +35,13 @@ public final class LezyPerfPolicy
         final List<Replay> filteredTick = new ArrayList<>();
         final List<Replay> filteredFrame = new ArrayList<>();
         final Set<String> anchoredTargetIds = new HashSet<>();
-        final Map<IEntity, Replay> entityToReplay = new IdentityHashMap<>();
 
         int lastReplayCount = -1;
         Film lastFilm;
-        Map<String, IEntity> lastEntitiesRef;
     }
+
+    private record Thresholds(int throttleDist, int skipDist, double throttleDistSq, double skipDistSq)
+    {}
 
     /**
      * Filters replays for the tick evaluation path (updateEntities).
@@ -115,58 +116,17 @@ public final class LezyPerfPolicy
             Camera camera = mc.gameRenderer.getCamera();
             Vec3d camPos = camera.getPos();
 
-            double ex = 0;
-            double ey = 0;
-            double ez = 0;
+            double[] pos = new double[] {0, 0, 0};
+            resolveEntityPosition(replay, entity, pos, 0, 0, 0);
 
-            if (entity != null)
-            {
-                ex = entity.getX();
-                ey = entity.getY();
-                ez = entity.getZ();
-            }
-
-            Form form = null;
-
-            if (replay != null)
-            {
-                form = replay.form.get();
-
-                if (replay.relative.get())
-                {
-                    Vector3d origin = replay.getRelativeOrigin();
-
-                    if (origin != null)
-                    {
-                        ex += origin.x;
-                        ey += origin.y;
-                        ez += origin.z;
-                    }
-                }
-            }
-            else if (entity != null)
-            {
-                form = entity.getForm();
-            }
-
-            double dx = ex - camPos.x;
-            double dy = ey - camPos.y;
-            double dz = ez - camPos.z;
+            double dx = pos[0] - camPos.x;
+            double dy = pos[1] - camPos.y;
+            double dz = pos[2] - camPos.z;
             double distSq = dx * dx + dy * dy + dz * dz;
 
-            int throttleDist = LodSettings.perf_throttle_distance != null ? LodSettings.perf_throttle_distance.get() : 32;
-            int skipDist = LodSettings.perf_skip_distance != null ? LodSettings.perf_skip_distance.get() : 96;
-
-            if (skipDist < throttleDist)
-            {
-                int temp = skipDist;
-                skipDist = throttleDist;
-                throttleDist = temp;
-            }
-
-            double skipDistSq = (double) skipDist * skipDist;
+            Thresholds th = getThresholds();
+            Form form = resolveForm(replay, entity);
             boolean inFrustum = form == null || !LodEngine.getCulledForms().contains(form);
-
             boolean cameraLocked = form != null && form.anchor.get().hasTarget();
             boolean shellActor = replay != null && replay.actor.get();
 
@@ -179,8 +139,8 @@ public final class LezyPerfPolicy
                 false,
                 0L,
                 4,
-                (double) throttleDist * throttleDist,
-                skipDistSq
+                th.throttleDistSq,
+                th.skipDistSq
             );
 
             return PerfDecision.isBadge(inputs);
@@ -253,23 +213,10 @@ public final class LezyPerfPolicy
         Vec3d camPos = camera.getPos();
 
         ControllerState state = states.computeIfAbsent(controller, (k) -> new ControllerState());
-
         updateAnchorCache(state, controller, replays);
-        updateEntityMapCache(state, controller, replays);
 
-        int throttleDist = LodSettings.perf_throttle_distance != null ? LodSettings.perf_throttle_distance.get() : 32;
-        int skipDist = LodSettings.perf_skip_distance != null ? LodSettings.perf_skip_distance.get() : 96;
+        Thresholds th = getThresholds();
         int throttleTicks = LodSettings.perf_throttle_ticks != null ? LodSettings.perf_throttle_ticks.get() : 4;
-
-        if (skipDist < throttleDist)
-        {
-            int temp = skipDist;
-            skipDist = throttleDist;
-            throttleDist = temp;
-        }
-
-        double throttleDistSq = (double) throttleDist * throttleDist;
-        double skipDistSq = (double) skipDist * skipDist;
         int throttleEvery = Math.max(0, throttleTicks);
 
         Set<Form> culledForms = LodEngine.getCulledForms();
@@ -279,37 +226,18 @@ public final class LezyPerfPolicy
         List<Replay> resultList = frameMode ? state.filteredFrame : state.filteredTick;
         resultList.clear();
 
+        double[] pos = new double[3];
+
         for (int i = 0; i < replays.size(); i++)
         {
             Replay replay = replays.get(i);
             IEntity entity = entities != null ? entities.get(replay.getId()) : null;
 
-            double ex = camPos.x;
-            double ey = camPos.y;
-            double ez = camPos.z;
+            resolveEntityPosition(replay, entity, pos, camPos.x, camPos.y, camPos.z);
 
-            if (entity != null)
-            {
-                ex = entity.getX();
-                ey = entity.getY();
-                ez = entity.getZ();
-            }
-
-            if (replay.relative.get())
-            {
-                Vector3d origin = replay.getRelativeOrigin();
-
-                if (origin != null)
-                {
-                    ex += origin.x;
-                    ey += origin.y;
-                    ez += origin.z;
-                }
-            }
-
-            double dx = ex - camPos.x;
-            double dy = ey - camPos.y;
-            double dz = ez - camPos.z;
+            double dx = pos[0] - camPos.x;
+            double dy = pos[1] - camPos.y;
+            double dz = pos[2] - camPos.z;
             double distSq = dx * dx + dy * dy + dz * dz;
 
             Form form = replay.form.get();
@@ -329,8 +257,8 @@ public final class LezyPerfPolicy
                 exception,
                 replayTicks,
                 throttleEvery,
-                throttleDistSq,
-                skipDistSq
+                th.throttleDistSq,
+                th.skipDistSq
             );
 
             PerfDecision.Verdict verdict = frameMode
@@ -344,6 +272,70 @@ public final class LezyPerfPolicy
         }
 
         return resultList;
+    }
+
+    private static Thresholds getThresholds()
+    {
+        int throttleDist = LodSettings.perf_throttle_distance != null ? LodSettings.perf_throttle_distance.get() : 32;
+        int skipDist = LodSettings.perf_skip_distance != null ? LodSettings.perf_skip_distance.get() : 96;
+
+        if (skipDist < throttleDist)
+        {
+            int temp = skipDist;
+            skipDist = throttleDist;
+            throttleDist = temp;
+        }
+
+        return new Thresholds(
+            throttleDist,
+            skipDist,
+            (double) throttleDist * throttleDist,
+            (double) skipDist * skipDist
+        );
+    }
+
+    private static void resolveEntityPosition(Replay replay, IEntity entity, double[] out, double defX, double defY, double defZ)
+    {
+        double ex = defX;
+        double ey = defY;
+        double ez = defZ;
+
+        if (entity != null)
+        {
+            ex = entity.getX();
+            ey = entity.getY();
+            ez = entity.getZ();
+        }
+
+        if (replay != null && replay.relative.get())
+        {
+            Vector3d origin = replay.getRelativeOrigin();
+
+            if (origin != null)
+            {
+                ex += origin.x;
+                ey += origin.y;
+                ez += origin.z;
+            }
+        }
+
+        out[0] = ex;
+        out[1] = ey;
+        out[2] = ez;
+    }
+
+    private static Form resolveForm(Replay replay, IEntity entity)
+    {
+        if (replay != null)
+        {
+            return replay.form.get();
+        }
+        else if (entity != null)
+        {
+            return entity.getForm();
+        }
+
+        return null;
     }
 
     private static void updateAnchorCache(ControllerState state, BaseFilmController controller, List<Replay> replays)
@@ -372,40 +364,6 @@ public final class LezyPerfPolicy
 
         state.lastFilm = controller.film;
         state.lastReplayCount = replays.size();
-    }
-
-    private static void updateEntityMapCache(ControllerState state, BaseFilmController controller, List<Replay> replays)
-    {
-        Map<String, IEntity> entities = controller.getEntities();
-
-        if (state.lastEntitiesRef == entities)
-        {
-            return;
-        }
-
-        state.entityToReplay.clear();
-
-        if (entities != null)
-        {
-            Map<String, Replay> replaysById = new IdentityHashMap<>();
-
-            for (Replay replay : replays)
-            {
-                replaysById.put(replay.getId(), replay);
-            }
-
-            for (Map.Entry<String, IEntity> entry : entities.entrySet())
-            {
-                Replay replay = replaysById.get(entry.getKey());
-
-                if (replay != null && entry.getValue() != null)
-                {
-                    state.entityToReplay.put(entry.getValue(), replay);
-                }
-            }
-        }
-
-        state.lastEntitiesRef = entities;
     }
 
     private LezyPerfPolicy()

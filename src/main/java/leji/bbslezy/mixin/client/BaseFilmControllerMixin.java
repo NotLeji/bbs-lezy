@@ -1,6 +1,5 @@
 package leji.bbslezy.mixin.client;
 
-import java.util.Collections;
 import java.util.List;
 
 import leji.bbslezy.perf.LezyReplayPerfFilter;
@@ -20,30 +19,21 @@ public abstract class BaseFilmControllerMixin
         target = "Lmchorse/bbs_mod/film/BaseFilmController;replays()Ljava/util/List;", remap = false))
     private List<Replay> bbslezy$perfFrameFilter(BaseFilmController controller)
     {
-        List<Replay> replays = controller.film == null ? Collections.emptyList() : controller.film.replays.getList();
-        List<Replay> filtered = LezyReplayPerfFilter.filterFrame(controller, controller.getTick(), replays);
-
-        return filtered != null ? filtered : replays;
+        return LezyReplayPerfFilter.getEffectiveFrameReplays(controller);
     }
 
     @Redirect(method = "updateEntities(I)V", at = @At(value = "INVOKE",
         target = "Lmchorse/bbs_mod/film/BaseFilmController;replays()Ljava/util/List;", remap = false))
     private List<Replay> bbslezy$perfTickFilter(BaseFilmController controller)
     {
-        List<Replay> replays = controller.film == null ? Collections.emptyList() : controller.film.replays.getList();
-        List<Replay> filtered = LezyReplayPerfFilter.filterTick(controller, controller.getTick(), replays);
-
-        return filtered != null ? filtered : replays;
+        return LezyReplayPerfFilter.getEffectiveTickReplays(controller);
     }
 
     @Redirect(method = "render(Lnet/fabricmc/fabric/api/client/rendering/v1/WorldRenderContext;)V", at = @At(value = "INVOKE",
         target = "Lmchorse/bbs_mod/film/BaseFilmController;replays()Ljava/util/List;", remap = false))
     private List<Replay> bbslezy$perfRenderFilter(BaseFilmController controller)
     {
-        List<Replay> replays = controller.film == null ? Collections.emptyList() : controller.film.replays.getList();
-        List<Replay> filtered = LezyReplayPerfFilter.filterFrame(controller, controller.getTick(), replays);
-
-        return filtered != null ? filtered : replays;
+        return LezyReplayPerfFilter.getEffectiveFrameReplays(controller);
     }
 
     @Redirect(method = "render(Lnet/fabricmc/fabric/api/client/rendering/v1/WorldRenderContext;)V", at = @At(value = "INVOKE",

@@ -1,5 +1,6 @@
 package leji.bbslezy.perf;
 
+import java.util.Collections;
 import java.util.List;
 
 import leji.bbslezy.LodSettings;
@@ -13,6 +14,22 @@ import mchorse.bbs_mod.film.replays.Replay;
  */
 public final class LezyReplayPerfFilter
 {
+    public static List<Replay> getEffectiveFrameReplays(BaseFilmController controller)
+    {
+        List<Replay> replays = controller.film == null ? Collections.emptyList() : controller.film.replays.getList();
+        List<Replay> filtered = filterFrame(controller, controller.getTick(), replays);
+
+        return filtered != null ? filtered : replays;
+    }
+
+    public static List<Replay> getEffectiveTickReplays(BaseFilmController controller)
+    {
+        List<Replay> replays = controller.film == null ? Collections.emptyList() : controller.film.replays.getList();
+        List<Replay> filtered = filterTick(controller, controller.getTick(), replays);
+
+        return filtered != null ? filtered : replays;
+    }
+
     public static List<Replay> filterFrame(BaseFilmController controller, int tick, List<Replay> original)
     {
         if (!enabled() || controller.exception >= 0)
