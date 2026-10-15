@@ -1,8 +1,13 @@
 package leji.bbslezy.perf.ui;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -31,6 +36,7 @@ public class LezyKeyCache
         volatile Collection<String> keys;
         volatile long refreshAt;
         final AtomicBoolean inFlight = new AtomicBoolean(false);
+        final Queue<Consumer<Collection<String>>> waiters = new ConcurrentLinkedQueue<>();
     }
 
     public LezyKeyCache(Supplier<Long> clock, Executor worker, Executor main)
@@ -53,32 +59,116 @@ public class LezyKeyCache
             return;
         }
 
-        if (!entry.inFlight.compareAndSet(false, true))
+        if (cached != null)
         {
-            if (cached != null)
+            callback.accept(cached); /* serve stale sementara refresh masih berjalan */
+
+            if (entry.inFlight.compareAndSet(false, true))
             {
-                callback.accept(cached); /* serve stale sementara refresh masih berjalan */
+                this.scheduleWorker(entry, walker);
             }
 
             return;
         }
 
-        this.worker.execute(() ->
+        entry.waiters.add(callback);
+
+        if (entry.inFlight.compareAndSet(false, true))
         {
-            try
-            {
-                Collection<String> keys = walker.get(); /* walk disk berat, di worker */
+            this.scheduleWorker(entry, walker);
+        }
+    }
 
-                entry.keys = keys;
-                entry.refreshAt = this.clock.get();
-
-                this.main.execute(() -> callback.accept(keys));
-            }
-            finally
+    private void scheduleWorker(Entry entry, Supplier<? extends Collection<String>> walker)
+    {
+        try
+        {
+            this.worker.execute(() ->
             {
-                entry.inFlight.set(false);
+                Collection<String> keys = null;
+
+                try
+                {
+                    keys = walker.get(); /* walk disk berat, di worker */
+
+                    if (keys != null)
+                    {
+                        entry.keys = keys;
+                        entry.refreshAt = this.clock.get();
+                    }
+                }
+                catch (Throwable t)
+                {
+                    t.printStackTrace();
+                }
+                finally
+                {
+                    entry.inFlight.set(false);
+
+                    Collection<String> result = keys != null ? keys
+                        : (entry.keys != null ? entry.keys : Collections.emptyList());
+
+                    List<Consumer<Collection<String>>> pending = new ArrayList<>();
+                    Consumer<Collection<String>> waiter;
+
+                    while ((waiter = entry.waiters.poll()) != null)
+                    {
+                        pending.add(waiter);
+                    }
+
+                    if (!pending.isEmpty())
+                    {
+                        this.main.execute(() ->
+                        {
+                            for (Consumer<Collection<String>> cb : pending)
+                            {
+                                try
+                                {
+                                    cb.accept(result);
+                                }
+                                catch (Throwable t)
+                                {
+                                    t.printStackTrace();
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        catch (Throwable t)
+        {
+            t.printStackTrace();
+            entry.inFlight.set(false);
+
+            List<Consumer<Collection<String>>> pending = new ArrayList<>();
+            Consumer<Collection<String>> waiter;
+
+            while ((waiter = entry.waiters.poll()) != null)
+            {
+                pending.add(waiter);
             }
-        });
+
+            if (!pending.isEmpty())
+            {
+                Collection<String> fallback = entry.keys != null ? entry.keys : Collections.emptyList();
+
+                this.main.execute(() ->
+                {
+                    for (Consumer<Collection<String>> cb : pending)
+                    {
+                        try
+                        {
+                            cb.accept(fallback);
+                        }
+                        catch (Throwable t2)
+                        {
+                            t2.printStackTrace();
+                        }
+                    }
+                });
+            }
+        }
     }
 
     public void invalidate(Object key)
@@ -93,14 +183,6 @@ public class LezyKeyCache
 
     private Entry stateFor(Object key)
     {
-        Entry entry = this.states.get(key);
-
-        if (entry == null)
-        {
-            entry = new Entry();
-            this.states.put(key, entry);
-        }
-
-        return entry;
+        return this.states.computeIfAbsent(key, (k) -> new Entry());
     }
 }

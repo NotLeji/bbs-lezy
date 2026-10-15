@@ -69,6 +69,8 @@ test {
 tasks.named('runClient', JavaExec) {
 	useXvfb = false
 
+	def displacedJars = []
+
 	/* Exclude all extra/Prism mods from run/mods/ so runClient boots cleanly with essential mods only (BBS, Sodium, Iris, etc.) from Loom dependencies */
 	doFirst {
 		def prismModsDir = project.file('run/prism-mods')
@@ -78,7 +80,21 @@ tasks.named('runClient', JavaExec) {
 		}.each { file ->
 			def target = new File(prismModsDir, file.name)
 			file.renameTo(target)
+			displacedJars.add(file.name)
 			logger.lifecycle("Moved ${file.name} to run/prism-mods/ for runClient isolation.")
+		}
+	}
+
+	doLast {
+		def prismModsDir = project.file('run/prism-mods')
+		def modsDir = project.file('run/mods')
+		displacedJars.each { fileName ->
+			def source = new File(prismModsDir, fileName)
+			if (source.exists()) {
+				def target = new File(modsDir, fileName)
+				source.renameTo(target)
+				logger.lifecycle("Restored ${fileName} back to run/mods/ after runClient.")
+			}
 		}
 	}
 

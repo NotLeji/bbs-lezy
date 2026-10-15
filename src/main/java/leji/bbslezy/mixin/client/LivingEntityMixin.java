@@ -1,6 +1,7 @@
 package leji.bbslezy.mixin.client;
 
 import leji.bbslezy.ui.LezyNightVision;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
@@ -18,7 +19,12 @@ public abstract class LivingEntityMixin
     {
         if (effect == StatusEffects.NIGHT_VISION && LezyNightVision.isEnabled())
         {
-            cir.setReturnValue(true);
+            MinecraftClient mc = MinecraftClient.getInstance();
+
+            if (mc != null && ((Object) this == mc.player || (Object) this == mc.cameraEntity))
+            {
+                cir.setReturnValue(true);
+            }
         }
     }
 
@@ -27,7 +33,12 @@ public abstract class LivingEntityMixin
     {
         if (effect == StatusEffects.NIGHT_VISION && LezyNightVision.isEnabled())
         {
-            cir.setReturnValue(LezyNightVision.getFakeInstance());
+            MinecraftClient mc = MinecraftClient.getInstance();
+
+            if (mc != null && ((Object) this == mc.player || (Object) this == mc.cameraEntity))
+            {
+                cir.setReturnValue(LezyNightVision.getFakeInstance());
+            }
         }
     }
 }
