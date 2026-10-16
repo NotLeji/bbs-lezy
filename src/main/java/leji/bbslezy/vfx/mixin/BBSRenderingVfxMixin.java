@@ -1,4 +1,7 @@
 package leji.bbslezy.vfx.mixin;
+
+import leji.bbslezy.vfx.client.BbsVfxAtlasDissolve;
+import leji.bbslezy.vfx.client.BbsVfxDissolveTexture;
 import leji.bbslezy.vfx.client.BeamHeat;
 import leji.bbslezy.vfx.client.BeamVolume;
 import leji.bbslezy.vfx.client.CracksVolume;
@@ -31,5 +34,8 @@ public abstract class BBSRenderingVfxMixin
         SmokeVolume.render(mc.getFramebuffer());
         ExplosionSmokeVolume.render(mc.getFramebuffer());
         BeamHeat.render(mc.getFramebuffer());
+
+        BbsVfxDissolveTexture.processPending();
+        BbsVfxAtlasDissolve.processPending();
     }
 }

@@ -16,11 +16,26 @@
 		"ModelBlockEntityRendererVfxMixin",
 		"FollowCurveControllerMixin",
 		"RunnerFollowCurveEndMixin",
-		"UIReplayPropertiesPanelMixin"
+		"UIReplayPropertiesPanelMixin",
+		"BOBJSmearHideMixin",
+		"FormRendererBodyPartSmearMixin",
+		"ModelFormRendererLinesMixin",
+		"ModelFormRendererPoseMixin",
+		"SmearRenderMixin",
+		"UIPoseEditorSmearMixin",
+		"UIPoseKeyframeFactorySmearMixin",
+		"BBSShadersDissolveMixin",
+		"TextureManagerDissolveMixin",
+		"TextureManagerVanillaDissolveMixin"
 	],
 	"mixins": [
 		"ActionManagerAccessor",
 		"FollowCurveFormMixin",
-		"ReplayFollowMixin"
+		"ReplayFollowMixin",
+		"SmearFormMixin",
+		"WholeFormSmearMixin",
+		"ModelFormSmearChannelsMixin",
+		"PoseTransformSmearMixin",
+		"FormUtilsPoseMixin"
 	]
 }

@@ -34,6 +34,7 @@ import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.camera.clips.ClipFactoryData;
 import mchorse.bbs_mod.utils.colors.Colors;
+import leji.bbslezy.vfx.forms.LezyVfxPoseFactories;
 import leji.bbslezy.vfx.forms.LezyWindForm;
 
 /**
@@ -72,6 +73,9 @@ public class BBSLod implements BBSAddonMod
     {
         event.register("lens_radius_settings", LensRadiusSettingsKeyframeFactory.INSTANCE);
         event.register("illusion", IllusionKeyframeFactory.INSTANCE);
+        event.register("smear_frames", LezyVfxPoseFactories.SMEAR);
+        event.register("motion_lines", LezyVfxPoseFactories.LINES);
+        event.register("smear", LezyVfxPoseFactories.FORM_SMEAR);
     }
 
     @Subscribe
