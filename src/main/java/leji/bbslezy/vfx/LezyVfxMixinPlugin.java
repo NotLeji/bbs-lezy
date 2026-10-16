@@ -1,5 +1,6 @@
 package leji.bbslezy.vfx;
 
+import com.llamalad7.mixinextras.MixinExtrasBootstrap;
 import net.fabricmc.loader.api.FabricLoader;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
@@ -28,7 +29,7 @@ public class LezyVfxMixinPlugin implements IMixinConfigPlugin
     @Override
     public void onLoad(String mixinPackage)
     {
-        com.llamalad7.mixinextras.MixinExtrasBootstrap.init();
+        MixinExtrasBootstrap.init();
     }
 
     @Override

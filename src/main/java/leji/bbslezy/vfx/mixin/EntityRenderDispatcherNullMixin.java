@@ -31,6 +31,7 @@ public abstract class EntityRenderDispatcherNullMixin
             LogManager.getLogger("bbslezy").warn("[shadow] entity without renderer (skipped): {} ({})",
                 entity.getType().toString(), entity.getUuid());
             cir.setReturnValue(false);
+            return;
         }
 
         if (entity instanceof mchorse.bbs_mod.entity.ActorEntity actor)

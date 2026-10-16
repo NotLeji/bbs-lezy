@@ -74,7 +74,7 @@ public abstract class SmearRenderMixin
                         return;
                     }
 
-                    if (smear.bbslezy$smearArc() <= 0F && (smear.bbslezy$smearManual() > 0F || smear.bbslezy$hasSmear()))
+                    if (smear.bbslezy$smearArc() <= 0F && smear.bbslezy$smearManual() > 0F)
                     {
                         bbslezy$renderFormVector(renderer, context, form, smear);
                         return;
@@ -99,7 +99,7 @@ public abstract class SmearRenderMixin
             {
                 arcBones.add(entry.getKey());
             }
-            else if (s.bbslezy$smearManual() > 0F || s.bbslezy$hasSmear())
+            else if (s.bbslezy$smearManual() > 0F)
             {
                 vectorBones.add(entry.getKey());
             }
@@ -270,41 +270,60 @@ public abstract class SmearRenderMixin
         context.color = original;
         renderer.render(context);
 
-        RenderSystem.depthMask(false);
-
-        for (int j = density; j >= 1; j--)
+        try
         {
-            float f = (float) j / density;
-            float tk = now - f * timeTicks;
+            RenderSystem.depthMask(false);
 
-            replay.properties.applyProperties(form, tk);
-            Matrix4f root = bbslezy$rootBegin(context, replay, tk, now);
-            SmearRenderState.beginArc(renderer, f * dissolveAmount, null, 0F, f, null);
-            context.color = bbslezy$withAlpha(bbslezy$desaturate(original, 0.6F * f), bandOpacity);
-            renderer.render(context);
-            SmearRenderState.end();
-            bbslezy$rootEnd(context, root);
+            for (int j = density; j >= 1; j--)
+            {
+                float f = (float) j / density;
+                float tk = now - f * timeTicks;
+
+                replay.properties.applyProperties(form, tk);
+                Matrix4f root = bbslezy$rootBegin(context, replay, tk, now);
+                try
+                {
+                    SmearRenderState.beginArc(renderer, f * dissolveAmount, null, 0F, f, null);
+                    context.color = bbslezy$withAlpha(bbslezy$desaturate(original, 0.6F * f), bandOpacity);
+                    renderer.render(context);
+                }
+                finally
+                {
+                    SmearRenderState.end();
+                    bbslezy$rootEnd(context, root);
+                }
+            }
+
+            RenderSystem.depthMask(true);
+
+            for (int k = count; k >= 1; k--)
+            {
+                float f = (float) k / count;
+                float tk = now - f * timeTicks;
+                float alpha = 1F - fade * f;
+
+                replay.properties.applyProperties(form, tk);
+                Matrix4f root = bbslezy$rootBegin(context, replay, tk, now);
+                try
+                {
+                    SmearRenderState.beginArc(renderer, f * dissolveAmount, null, 0F, f, null);
+                    context.color = bbslezy$withAlpha(bbslezy$desaturate(original, 0.6F * f), alpha);
+                    renderer.render(context);
+                }
+                finally
+                {
+                    SmearRenderState.end();
+                    bbslezy$rootEnd(context, root);
+                }
+            }
         }
-
-        RenderSystem.depthMask(true);
-
-        for (int k = count; k >= 1; k--)
+        finally
         {
-            float f = (float) k / count;
-            float tk = now - f * timeTicks;
-            float alpha = 1F - fade * f;
-
-            replay.properties.applyProperties(form, tk);
-            Matrix4f root = bbslezy$rootBegin(context, replay, tk, now);
-            SmearRenderState.beginArc(renderer, f * dissolveAmount, null, 0F, f, null);
-            context.color = bbslezy$withAlpha(bbslezy$desaturate(original, 0.6F * f), alpha);
-            renderer.render(context);
+            RenderSystem.depthMask(true);
             SmearRenderState.end();
-            bbslezy$rootEnd(context, root);
+            replay.properties.applyProperties(form, now);
+            context.color = original;
         }
-
-        replay.properties.applyProperties(form, now);
-        context.color = original;
     }
 
     @Unique
@@ -323,20 +342,27 @@ public abstract class SmearRenderMixin
         float oy = translate.y;
         float oz = translate.z;
 
-        for (int k = count; k >= 1; k--)
+        try
         {
-            float fraction = (float) k / count;
-            float alpha = (float) Math.pow(falloff, k);
+            for (int k = count; k >= 1; k--)
+            {
+                float fraction = (float) k / count;
+                float alpha = (float) Math.pow(falloff, k);
 
-            translate.set(ox - sx * fraction, oy - sy * fraction, oz - sz * fraction);
-            SmearRenderState.beginArc(renderer, fraction * dissolveAmount, null, 0F, fraction, null);
-            context.color = bbslezy$withAlpha(original, alpha);
-            renderer.render(context);
+                translate.set(ox - sx * fraction, oy - sy * fraction, oz - sz * fraction);
+                SmearRenderState.beginArc(renderer, fraction * dissolveAmount, null, 0F, fraction, null);
+                context.color = bbslezy$withAlpha(original, alpha);
+                renderer.render(context);
+                SmearRenderState.end();
+            }
+        }
+        finally
+        {
+            translate.set(ox, oy, oz);
             SmearRenderState.end();
+            context.color = original;
         }
 
-        translate.set(ox, oy, oz);
-        context.color = original;
         renderer.render(context);
     }
 

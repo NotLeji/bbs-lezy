@@ -77,8 +77,6 @@ public abstract class ModelFormRendererLinesMixin implements IArcTrailDrawer, IM
     @Unique
     private static boolean bbslezy$trailLogged;
 
-    @Unique
-    private Map<String, Vector3f> bbslezy$offsets;
 
     @Unique
     private Matrix4f bbslezy$lineMat;
