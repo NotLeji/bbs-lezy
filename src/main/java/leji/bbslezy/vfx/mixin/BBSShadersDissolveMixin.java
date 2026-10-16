@@ -1,6 +1,5 @@
 package leji.bbslezy.vfx.mixin;
 
-import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import leji.bbslezy.vfx.client.SmearDissolveShader;
 import mchorse.bbs_mod.client.BBSShaders;
 import net.minecraft.client.gl.ShaderProgram;
@@ -8,6 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Routes BBS model rendering through our model_dissolve program.
@@ -21,11 +21,14 @@ public abstract class BBSShadersDissolveMixin
         SmearDissolveShader.build();
     }
 
-    @ModifyReturnValue(method = "getModel", at = @At("RETURN"))
-    private static ShaderProgram bbslezy$useDissolve(ShaderProgram original)
+    @Inject(method = "getModel", at = @At("RETURN"), cancellable = true)
+    private static void bbslezy$useDissolve(CallbackInfoReturnable<ShaderProgram> cir)
     {
         ShaderProgram dissolve = SmearDissolveShader.get();
 
-        return dissolve != null ? dissolve : original;
+        if (dissolve != null)
+        {
+            cir.setReturnValue(dissolve);
+        }
     }
 }

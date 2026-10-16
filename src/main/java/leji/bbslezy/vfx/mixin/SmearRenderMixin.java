@@ -42,10 +42,18 @@ public abstract class SmearRenderMixin
         method = "render(Lmchorse/bbs_mod/forms/forms/Form;Lmchorse/bbs_mod/forms/renderers/FormRenderingContext;)V",
         at = @At(
             value = "INVOKE",
-            target = "Lmchorse/bbs_mod/forms/renderers/FormRenderer;render(Lmchorse/bbs_mod/forms/renderers/FormRenderingContext;)V"))
-    private static void bbslezy$smear(FormRenderer renderer, FormRenderingContext context, Form form)
+            target = "Lmchorse/bbs_mod/forms/renderers/FormRenderer;render(Lmchorse/bbs_mod/forms/renderers/FormRenderingContext;)V"),
+        require = 1)
+    private static void bbslezy$smear(FormRenderer renderer, FormRenderingContext context)
     {
-        if (context.stencilMap != null || SmearRenderState.active || LezyImpactSilhouette.replaying)
+        Form form = renderer.getForm();
+
+        if (form == null)
+        {
+            form = FormUtilsClient.getCurrentForm();
+        }
+
+        if (form == null || context.stencilMap != null || SmearRenderState.active || LezyImpactSilhouette.replaying)
         {
             renderer.render(context);
             return;
@@ -66,7 +74,7 @@ public abstract class SmearRenderMixin
                         return;
                     }
 
-                    if (smear.bbslezy$smearArc() <= 0F && smear.bbslezy$smearManual() > 0F)
+                    if (smear.bbslezy$smearArc() <= 0F && (smear.bbslezy$smearManual() > 0F || smear.bbslezy$hasSmear()))
                     {
                         bbslezy$renderFormVector(renderer, context, form, smear);
                         return;
@@ -91,7 +99,7 @@ public abstract class SmearRenderMixin
             {
                 arcBones.add(entry.getKey());
             }
-            else if (s.bbslezy$smearManual() > 0F)
+            else if (s.bbslezy$smearManual() > 0F || s.bbslezy$hasSmear())
             {
                 vectorBones.add(entry.getKey());
             }

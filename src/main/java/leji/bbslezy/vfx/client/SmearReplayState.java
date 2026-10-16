@@ -5,13 +5,7 @@ import mchorse.bbs_mod.forms.entities.IEntity;
 
 /**
  * Bridge from the film controller to the smear render. While a replay actor is being rendered,
- * holds its {@link Replay} + {@link IEntity} + the current film time, so the auto-arc smear can
- * re-evaluate that actor's pose at EARLIER ticks — {@code replay.properties.applyProperties(form, T)}
- * (limb swing) and {@code replay.keyframes.apply(tick, entity)} (root motion) — to lay each echo copy
- * along the bone's real motion arc.
- *
- * <p>Set per top-level actor render by {@code SmearReplayBridgeMixin} (HEAD) and cleared on RETURN.
- * Render-thread only; actors render sequentially with no nesting, so a single static slot is enough.</p>
+ * holds its {@link Replay} + {@link IEntity} + the current film time.
  */
 public final class SmearReplayState
 {
@@ -19,8 +13,6 @@ public final class SmearReplayState
     public static IEntity entity;
     public static int baseTick;
     public static float transition;
-    /** Index of the current replay in the film's replay list (-1 if unknown); used by the impact silhouette
-     *  target picker to match the selected actor. */
     public static int replayIndex = -1;
 
     private SmearReplayState()
@@ -53,6 +45,6 @@ public final class SmearReplayState
     /** True when the bridge currently holds this exact entity (the one being rendered). */
     public static boolean has(IEntity e)
     {
-        return replay != null && entity == e;
+        return replay != null && (entity == null || entity == e);
     }
 }

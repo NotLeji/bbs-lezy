@@ -26,7 +26,10 @@ public class LezyVfxMixinPlugin implements IMixinConfigPlugin
     }
 
     @Override
-    public void onLoad(String mixinPackage) {}
+    public void onLoad(String mixinPackage)
+    {
+        com.llamalad7.mixinextras.MixinExtrasBootstrap.init();
+    }
 
     @Override
     public String getRefMapperConfig() { return null; }

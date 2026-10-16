@@ -1,6 +1,5 @@
 package leji.bbslezy.vfx.mixin;
 
-import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import leji.bbslezy.vfx.client.LezyVfxBlendBoneState;
 import leji.bbslezy.vfx.client.SmearRenderState;
 import leji.bbslezy.vfx.forms.IModelSmearChannels;
@@ -18,6 +17,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Map;
 
@@ -39,9 +39,16 @@ public abstract class ModelFormRendererPoseMixin
         }
     }
 
-    @ModifyReturnValue(method = "getPose", at = @At("RETURN"))
-    private Pose bbslezy$offsetSmear(Pose pose)
+    @Inject(method = "getPose", at = @At("RETURN"), cancellable = true, require = 1)
+    private void bbslezy$offsetSmear(CallbackInfoReturnable<Pose> cir)
     {
+        Pose pose = cir.getReturnValue();
+
+        if (pose == null)
+        {
+            return;
+        }
+
         if (this.getForm() instanceof ModelForm && this.getForm() instanceof IModelSmearChannels channels)
         {
             bbslezy$copySmear(pose, channels.bbslezy$smearPose().get());
@@ -57,7 +64,8 @@ public abstract class ModelFormRendererPoseMixin
 
         if (!SmearRenderState.active || SmearRenderState.target != this)
         {
-            return pose;
+            cir.setReturnValue(pose);
+            return;
         }
 
         if (SmearRenderState.hide != null)
@@ -90,7 +98,8 @@ public abstract class ModelFormRendererPoseMixin
                 }
             }
 
-            return pose;
+            cir.setReturnValue(pose);
+            return;
         }
 
         float f = SmearRenderState.fraction;
@@ -124,7 +133,7 @@ public abstract class ModelFormRendererPoseMixin
             }
         }
 
-        return pose;
+        cir.setReturnValue(pose);
     }
 
     @Unique

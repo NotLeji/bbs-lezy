@@ -1,6 +1,5 @@
 package leji.bbslezy.vfx.mixin;
 
-import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import leji.bbslezy.vfx.forms.ISmearBone;
 import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.utils.interps.IInterp;
@@ -11,6 +10,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Adds a per-bone smear vector to BBS's {@link PoseTransform}.
@@ -322,13 +322,12 @@ public abstract class PoseTransformSmearMixin implements ISmearBone
         }
     }
 
-    @ModifyReturnValue(method = "equals", at = @At("RETURN"))
-    private boolean bbslezy$equals(boolean original, Object obj)
+    @Inject(method = "equals", at = @At("RETURN"), cancellable = true)
+    private void bbslezy$equals(Object obj, CallbackInfoReturnable<Boolean> cir)
     {
-        if (obj instanceof ISmearBone o)
+        if (cir.getReturnValue() && obj instanceof ISmearBone o)
         {
-            return original
-                && this.bbslezy$sx == o.bbslezy$smearX() && this.bbslezy$sy == o.bbslezy$smearY() && this.bbslezy$sz == o.bbslezy$smearZ()
+            boolean matches = this.bbslezy$sx == o.bbslezy$smearX() && this.bbslezy$sy == o.bbslezy$smearY() && this.bbslezy$sz == o.bbslezy$smearZ()
                 && this.bbslezy$count == o.bbslezy$smearCount() && this.bbslezy$falloff == o.bbslezy$smearFalloff()
                 && this.bbslezy$dissolve == o.bbslezy$smearDissolve()
                 && this.bbslezy$manual == o.bbslezy$smearManual()
@@ -339,9 +338,12 @@ public abstract class PoseTransformSmearMixin implements ISmearBone
                 && this.bbslezy$linesWidth == o.bbslezy$smearLinesWidth() && this.bbslezy$linesSpread == o.bbslezy$smearLinesSpread()
                 && this.bbslezy$lox == o.bbslezy$smearLinesOffsetX() && this.bbslezy$loy == o.bbslezy$smearLinesOffsetY() && this.bbslezy$loz == o.bbslezy$smearLinesOffsetZ()
                 && this.bbslezy$linesTexture == o.bbslezy$smearLinesTexture();
-        }
 
-        return original;
+            if (!matches)
+            {
+                cir.setReturnValue(false);
+            }
+        }
     }
 
     @Inject(method = "copy(Lmchorse/bbs_mod/utils/pose/Transform;)V", at = @At("TAIL"))

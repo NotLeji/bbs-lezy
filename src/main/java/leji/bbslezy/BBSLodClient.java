@@ -184,6 +184,12 @@ public class BBSLodClient implements BBSAddonMod
     public void onKeyframeEditors(RegisterKeyframeEditorsEvent event)
     {
         event.register(IllusionKeyframeFactory.INSTANCE, UIIllusionKeyframeFactory::new);
+        event.register(LezyVfxPoseFactories.SMEAR, UISmearKeyframeFactory::new);
+        event.register(LezyVfxPoseFactories.LINES, UILinesKeyframeFactory::new);
+        event.register(LezyVfxPoseFactories.FORM_SMEAR, UIFormSmearKeyframeFactory::new);
+        event.registerProperty("smear_frames", UISmearKeyframeFactory::new);
+        event.registerProperty("motion_lines", UILinesKeyframeFactory::new);
+        event.registerProperty("smear", UIFormSmearKeyframeFactory::new);
         event.registerProperty("destruction", UIDestructionKeyframeFactory::new);
         event.registerProperty("progress", UIDestructionKeyframeFactory::new);
     }

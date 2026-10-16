@@ -35,6 +35,7 @@ import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.camera.clips.ClipFactoryData;
 import mchorse.bbs_mod.utils.colors.Colors;
 import leji.bbslezy.vfx.forms.LezyVfxPoseFactories;
+import mchorse.bbs_mod.utils.keyframes.factories.KeyframeFactories;
 import leji.bbslezy.vfx.forms.LezyWindForm;
 
 /**
@@ -48,6 +49,15 @@ import leji.bbslezy.vfx.forms.LezyWindForm;
 public class BBSLod implements BBSAddonMod
 {
     public static final String MOD_ID = "bbslezy";
+
+    public BBSLod()
+    {
+        KeyframeFactories.FACTORIES.put("smear_frames", LezyVfxPoseFactories.SMEAR);
+        KeyframeFactories.FACTORIES.put("motion_lines", LezyVfxPoseFactories.LINES);
+        KeyframeFactories.FACTORIES.put("smear", LezyVfxPoseFactories.FORM_SMEAR);
+        KeyframeFactories.FACTORIES.put("xavin_smear", LezyVfxPoseFactories.SMEAR);
+        KeyframeFactories.FACTORIES.put("xavin_lines", LezyVfxPoseFactories.LINES);
+    }
 
     @Subscribe
     public void onSourcePacks(RegisterSourcePacksEvent event)
