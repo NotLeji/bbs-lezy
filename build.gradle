@@ -14,6 +14,10 @@ repositories {
 	 * public repository for it. */
 	mavenLocal()
 	mavenCentral()
+	maven {
+		name = "Fabric"
+		url = "https://maven.fabricmc.net/"
+	}
 
 	/* Sodium lives on Modrinth's maven; the exclusiveContent filter keeps the repository from
 	 * being consulted for anything else. Same shape as BBS's own build file. */
@@ -73,6 +77,36 @@ test {
  * covers the integrated server the client starts. */
 tasks.named('runClient', JavaExec) {
 	useXvfb = false
+
+	def displacedJars = []
+
+	/* Exclude all extra/Prism mods from run/mods/ so runClient boots cleanly with essential mods only (BBS, Sodium, Iris, etc.) from Loom dependencies */
+	doFirst {
+		def prismModsDir = project.file('run/prism-mods')
+		prismModsDir.mkdirs()
+		fileTree('run/mods').matching {
+			include '*.jar'
+		}.each { file ->
+			def target = new File(prismModsDir, file.name)
+			file.renameTo(target)
+			displacedJars.add(file.name)
+			logger.lifecycle("Moved ${file.name} to run/prism-mods/ for runClient isolation.")
+		}
+	}
+
+	doLast {
+		def prismModsDir = project.file('run/prism-mods')
+		def modsDir = project.file('run/mods')
+		displacedJars.each { fileName ->
+			def source = new File(prismModsDir, fileName)
+			if (source.exists()) {
+				def target = new File(modsDir, fileName)
+				source.renameTo(target)
+				logger.lifecycle("Restored ${fileName} back to run/mods/ after runClient.")
+			}
+		}
+	}
+
 	if (System.getProperty('os.name').startsWith('Windows')) {
 		def socketDir = layout.projectDirectory.dir('.gradle/sockets').asFile
 		systemProperty 'jdk.net.unixdomain.tmpdir', socketDir.absolutePath
@@ -109,4 +143,37 @@ tasks.withType(JavaCompile).configureEach {
 java {
 	sourceCompatibility = JavaVersion.VERSION_17
 	targetCompatibility = JavaVersion.VERSION_17
+}
+
+/* Stage Prism launcher mods into run/mods/ for headless mc-runtime-test runs */
+tasks.register('stagePrismMods') {
+	doLast {
+		def prismModsDir = project.file('run/prism-mods')
+		def modsDir = project.file('run/mods')
+		modsDir.mkdirs()
+		if (prismModsDir.exists()) {
+			fileTree(prismModsDir).matching {
+				include '*.jar'
+			}.each { file ->
+				def target = new File(modsDir, file.name)
+				java.nio.file.Files.copy(file.toPath(), target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+			}
+			logger.lifecycle("Staged Prism mods from run/prism-mods/ into run/mods/ for mc-runtime-test.")
+		}
+	}
+}
+
+/* Unstage / move all jars out of run/mods/ into run/prism-mods/ */
+tasks.register('unstagePrismMods') {
+	doLast {
+		def prismModsDir = project.file('run/prism-mods')
+		prismModsDir.mkdirs()
+		fileTree('run/mods').matching {
+			include '*.jar'
+		}.each { file ->
+			def target = new File(prismModsDir, file.name)
+			file.renameTo(target)
+		}
+		logger.lifecycle("Unstaged all jars from run/mods/ to run/prism-mods/.")
+	}
 }
