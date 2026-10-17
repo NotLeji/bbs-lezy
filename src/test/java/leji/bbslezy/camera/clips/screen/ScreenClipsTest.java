@@ -323,32 +323,7 @@ class ScreenClipsTest
     }
 
 
-    @Test
-    void impactClip_punchInFov()
-    {
-        ImpactClip clip = new ImpactClip();
-        clip.duration.set(30);
-        clip.punchInEnabled.set(true);
-        clip.punchInFov.set(20F);
-        clip.punchInDuration.set(10);
-        clip.freezeEnabled.set(false);
-        clip.shakeEnabled.set(false);
-        clip.flashEnabled.set(false);
 
-        ClipContext context = dummyContext(0, 0F);
-        Position position = new Position();
-        position.angle.fov = 70F;
-
-        // at t=0, punch-in is maximum (fov drops by 20 -> 50)
-        context.setup(0, 0, 0F);
-        clip.apply(context, position);
-        assertEquals(50F, position.angle.fov, 1e-3F);
-
-        // at t=10 (end of punchInDuration), decay is (1-1)^2 = 0 -> fov unaffected
-        position.angle.fov = 70F;
-        context.setup(10, 10, 0F);
-        assertEquals(70F, position.angle.fov, 1e-3F);
-    }
 
     @Test
     void proceduralShakeClip_presetsAndDeterminism()

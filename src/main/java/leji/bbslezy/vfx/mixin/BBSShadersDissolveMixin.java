@@ -1,5 +1,6 @@
 package leji.bbslezy.vfx.mixin;
 
+import leji.bbslezy.vfx.client.BbsVfxImpactShader;
 import leji.bbslezy.vfx.client.SmearDissolveShader;
 import mchorse.bbs_mod.client.BBSShaders;
 import net.minecraft.client.gl.ShaderProgram;
@@ -19,6 +20,7 @@ public abstract class BBSShadersDissolveMixin
     private static void bbslezy$buildDissolve(CallbackInfo ci)
     {
         SmearDissolveShader.build();
+        BbsVfxImpactShader.build();
     }
 
     @Inject(method = "getModel", at = @At("RETURN"), cancellable = true)

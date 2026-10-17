@@ -10,6 +10,9 @@ import leji.bbslezy.vfx.client.CracksVolume;
 import leji.bbslezy.vfx.client.DomeVolume;
 import leji.bbslezy.vfx.client.ExplosionSmokeVolume;
 import leji.bbslezy.vfx.client.SmokeVolume;
+import leji.bbslezy.vfx.camera.BbsVfxImpactState;
+import leji.bbslezy.vfx.client.BbsVfxImpactShader;
+import leji.bbslezy.vfx.client.LezyImpactSilhouette;
 import mchorse.bbs_mod.client.BBSRendering;
 import net.minecraft.client.MinecraftClient;
 import org.spongepowered.asm.mixin.Mixin;
@@ -42,6 +45,13 @@ public abstract class BBSRenderingVfxMixin
         /* Whole-form blend composite: re-render the captured forms in isolation (the in-world draw was
          * cancelled for shader modes / under a shader pack) and blend them over the finished scene. */
         BbsVfxFormBlend.render(mc.getFramebuffer());
+
+        if (BbsVfxImpactState.active && BbsVfxImpactState.silhouette > 0.004F)
+        {
+            LezyImpactSilhouette.render();
+        }
+
+        BbsVfxImpactShader.render(mc.getFramebuffer());
 
         BbsVfxDissolveTexture.processPending();
         BbsVfxAtlasDissolve.processPending();

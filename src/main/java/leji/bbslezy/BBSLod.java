@@ -10,7 +10,7 @@ import leji.bbslezy.camera.clips.screen.LetterboxClip;
 import leji.bbslezy.camera.clips.screen.VignetteClip;
 import leji.bbslezy.camera.clips.screen.HalftoneClip;
 import leji.bbslezy.camera.clips.modifiers.ProceduralShakeClip;
-import leji.bbslezy.camera.clips.screen.ImpactClip;
+import leji.bbslezy.vfx.camera.ImpactClip;
 import leji.bbslezy.vfx.camera.FollowCurveClip;
 import leji.bbslezy.vfx.forms.CurveForm;
 import leji.bbslezy.vfx.forms.BeamForm;

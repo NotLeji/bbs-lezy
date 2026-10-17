@@ -36,7 +36,8 @@
 		"TrailBlendMixin",
 		"ConsumerBlendMixin",
 		"RenderLayerBlendReapplyMixin",
-		"UIPoseEditorBlendMixin"
+		"UIPoseEditorBlendMixin",
+		"ImpactSilhouetteCaptureMixin"
 	],
 	"mixins": [
 		"ActionManagerAccessor",
