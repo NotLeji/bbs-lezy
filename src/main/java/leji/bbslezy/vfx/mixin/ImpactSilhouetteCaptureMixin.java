@@ -48,19 +48,17 @@ public abstract class ImpactSilhouetteCaptureMixin
             return;
         }
 
-        if (context.isPicking() || context.stencilMap != null)
+        if (context.isPicking() || context.stencilMap != null || context.ui)
         {
             return;
         }
 
-        if (SmearReplayState.replay == null)
+        if (BbsVfxImpactState.silTarget >= 0)
         {
-            return;
-        }
-
-        if (BbsVfxImpactState.silTarget >= 0 && SmearReplayState.replayIndex != BbsVfxImpactState.silTarget)
-        {
-            return;
+            if (SmearReplayState.replay == null || SmearReplayState.replayIndex != BbsVfxImpactState.silTarget)
+            {
+                return;
+            }
         }
 
         FormRenderer renderer = FormUtilsClient.getRenderer(form);

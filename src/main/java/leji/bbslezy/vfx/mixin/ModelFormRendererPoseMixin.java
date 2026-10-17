@@ -60,7 +60,7 @@ public abstract class ModelFormRendererPoseMixin
 
         boolean smearPass = SmearRenderState.active && (Object) this == SmearRenderState.target;
 
-        if (smearPass || LezyVfxBlendBoneState.active)
+        if (smearPass || LezyVfxBlendBoneState.active || leji.bbslezy.vfx.client.LezyImpactSilhouette.replaying)
         {
             model.clearChannels();
         }
@@ -83,6 +83,14 @@ public abstract class ModelFormRendererPoseMixin
         if (pose == null)
         {
             return;
+        }
+
+        if (leji.bbslezy.vfx.client.LezyImpactSilhouette.replaying)
+        {
+            for (PoseTransform pt : pose.transforms.values())
+            {
+                pt.color.a = 1F;
+            }
         }
 
         if (this.getForm() instanceof ModelForm && this.getForm() instanceof IModelSmearChannels channels)

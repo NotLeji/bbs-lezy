@@ -72,7 +72,7 @@ out vec4 fragColor;
 
 const vec3 LUMA = vec3(0.299, 0.587, 0.114);
 const float TAU = 6.2831853;
-const int BLUR_SAMPLES = 8;
+const int BLUR_SAMPLES = 5;
 const int SHAPES_MAX = 24;
 
 float hash(float n)
@@ -128,6 +128,10 @@ float inkBurstAt(vec2 uv)
 
     vec2 d = (uv - Focus) * vec2(Aspect, 1.0);
     float r = length(d);
+    if (r > InkRadius * 1.35 + 0.05)
+    {
+        return 0.0;
+    }
     float ang = atan(d.y, d.x) / TAU + 0.5;          // 0..1 around the focus
 
     // Jagged outer boundary per angle (fractal) -> spiky silhouette, sharp not blobby.
@@ -174,6 +178,10 @@ float silCoverage(vec2 uv)
     }
 
     float outside = max(streak - cov, 0.0);
+    if (outside <= 0.001)
+    {
+        return cov;
+    }
 
     /* Directional streaky noise -> stroke bands aligned to the direction; breaks the outward streak into
      * separate brush strokes coming off the edge. */
@@ -285,6 +293,12 @@ float shapesAt(vec2 uv)
         return 0.0;
     }
 
+    float maxReach = (ShapesSpread * 0.5 + ShapesSize) * 1.5 + 0.05;
+    if (length((uv - Focus) * vec2(Aspect, 1.0)) > maxReach)
+    {
+        return 0.0;
+    }
+
     float cover = 0.0;
 
     for (int i = 0; i < SHAPES_MAX; i++)
@@ -321,6 +335,10 @@ float shockwaveAt(vec2 uv)
     float r = length(fd);
     float rad = ShockwaveRadius * ShockwaveProgress;
     float stroke = ShockwaveWidth * 0.5 * (1.0 - 0.6 * ShockwaveProgress);
+    if (abs(r - rad) > stroke + 0.02)
+    {
+        return 0.0;
+    }
     float d = abs(r - rad) - stroke;
     float aa = fwidth(r) + 1e-5;
     float ring = 1.0 - smoothstep(-aa, aa, d);
@@ -338,6 +356,10 @@ float flashStarAt(vec2 uv)
     }
 
     vec2 q = (uv - Focus) * vec2(Aspect, 1.0);
+    if (length(q) > FlashStarSize * 1.5 + 0.05)
+    {
+        return 0.0;
+    }
 
     float a = radians(FlashStarRotation);
     float ca = cos(a);

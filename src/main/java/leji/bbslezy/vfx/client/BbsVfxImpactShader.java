@@ -1,16 +1,15 @@
 package leji.bbslezy.vfx.client;
 
-import leji.bbslezy.vfx.camera.BbsVfxImpactState;
-import leji.bbslezy.BBSLod;
-
 import com.mojang.blaze3d.systems.RenderSystem;
+import leji.bbslezy.BBSLod;
+import leji.bbslezy.vfx.camera.BbsVfxImpactState;
 import mchorse.bbs_mod.graphics.Framebuffer;
 import mchorse.bbs_mod.graphics.texture.Texture;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.Uniform;
 import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
-import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.resource.ResourceFactory;
@@ -19,17 +18,10 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL30;
 
-
-import java.io.IOException;
-
 /**
  * The "impact frame" full-screen post pass. After BBS renders the film scene into its framebuffer, this
  * copies that frame into a scratch texture and draws it back through our {@code impact} program with the
- * effect uniforms from {@link BbsVfxImpactState} (set by {@code ImpactClip} that frame).
- *
- * <p>Own uniquely-named program ({@code impact}) loaded the {@code SmearDissolveShader} way (rewrite
- * {@code /core/} paths to the {@code bbs} namespace) so there's no resource collision. Read+write of the
- * same colour attachment isn't allowed, hence the blit into a scratch framebuffer first.</p>
+ * effect uniforms from {@link BbsVfxImpactState}.
  */
 public final class BbsVfxImpactShader
 {
@@ -38,10 +30,66 @@ public final class BbsVfxImpactShader
     private static ShaderProgram program;
     private static Framebuffer scratch;
 
+    /* Cached uniform references — avoids 43 String map lookups per frame on CPU */
+    private static Uniform uSilhouette;
+    private static Uniform uSilColor;
+    private static Uniform uBgColor;
+    private static Uniform uSilStrokes;
+    private static Uniform uSilStrokeAngle;
+    private static Uniform uSilStrokeLength;
+    private static Uniform uSilStrokeScale;
+    private static Uniform uSilStrokeRough;
+    private static Uniform uInkBurst;
+    private static Uniform uInkColor;
+    private static Uniform uInkRadius;
+    private static Uniform uInkInner;
+    private static Uniform uInkSpikes;
+    private static Uniform uInkRough;
+    private static Uniform uInkSeed;
+    private static Uniform uShockwave;
+    private static Uniform uShockwaveProgress;
+    private static Uniform uShockwaveRadius;
+    private static Uniform uShockwaveWidth;
+    private static Uniform uShockwaveColor;
+    private static Uniform uFlashStar;
+    private static Uniform uFlashStarSize;
+    private static Uniform uFlashStarWidth;
+    private static Uniform uFlashStarGlow;
+    private static Uniform uFlashStarRotation;
+    private static Uniform uFlashStarColor;
+    private static Uniform uInvert;
+    private static Uniform uFlash;
+    private static Uniform uGrayscale;
+    private static Uniform uThreshold;
+    private static Uniform uThresholdLevel;
+    private static Uniform uThresholdSoft;
+    private static Uniform uChroma;
+    private static Uniform uFlashColor;
+    private static Uniform uDarkColor;
+    private static Uniform uLightColor;
+    private static Uniform uFocus;
+    private static Uniform uZoomBlur;
+    private static Uniform uBlurMode;
+    private static Uniform uZoomLines;
+    private static Uniform uLinesCount;
+    private static Uniform uLinesThickness;
+    private static Uniform uLinesInner;
+    private static Uniform uLinesMode;
+    private static Uniform uLinesSeed;
+    private static Uniform uLinesColor;
+    private static Uniform uShapes;
+    private static Uniform uShapesCount;
+    private static Uniform uShapesSize;
+    private static Uniform uShapesSpread;
+    private static Uniform uCenterStar;
+    private static Uniform uCenterCircle;
+    private static Uniform uShapesColor;
+    private static Uniform uAspect;
+
     private BbsVfxImpactShader()
     {}
 
-    /** (Re)build the program on the render thread (valid GL context, after resources load). */
+    /** (Re)build the program on the render thread. */
     public static void build()
     {
         if (program != null)
@@ -53,6 +101,7 @@ public final class BbsVfxImpactShader
         try
         {
             program = new ShaderProgram(factory(), "impact", VertexFormats.POSITION_TEXTURE);
+            cacheUniforms();
         }
         catch (Exception e)
         {
@@ -60,7 +109,69 @@ public final class BbsVfxImpactShader
         }
     }
 
-    /** Mirrors BBS's ProxyResourceFactory: core shader files live under the {@code bbs} namespace. */
+    private static void cacheUniforms()
+    {
+        if (program == null)
+        {
+            return;
+        }
+
+        uSilhouette = program.getUniformOrDefault("Silhouette");
+        uSilColor = program.getUniformOrDefault("SilColor");
+        uBgColor = program.getUniformOrDefault("BgColor");
+        uSilStrokes = program.getUniformOrDefault("SilStrokes");
+        uSilStrokeAngle = program.getUniformOrDefault("SilStrokeAngle");
+        uSilStrokeLength = program.getUniformOrDefault("SilStrokeLength");
+        uSilStrokeScale = program.getUniformOrDefault("SilStrokeScale");
+        uSilStrokeRough = program.getUniformOrDefault("SilStrokeRough");
+        uInkBurst = program.getUniformOrDefault("InkBurst");
+        uInkColor = program.getUniformOrDefault("InkColor");
+        uInkRadius = program.getUniformOrDefault("InkRadius");
+        uInkInner = program.getUniformOrDefault("InkInner");
+        uInkSpikes = program.getUniformOrDefault("InkSpikes");
+        uInkRough = program.getUniformOrDefault("InkRough");
+        uInkSeed = program.getUniformOrDefault("InkSeed");
+        uShockwave = program.getUniformOrDefault("Shockwave");
+        uShockwaveProgress = program.getUniformOrDefault("ShockwaveProgress");
+        uShockwaveRadius = program.getUniformOrDefault("ShockwaveRadius");
+        uShockwaveWidth = program.getUniformOrDefault("ShockwaveWidth");
+        uShockwaveColor = program.getUniformOrDefault("ShockwaveColor");
+        uFlashStar = program.getUniformOrDefault("FlashStar");
+        uFlashStarSize = program.getUniformOrDefault("FlashStarSize");
+        uFlashStarWidth = program.getUniformOrDefault("FlashStarWidth");
+        uFlashStarGlow = program.getUniformOrDefault("FlashStarGlow");
+        uFlashStarRotation = program.getUniformOrDefault("FlashStarRotation");
+        uFlashStarColor = program.getUniformOrDefault("FlashStarColor");
+        uInvert = program.getUniformOrDefault("Invert");
+        uFlash = program.getUniformOrDefault("Flash");
+        uGrayscale = program.getUniformOrDefault("Grayscale");
+        uThreshold = program.getUniformOrDefault("Threshold");
+        uThresholdLevel = program.getUniformOrDefault("ThresholdLevel");
+        uThresholdSoft = program.getUniformOrDefault("ThresholdSoft");
+        uChroma = program.getUniformOrDefault("Chroma");
+        uFlashColor = program.getUniformOrDefault("FlashColor");
+        uDarkColor = program.getUniformOrDefault("DarkColor");
+        uLightColor = program.getUniformOrDefault("LightColor");
+        uFocus = program.getUniformOrDefault("Focus");
+        uZoomBlur = program.getUniformOrDefault("ZoomBlur");
+        uBlurMode = program.getUniformOrDefault("BlurMode");
+        uZoomLines = program.getUniformOrDefault("ZoomLines");
+        uLinesCount = program.getUniformOrDefault("LinesCount");
+        uLinesThickness = program.getUniformOrDefault("LinesThickness");
+        uLinesInner = program.getUniformOrDefault("LinesInner");
+        uLinesMode = program.getUniformOrDefault("LinesMode");
+        uLinesSeed = program.getUniformOrDefault("LinesSeed");
+        uLinesColor = program.getUniformOrDefault("LinesColor");
+        uShapes = program.getUniformOrDefault("Shapes");
+        uShapesCount = program.getUniformOrDefault("ShapesCount");
+        uShapesSize = program.getUniformOrDefault("ShapesSize");
+        uShapesSpread = program.getUniformOrDefault("ShapesSpread");
+        uCenterStar = program.getUniformOrDefault("CenterStar");
+        uCenterCircle = program.getUniformOrDefault("CenterCircle");
+        uShapesColor = program.getUniformOrDefault("ShapesColor");
+        uAspect = program.getUniformOrDefault("Aspect");
+    }
+
     private static ResourceFactory factory()
     {
         return (id) ->
@@ -81,8 +192,6 @@ public final class BbsVfxImpactShader
     /** Apply the impact effect to BBS's scene framebuffer in place. */
     public static void render(net.minecraft.client.gl.Framebuffer main)
     {
-        /* Lazy build: BBS only calls BBSShaders.setup() from a manual debug panel, so build the program
-         * on the render thread on first use instead (valid GL context, resources loaded). */
         if (program == null && !buildTried)
         {
             buildTried = true;
@@ -110,7 +219,6 @@ public final class BbsVfxImpactShader
             fb.resize(w, h);
         }
 
-        /* Copy the rendered frame into the scratch texture (can't sample + write the same attachment). */
         int prevDraw = GL30.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
         int prevRead = GL30.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
 
@@ -120,7 +228,6 @@ public final class BbsVfxImpactShader
         GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, prevRead);
         GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, prevDraw);
 
-        /* Draw the processed frame back into the main framebuffer. */
         main.beginWrite(true);
 
         RenderSystem.disableDepthTest();
@@ -128,74 +235,71 @@ public final class BbsVfxImpactShader
         RenderSystem.disableBlend();
         RenderSystem.setShaderTexture(0, fb.getMainTexture().id);
 
-        /* Silhouette coverage on unit 1 (built by LezyImpactSilhouette just before this pass). Fall back to
-         * the scene copy when not built — harmless since Silhouette is then 0. */
         int silTex = LezyImpactSilhouette.ready() ? LezyImpactSilhouette.textureId() : fb.getMainTexture().id;
         RenderSystem.setShaderTexture(1, silTex);
         RenderSystem.setShader(() -> program);
 
-        program.getUniformOrDefault("Silhouette").set(BbsVfxImpactState.silhouette);
-        program.getUniformOrDefault("SilColor").set(BbsVfxImpactState.silR, BbsVfxImpactState.silG, BbsVfxImpactState.silB);
-        program.getUniformOrDefault("BgColor").set(BbsVfxImpactState.bgR, BbsVfxImpactState.bgG, BbsVfxImpactState.bgB);
+        uSilhouette.set(BbsVfxImpactState.silhouette);
+        uSilColor.set(BbsVfxImpactState.silR, BbsVfxImpactState.silG, BbsVfxImpactState.silB);
+        uBgColor.set(BbsVfxImpactState.bgR, BbsVfxImpactState.bgG, BbsVfxImpactState.bgB);
 
-        program.getUniformOrDefault("SilStrokes").set(BbsVfxImpactState.silStrokes);
-        program.getUniformOrDefault("SilStrokeAngle").set(BbsVfxImpactState.silStrokeAngle);
-        program.getUniformOrDefault("SilStrokeLength").set(BbsVfxImpactState.silStrokeLength);
-        program.getUniformOrDefault("SilStrokeScale").set(BbsVfxImpactState.silStrokeScale);
-        program.getUniformOrDefault("SilStrokeRough").set(BbsVfxImpactState.silStrokeRough);
+        uSilStrokes.set(BbsVfxImpactState.silStrokes);
+        uSilStrokeAngle.set(BbsVfxImpactState.silStrokeAngle);
+        uSilStrokeLength.set(BbsVfxImpactState.silStrokeLength);
+        uSilStrokeScale.set(BbsVfxImpactState.silStrokeScale);
+        uSilStrokeRough.set(BbsVfxImpactState.silStrokeRough);
 
-        program.getUniformOrDefault("InkBurst").set(BbsVfxImpactState.inkBurst);
-        program.getUniformOrDefault("InkColor").set(BbsVfxImpactState.inkR, BbsVfxImpactState.inkG, BbsVfxImpactState.inkB);
-        program.getUniformOrDefault("InkRadius").set(BbsVfxImpactState.inkRadius);
-        program.getUniformOrDefault("InkInner").set(BbsVfxImpactState.inkInner);
-        program.getUniformOrDefault("InkSpikes").set(BbsVfxImpactState.inkSpikes);
-        program.getUniformOrDefault("InkRough").set(BbsVfxImpactState.inkRough);
-        program.getUniformOrDefault("InkSeed").set(BbsVfxImpactState.inkSeed);
+        uInkBurst.set(BbsVfxImpactState.inkBurst);
+        uInkColor.set(BbsVfxImpactState.inkR, BbsVfxImpactState.inkG, BbsVfxImpactState.inkB);
+        uInkRadius.set(BbsVfxImpactState.inkRadius);
+        uInkInner.set(BbsVfxImpactState.inkInner);
+        uInkSpikes.set(BbsVfxImpactState.inkSpikes);
+        uInkRough.set(BbsVfxImpactState.inkRough);
+        uInkSeed.set(BbsVfxImpactState.inkSeed);
 
-        program.getUniformOrDefault("Shockwave").set(BbsVfxImpactState.shockwave);
-        program.getUniformOrDefault("ShockwaveProgress").set(BbsVfxImpactState.shockwaveProgress);
-        program.getUniformOrDefault("ShockwaveRadius").set(BbsVfxImpactState.shockwaveRadius);
-        program.getUniformOrDefault("ShockwaveWidth").set(BbsVfxImpactState.shockwaveWidth);
-        program.getUniformOrDefault("ShockwaveColor").set(BbsVfxImpactState.swR, BbsVfxImpactState.swG, BbsVfxImpactState.swB);
+        uShockwave.set(BbsVfxImpactState.shockwave);
+        uShockwaveProgress.set(BbsVfxImpactState.shockwaveProgress);
+        uShockwaveRadius.set(BbsVfxImpactState.shockwaveRadius);
+        uShockwaveWidth.set(BbsVfxImpactState.shockwaveWidth);
+        uShockwaveColor.set(BbsVfxImpactState.swR, BbsVfxImpactState.swG, BbsVfxImpactState.swB);
 
-        program.getUniformOrDefault("FlashStar").set(BbsVfxImpactState.flashStar);
-        program.getUniformOrDefault("FlashStarSize").set(BbsVfxImpactState.flashStarSize);
-        program.getUniformOrDefault("FlashStarWidth").set(BbsVfxImpactState.flashStarWidth);
-        program.getUniformOrDefault("FlashStarGlow").set(BbsVfxImpactState.flashStarGlow);
-        program.getUniformOrDefault("FlashStarRotation").set(BbsVfxImpactState.flashStarRotation);
-        program.getUniformOrDefault("FlashStarColor").set(BbsVfxImpactState.fsR, BbsVfxImpactState.fsG, BbsVfxImpactState.fsB);
+        uFlashStar.set(BbsVfxImpactState.flashStar);
+        uFlashStarSize.set(BbsVfxImpactState.flashStarSize);
+        uFlashStarWidth.set(BbsVfxImpactState.flashStarWidth);
+        uFlashStarGlow.set(BbsVfxImpactState.flashStarGlow);
+        uFlashStarRotation.set(BbsVfxImpactState.flashStarRotation);
+        uFlashStarColor.set(BbsVfxImpactState.fsR, BbsVfxImpactState.fsG, BbsVfxImpactState.fsB);
 
-        program.getUniformOrDefault("Invert").set(BbsVfxImpactState.invert);
-        program.getUniformOrDefault("Flash").set(BbsVfxImpactState.flash);
-        program.getUniformOrDefault("Grayscale").set(BbsVfxImpactState.grayscale);
-        program.getUniformOrDefault("Threshold").set(BbsVfxImpactState.threshold);
-        program.getUniformOrDefault("ThresholdLevel").set(BbsVfxImpactState.thresholdLevel);
-        program.getUniformOrDefault("ThresholdSoft").set(BbsVfxImpactState.thresholdSoft);
-        program.getUniformOrDefault("Chroma").set(BbsVfxImpactState.chroma);
-        program.getUniformOrDefault("FlashColor").set(BbsVfxImpactState.flashR, BbsVfxImpactState.flashG, BbsVfxImpactState.flashB);
-        program.getUniformOrDefault("DarkColor").set(BbsVfxImpactState.darkR, BbsVfxImpactState.darkG, BbsVfxImpactState.darkB);
-        program.getUniformOrDefault("LightColor").set(BbsVfxImpactState.lightR, BbsVfxImpactState.lightG, BbsVfxImpactState.lightB);
-        program.getUniformOrDefault("Focus").set(BbsVfxImpactState.focusX, BbsVfxImpactState.focusY);
+        uInvert.set(BbsVfxImpactState.invert);
+        uFlash.set(BbsVfxImpactState.flash);
+        uGrayscale.set(BbsVfxImpactState.grayscale);
+        uThreshold.set(BbsVfxImpactState.threshold);
+        uThresholdLevel.set(BbsVfxImpactState.thresholdLevel);
+        uThresholdSoft.set(BbsVfxImpactState.thresholdSoft);
+        uChroma.set(BbsVfxImpactState.chroma);
+        uFlashColor.set(BbsVfxImpactState.flashR, BbsVfxImpactState.flashG, BbsVfxImpactState.flashB);
+        uDarkColor.set(BbsVfxImpactState.darkR, BbsVfxImpactState.darkG, BbsVfxImpactState.darkB);
+        uLightColor.set(BbsVfxImpactState.lightR, BbsVfxImpactState.lightG, BbsVfxImpactState.lightB);
+        uFocus.set(BbsVfxImpactState.focusX, BbsVfxImpactState.focusY);
 
-        program.getUniformOrDefault("ZoomBlur").set(BbsVfxImpactState.zoomBlur);
-        program.getUniformOrDefault("BlurMode").set(BbsVfxImpactState.blurMode);
-        program.getUniformOrDefault("ZoomLines").set(BbsVfxImpactState.zoomLines);
-        program.getUniformOrDefault("LinesCount").set(BbsVfxImpactState.linesCount);
-        program.getUniformOrDefault("LinesThickness").set(BbsVfxImpactState.linesThickness);
-        program.getUniformOrDefault("LinesInner").set(BbsVfxImpactState.linesInner);
-        program.getUniformOrDefault("LinesMode").set(BbsVfxImpactState.linesMode);
-        program.getUniformOrDefault("LinesSeed").set(BbsVfxImpactState.linesSeed);
-        program.getUniformOrDefault("LinesColor").set(BbsVfxImpactState.linesR, BbsVfxImpactState.linesG, BbsVfxImpactState.linesB);
-        program.getUniformOrDefault("Shapes").set(BbsVfxImpactState.shapes);
-        program.getUniformOrDefault("ShapesCount").set(BbsVfxImpactState.shapesCount);
-        program.getUniformOrDefault("ShapesSize").set(BbsVfxImpactState.shapesSize);
-        program.getUniformOrDefault("ShapesSpread").set(BbsVfxImpactState.shapesSpread);
-        program.getUniformOrDefault("CenterStar").set(BbsVfxImpactState.centerStar);
-        program.getUniformOrDefault("CenterCircle").set(BbsVfxImpactState.centerCircle);
-        program.getUniformOrDefault("ShapesColor").set(BbsVfxImpactState.shapesR, BbsVfxImpactState.shapesG, BbsVfxImpactState.shapesB);
-        program.getUniformOrDefault("Aspect").set((float) w / (float) h);
+        uZoomBlur.set(BbsVfxImpactState.zoomBlur);
+        uBlurMode.set(BbsVfxImpactState.blurMode);
+        uZoomLines.set(BbsVfxImpactState.zoomLines);
+        uLinesCount.set(BbsVfxImpactState.linesCount);
+        uLinesThickness.set(BbsVfxImpactState.linesThickness);
+        uLinesInner.set(BbsVfxImpactState.linesInner);
+        uLinesMode.set(BbsVfxImpactState.linesMode);
+        uLinesSeed.set(BbsVfxImpactState.linesSeed);
+        uLinesColor.set(BbsVfxImpactState.linesR, BbsVfxImpactState.linesG, BbsVfxImpactState.linesB);
+        uShapes.set(BbsVfxImpactState.shapes);
+        uShapesCount.set(BbsVfxImpactState.shapesCount);
+        uShapesSize.set(BbsVfxImpactState.shapesSize);
+        uShapesSpread.set(BbsVfxImpactState.shapesSpread);
+        uCenterStar.set(BbsVfxImpactState.centerStar);
+        uCenterCircle.set(BbsVfxImpactState.centerCircle);
+        uShapesColor.set(BbsVfxImpactState.shapesR, BbsVfxImpactState.shapesG, BbsVfxImpactState.shapesB);
+        uAspect.set((float) w / (float) h);
 
-        Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = LezyVfxRenderCompat.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
         LezyVfxRenderCompat.next(buffer.vertex(-1F, -1F, 0F).texture(0F, 0F));
         LezyVfxRenderCompat.next(buffer.vertex(1F, -1F, 0F).texture(1F, 0F));
@@ -207,14 +311,8 @@ public final class BbsVfxImpactShader
         RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
 
-        /* Restore the active texture unit to 0. Sampling through Sampler1 leaves the active unit at 1;
-         * MC/BBS (and GlStateManager's cache) assume unit 0 afterwards, and the desync makes the next
-         * frame's FIRST-rendered actor's skin bind/filter land on the wrong unit — driver-dependent, it
-         * showed up as a Linear-filtered skin on one tester (clear weather only: the weather pass resets
-         * the unit; first actor only: it renders first and eats the leaked state). */
         com.mojang.blaze3d.platform.GlStateManager._activeTexture(GL13.GL_TEXTURE0);
 
-        /* Consume-and-clear so the next frame starts clean (the clip re-sets it if still active). */
         BbsVfxImpactState.reset();
     }
 

@@ -469,7 +469,7 @@ public class UIImpactClip extends UIClip<ImpactClip>
     /* ---- Full impact-frame presets (curated by the references) ---- */
 
     private static final List<String> PRESET_NAMES = Arrays.asList(
-        "Charcoal Slam (B&W)", "Color Swap (aura)", "Manga Speed Lines", "Spider-Verse Pop", "White Flash Hit");
+        "Normal (Reset)", "Charcoal Slam (B&W)", "Color Swap (aura)", "Manga Speed Lines", "Spider-Verse Pop", "White Flash Hit");
 
     /* Sheet colours for the keyframe channels (ARGB), cycled. */
     private static final int[] KF_COLORS = {
@@ -480,7 +480,7 @@ public class UIImpactClip extends UIClip<ImpactClip>
     private int bbslezy$colorIdx;
 
     /** Track rows the user has folded right now; handed to the dope sheet, which folds them in place. */
-    private final FoldState<String> bbslezy$folds = new FoldState<>();
+    private final FoldState<String> bbslezy$folds = new FoldState<>(true);
 
     /** (Re)build the graph tracks as collapsible SECTION groups (mirrors the slider sections). Each
      * section's first channel is its header (titled by the section); the rest hang under it via
@@ -586,7 +586,15 @@ public class UIImpactClip extends UIClip<ImpactClip>
 
         switch (p)
         {
-            case 0 -> /* Charcoal Slam (B&W sumi-e) */
+            case 0 -> /* Normal (Reset) */
+            {
+                this.clip.target.set(-1);
+                this.clip.focusX.set(0.5F);
+                this.clip.focusY.set(0.5F);
+                this.clip.silColor.set(0x000000);
+                this.clip.bgColor.set(0xFFFFFF);
+            }
+            case 1 -> /* Charcoal Slam (B&W sumi-e) */
             {
                 this.clip.silhouette.set(1F);
                 this.clip.silColor.set(0x000000);
@@ -618,7 +626,7 @@ public class UIImpactClip extends UIClip<ImpactClip>
                 this.clip.shockwaveWidth.set(0.03F);
                 this.clip.shockwaveProgress.set(0.5F);
             }
-            case 1 -> /* Color Swap (power-up aura) */
+            case 2 -> /* Color Swap (power-up aura) */
             {
                 this.clip.silhouette.set(1F);
                 this.clip.silColor.set(0xFF7A1A);
@@ -643,7 +651,7 @@ public class UIImpactClip extends UIClip<ImpactClip>
                 this.clip.shockwaveColor.set(0xFF7A1A);
                 this.clip.shockwaveProgress.set(0.5F);
             }
-            case 2 -> /* Manga Speed Lines */
+            case 3 -> /* Manga Speed Lines */
             {
                 this.clip.silhouette.set(1F);
                 this.clip.silColor.set(0x000000);
@@ -664,7 +672,7 @@ public class UIImpactClip extends UIClip<ImpactClip>
                 this.clip.shapesColor.set(0xE01010);
                 this.clip.shapesCount.set(10F);
             }
-            case 3 -> /* Spider-Verse Pop (graphic comic, no silhouette) */
+            case 4 -> /* Spider-Verse Pop (graphic comic, no silhouette) */
             {
                 this.clip.shapes.set(1F);
                 this.clip.shapesColor.set(0xFFFFFF);
@@ -683,7 +691,7 @@ public class UIImpactClip extends UIClip<ImpactClip>
                 this.clip.linesColor.set(0x33E0FF);
                 this.clip.linesCount.set(40F);
             }
-            case 4 -> /* White Flash Hit (quick hard flash) */
+            case 5 -> /* White Flash Hit (quick hard flash) */
             {
                 this.clip.flash.set(0.8F);
                 this.clip.invert.set(0.4F);

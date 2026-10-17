@@ -118,6 +118,7 @@ public final class LezyImpactSilhouette
 
         boolean prevIris = BBSRenderingIrisAccessor.bbslezy$getIris();
         BBSRenderingIrisAccessor.bbslezy$setIris(false);
+        boolean wasQueueActive = mchorse.bbs_mod.forms.FormTranslucentQueue.suspend();
 
         try
         {
@@ -172,6 +173,7 @@ public final class LezyImpactSilhouette
         }
         finally
         {
+            mchorse.bbs_mod.forms.FormTranslucentQueue.restore(wasQueueActive);
             replaying = false;
             BBSRenderingIrisAccessor.bbslezy$setIris(prevIris);
 
