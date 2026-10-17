@@ -184,7 +184,9 @@ public abstract class SmearRenderMixin
         Replay replay = SmearReplayState.replay;
         float now = SmearReplayState.time();
 
-        if (!bbslezy$rewindMoves(form, replay, model, now, timeTicks))
+        boolean moved = bbslezy$rewindMoves(form, replay, model, now, timeTicks);
+
+        if (!moved)
         {
             replay.properties.applyProperties(form, now);
             return;

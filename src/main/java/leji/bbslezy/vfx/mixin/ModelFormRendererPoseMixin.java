@@ -30,6 +30,28 @@ public abstract class ModelFormRendererPoseMixin
     @Shadow
     public abstract Form getForm();
 
+    /**
+     * Smear copies re-pose the form at earlier film times via {@code applyProperties} (a silent
+     * runtime-value write), so the form's pose version never changes between the passes of one
+     * frame. The animator channel cache keys on that version alone — its token (form, entity,
+     * transition, frame epoch, pose version) matches the base pass and
+     * {@code ModelInstance#restoreChannels} hands every copy the crisp channel state, which made
+     * the copies pixel-identical to the model and the smear invisible. Clearing the cached token
+     * forces each copy pass to re-evaluate the rewound pose. The next frame's base pass rebuilds
+     * the cache from scratch (one extra evaluation per frame).
+     *
+     * <p>The clear only runs while a smear pass is active for this very renderer, so ordinary
+     * renders keep the per-frame channel cache intact.</p>
+     */
+    @Inject(method = "evaluateChannels", at = @At("HEAD"))
+    private void bbslezy$freshChannelsForSmear(IEntity entity, mchorse.bbs_mod.cubic.ModelInstance model, float transition, CallbackInfo ci)
+    {
+        if (model != null && SmearRenderState.active && (Object) this == SmearRenderState.target)
+        {
+            model.clearChannels();
+        }
+    }
+
     @Inject(method = "applyPhysics", at = @At("HEAD"), cancellable = true)
     private void bbslezy$skipPhysicsInCopies(IEntity target, mchorse.bbs_mod.cubic.ModelInstance model, float transition, Matrix4f baseTransform, CallbackInfo ci)
     {
