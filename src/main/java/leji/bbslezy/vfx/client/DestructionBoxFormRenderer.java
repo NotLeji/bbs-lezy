@@ -311,7 +311,7 @@ public class DestructionBoxFormRenderer extends FormRenderer<DestructionBoxForm>
          * (tier A); the far bulk (tier C) flies on closed-form ballistics — GPU-instanced on vanilla, a
          * static rest shell under Iris. This is what keeps 50-100k-block scans real-time. */
         List<DestructionBlock> allBlocks = blocks;
-        int tierCap = this.physSrc.physMaxBodies.get();
+        int tierCap = LezyVfxQuality.getPhysMaxBodiesCap(this.physSrc.physMaxBodies.get());
         int[] tierC = null;
 
         if (tierCap > 0 && blocks.size() > tierCap)

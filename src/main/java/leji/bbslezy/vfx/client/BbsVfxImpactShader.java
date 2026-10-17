@@ -86,6 +86,8 @@ public final class BbsVfxImpactShader
     private static Uniform uCenterCircle;
     private static Uniform uShapesColor;
     private static Uniform uAspect;
+    private static Uniform uBlurSamples;
+    private static Uniform uShapesMax;
 
     private BbsVfxImpactShader()
     {}
@@ -171,6 +173,8 @@ public final class BbsVfxImpactShader
         uCenterCircle = program.getUniformOrDefault("CenterCircle");
         uShapesColor = program.getUniformOrDefault("ShapesColor");
         uAspect = program.getUniformOrDefault("Aspect");
+        uBlurSamples = program.getUniformOrDefault("uBlurSamples");
+        uShapesMax = program.getUniformOrDefault("uShapesMax");
     }
 
     private static ResourceFactory factory()
@@ -300,6 +304,8 @@ public final class BbsVfxImpactShader
         uCenterCircle.set(BbsVfxImpactState.centerCircle);
         uShapesColor.set(BbsVfxImpactState.shapesR, BbsVfxImpactState.shapesG, BbsVfxImpactState.shapesB);
         uAspect.set((float) w / (float) h);
+        if (uBlurSamples != null) uBlurSamples.set(LezyVfxQuality.getImpactBlurSamples());
+        if (uShapesMax != null) uShapesMax.set(LezyVfxQuality.getImpactShapesMax());
 
         BufferBuilder buffer = LezyVfxRenderCompat.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
         LezyVfxRenderCompat.next(buffer.vertex(-1F, -1F, 0F).texture(0F, 0F));

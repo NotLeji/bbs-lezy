@@ -7,6 +7,7 @@ import mchorse.bbs_mod.graphics.texture.Texture;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.ShaderProgram;
+import net.minecraft.client.gl.Uniform;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
 import net.minecraft.client.render.VertexFormat;
@@ -31,6 +32,31 @@ import java.util.List;
 public final class SmokeVolume
 {
     public static ShaderProgram PROGRAM;
+    private static ShaderProgram lastProgram;
+    private static Uniform uInvProj, uOrigin, uUp, uTanU, uTanV, uReach, uHeight;
+    private static Uniform uDensity, uScale, uRise, uCrackScale, uCrackReach, uTime, uColor;
+
+    private static void checkUniforms()
+    {
+        if (PROGRAM != lastProgram && PROGRAM != null)
+        {
+            lastProgram = PROGRAM;
+            uInvProj = PROGRAM.getUniformOrDefault("uInvProj");
+            uOrigin = PROGRAM.getUniformOrDefault("uOrigin");
+            uUp = PROGRAM.getUniformOrDefault("uUp");
+            uTanU = PROGRAM.getUniformOrDefault("uTanU");
+            uTanV = PROGRAM.getUniformOrDefault("uTanV");
+            uReach = PROGRAM.getUniformOrDefault("uReach");
+            uHeight = PROGRAM.getUniformOrDefault("uHeight");
+            uDensity = PROGRAM.getUniformOrDefault("uDensity");
+            uScale = PROGRAM.getUniformOrDefault("uScale");
+            uRise = PROGRAM.getUniformOrDefault("uRise");
+            uCrackScale = PROGRAM.getUniformOrDefault("uCrackScale");
+            uCrackReach = PROGRAM.getUniformOrDefault("uCrackReach");
+            uTime = PROGRAM.getUniformOrDefault("uTime");
+            uColor = PROGRAM.getUniformOrDefault("uColor");
+        }
+    }
 
     private record Entry(Matrix4f mat, float reach, float height, float density, float scale, float rise,
         float crackScale, float crackReach, float st, float colR, float colG, float colB)
@@ -162,20 +188,21 @@ public final class SmokeVolume
             Vector3f tanU = new Vector3f(e.mat.m00(), e.mat.m01(), e.mat.m02()).normalize();
             Vector3f tanV = new Vector3f(e.mat.m20(), e.mat.m21(), e.mat.m22()).normalize();
 
-            PROGRAM.getUniformOrDefault("uInvProj").set(invProj);
-            PROGRAM.getUniformOrDefault("uOrigin").set(origin.x, origin.y, origin.z);
-            PROGRAM.getUniformOrDefault("uUp").set(up.x, up.y, up.z);
-            PROGRAM.getUniformOrDefault("uTanU").set(tanU.x, tanU.y, tanU.z);
-            PROGRAM.getUniformOrDefault("uTanV").set(tanV.x, tanV.y, tanV.z);
-            PROGRAM.getUniformOrDefault("uReach").set(e.reach);
-            PROGRAM.getUniformOrDefault("uHeight").set(e.height);
-            PROGRAM.getUniformOrDefault("uDensity").set(e.density);
-            PROGRAM.getUniformOrDefault("uScale").set(e.scale);
-            PROGRAM.getUniformOrDefault("uRise").set(e.rise);
-            PROGRAM.getUniformOrDefault("uCrackScale").set(e.crackScale);
-            PROGRAM.getUniformOrDefault("uCrackReach").set(e.crackReach);
-            PROGRAM.getUniformOrDefault("uTime").set(e.st);
-            PROGRAM.getUniformOrDefault("uColor").set(e.colR, e.colG, e.colB);
+            checkUniforms();
+            if (uInvProj != null) uInvProj.set(invProj);
+            if (uOrigin != null) uOrigin.set(origin.x, origin.y, origin.z);
+            if (uUp != null) uUp.set(up.x, up.y, up.z);
+            if (uTanU != null) uTanU.set(tanU.x, tanU.y, tanU.z);
+            if (uTanV != null) uTanV.set(tanV.x, tanV.y, tanV.z);
+            if (uReach != null) uReach.set(e.reach);
+            if (uHeight != null) uHeight.set(e.height);
+            if (uDensity != null) uDensity.set(e.density);
+            if (uScale != null) uScale.set(e.scale);
+            if (uRise != null) uRise.set(e.rise);
+            if (uCrackScale != null) uCrackScale.set(e.crackScale);
+            if (uCrackReach != null) uCrackReach.set(e.crackReach);
+            if (uTime != null) uTime.set(e.st);
+            if (uColor != null) uColor.set(e.colR, e.colG, e.colB);
 
             BufferBuilder buffer = LezyVfxRenderCompat.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
 

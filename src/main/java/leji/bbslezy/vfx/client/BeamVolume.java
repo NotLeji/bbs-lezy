@@ -7,6 +7,7 @@ import mchorse.bbs_mod.graphics.texture.Texture;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.ShaderProgram;
+import net.minecraft.client.gl.Uniform;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
 import net.minecraft.client.render.VertexFormat;
@@ -30,6 +31,38 @@ import java.util.List;
 public final class BeamVolume
 {
     public static ShaderProgram PROGRAM;
+    private static ShaderProgram lastProgram;
+    private static Uniform uInvProj, uBase, uAxis, uTanU, uTanV, uLen, uRadius;
+    private static Uniform uSoftness, uOpacity, uEmit, uHelixOn, uHelixCount, uHelixRadius;
+    private static Uniform uHelixTurns, uHelixThickness, uHelixSpin, uTime, uColor, uRim, uSteps;
+
+    private static void checkUniforms()
+    {
+        if (PROGRAM != lastProgram && PROGRAM != null)
+        {
+            lastProgram = PROGRAM;
+            uInvProj = PROGRAM.getUniformOrDefault("uInvProj");
+            uBase = PROGRAM.getUniformOrDefault("uBase");
+            uAxis = PROGRAM.getUniformOrDefault("uAxis");
+            uTanU = PROGRAM.getUniformOrDefault("uTanU");
+            uTanV = PROGRAM.getUniformOrDefault("uTanV");
+            uLen = PROGRAM.getUniformOrDefault("uLen");
+            uRadius = PROGRAM.getUniformOrDefault("uRadius");
+            uSoftness = PROGRAM.getUniformOrDefault("uSoftness");
+            uOpacity = PROGRAM.getUniformOrDefault("uOpacity");
+            uEmit = PROGRAM.getUniformOrDefault("uEmit");
+            uHelixOn = PROGRAM.getUniformOrDefault("uHelixOn");
+            uHelixCount = PROGRAM.getUniformOrDefault("uHelixCount");
+            uHelixRadius = PROGRAM.getUniformOrDefault("uHelixRadius");
+            uHelixTurns = PROGRAM.getUniformOrDefault("uHelixTurns");
+            uHelixThickness = PROGRAM.getUniformOrDefault("uHelixThickness");
+            uHelixSpin = PROGRAM.getUniformOrDefault("uHelixSpin");
+            uTime = PROGRAM.getUniformOrDefault("uTime");
+            uColor = PROGRAM.getUniformOrDefault("uColor");
+            uRim = PROGRAM.getUniformOrDefault("uRim");
+            uSteps = PROGRAM.getUniformOrDefault("uSteps");
+        }
+    }
 
     private record Entry(Matrix4f mat, float len, float radius, float softness, float opacity, float emit,
         int helixOn, int helixCount, float helixRadius, float helixTurns, float helixThickness, float helixSpin,
@@ -164,25 +197,27 @@ public final class BeamVolume
             Vector3f tanU = new Vector3f(e.mat.m00(), e.mat.m01(), e.mat.m02()).normalize();
             Vector3f tanV = new Vector3f(e.mat.m20(), e.mat.m21(), e.mat.m22()).normalize();
 
-            PROGRAM.getUniformOrDefault("uInvProj").set(invProj);
-            PROGRAM.getUniformOrDefault("uBase").set(base.x, base.y, base.z);
-            PROGRAM.getUniformOrDefault("uAxis").set(axis.x, axis.y, axis.z);
-            PROGRAM.getUniformOrDefault("uTanU").set(tanU.x, tanU.y, tanU.z);
-            PROGRAM.getUniformOrDefault("uTanV").set(tanV.x, tanV.y, tanV.z);
-            PROGRAM.getUniformOrDefault("uLen").set(e.len);
-            PROGRAM.getUniformOrDefault("uRadius").set(e.radius);
-            PROGRAM.getUniformOrDefault("uSoftness").set(Math.max(0.05F, e.softness));
-            PROGRAM.getUniformOrDefault("uOpacity").set(e.opacity);
-            PROGRAM.getUniformOrDefault("uEmit").set(e.emit);
-            PROGRAM.getUniformOrDefault("uHelixOn").set(e.helixOn);
-            PROGRAM.getUniformOrDefault("uHelixCount").set(e.helixCount);
-            PROGRAM.getUniformOrDefault("uHelixRadius").set(e.helixRadius);
-            PROGRAM.getUniformOrDefault("uHelixTurns").set(e.helixTurns);
-            PROGRAM.getUniformOrDefault("uHelixThickness").set(e.helixThickness);
-            PROGRAM.getUniformOrDefault("uHelixSpin").set(e.helixSpin);
-            PROGRAM.getUniformOrDefault("uTime").set(e.st);
-            PROGRAM.getUniformOrDefault("uColor").set(e.colR, e.colG, e.colB);
-            PROGRAM.getUniformOrDefault("uRim").set(e.rimR, e.rimG, e.rimB);
+            checkUniforms();
+            if (uInvProj != null) uInvProj.set(invProj);
+            if (uBase != null) uBase.set(base.x, base.y, base.z);
+            if (uAxis != null) uAxis.set(axis.x, axis.y, axis.z);
+            if (uTanU != null) uTanU.set(tanU.x, tanU.y, tanU.z);
+            if (uTanV != null) uTanV.set(tanV.x, tanV.y, tanV.z);
+            if (uLen != null) uLen.set(e.len);
+            if (uRadius != null) uRadius.set(e.radius);
+            if (uSoftness != null) uSoftness.set(Math.max(0.05F, e.softness));
+            if (uOpacity != null) uOpacity.set(e.opacity);
+            if (uEmit != null) uEmit.set(e.emit);
+            if (uHelixOn != null) uHelixOn.set(e.helixOn);
+            if (uHelixCount != null) uHelixCount.set(e.helixCount);
+            if (uHelixRadius != null) uHelixRadius.set(e.helixRadius);
+            if (uHelixTurns != null) uHelixTurns.set(e.helixTurns);
+            if (uHelixThickness != null) uHelixThickness.set(e.helixThickness);
+            if (uHelixSpin != null) uHelixSpin.set(e.helixSpin);
+            if (uTime != null) uTime.set(e.st);
+            if (uColor != null) uColor.set(e.colR, e.colG, e.colB);
+            if (uRim != null) uRim.set(e.rimR, e.rimG, e.rimB);
+            if (uSteps != null) uSteps.set(LezyVfxQuality.getBeamSteps());
 
             BufferBuilder buffer = LezyVfxRenderCompat.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
 

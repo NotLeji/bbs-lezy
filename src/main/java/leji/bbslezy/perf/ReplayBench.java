@@ -227,6 +227,12 @@ public class ReplayBench
      */
     private static void stageFilm(String filmId)
     {
+        if ("vfx-mixed-bench".equals(filmId))
+        {
+            createMixedVfxFilm(filmId);
+            return;
+        }
+
         try
         {
             File dest = BBSMod.getFilms().getFile(filmId);
@@ -243,6 +249,86 @@ public class ReplayBench
             dest.getParentFile().mkdirs();
             Files.copy(source, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
             System.out.println("BBSLezy[bench] staged film from bench-films");
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    private static void createMixedVfxFilm(String filmId)
+    {
+        try
+        {
+            File dest = BBSMod.getFilms().getFile(filmId);
+
+            if (dest.exists())
+            {
+                System.out.println("BBSLezy[bench] vfx-mixed-bench film file present");
+                return;
+            }
+
+            Film film = new Film();
+            film.setId(filmId);
+
+            for (int i = 0; i < 200; i++)
+            {
+                mchorse.bbs_mod.film.replays.Replay r = film.replays.addReplay();
+                double rx = ((i % 20) - 10) * 3.5;
+                double rz = ((i / 20) - 5) * 3.5;
+                r.keyframes.x.insert(0F, rx);
+                r.keyframes.y.insert(0F, 64.0);
+                r.keyframes.z.insert(0F, rz);
+            }
+
+            mchorse.bbs_mod.film.replays.Replay expReplay = film.replays.addReplay();
+            expReplay.category.set("vfx");
+            expReplay.keyframes.x.insert(0F, 0.0);
+            expReplay.keyframes.y.insert(0F, 64.0);
+            expReplay.keyframes.z.insert(0F, 0.0);
+            leji.bbslezy.vfx.forms.ExplosionForm expForm = new leji.bbslezy.vfx.forms.ExplosionForm();
+            expForm.fillTestStructure(10);
+            expForm.destruction.set(0.6F);
+            expForm.fireCount.set(20);
+            expForm.fireDuration.set(10F);
+            expReplay.form.set(expForm);
+
+            mchorse.bbs_mod.film.replays.Replay windReplay = film.replays.addReplay();
+            windReplay.category.set("vfx");
+            windReplay.keyframes.x.insert(0F, 8.0);
+            windReplay.keyframes.y.insert(0F, 64.0);
+            windReplay.keyframes.z.insert(0F, 8.0);
+            leji.bbslezy.vfx.forms.LezyWindForm windForm = new leji.bbslezy.vfx.forms.LezyWindForm();
+            windForm.windType.set(2);
+            windForm.strength.set(8F);
+            windForm.dust.set(0.8F);
+            windForm.streaks.set(1F);
+            windForm.leaves.set(1F);
+            windForm.progress.set(0.5F);
+            windReplay.form.set(windForm);
+
+            mchorse.bbs_mod.film.replays.Replay domeReplay = film.replays.addReplay();
+            domeReplay.category.set("vfx");
+            domeReplay.keyframes.x.insert(0F, -8.0);
+            domeReplay.keyframes.y.insert(0F, 64.0);
+            domeReplay.keyframes.z.insert(0F, -8.0);
+            leji.bbslezy.vfx.forms.DomeForm domeForm = new leji.bbslezy.vfx.forms.DomeForm();
+            domeForm.progress.set(0.4F);
+            domeForm.maxRadius.set(24F);
+            domeForm.opacity.set(0.9F);
+            domeReplay.form.set(domeForm);
+
+            leji.bbslezy.vfx.camera.ImpactClip impactClip = new leji.bbslezy.vfx.camera.ImpactClip();
+            impactClip.tick.set(0);
+            impactClip.duration.set(2400);
+            impactClip.zoomBlur.set(0.25F);
+            impactClip.zoomLines.set(0.35F);
+            impactClip.shapes.set(0.5F);
+            film.camera.add(impactClip);
+
+            dest.getParentFile().mkdirs();
+            BBSMod.getFilms().save(filmId, (mchorse.bbs_mod.data.types.MapType) film.toData());
+            System.out.println("BBSLezy[bench] created and saved vfx-mixed-bench film successfully");
         }
         catch (Exception e)
         {

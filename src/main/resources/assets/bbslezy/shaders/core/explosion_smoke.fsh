@@ -42,6 +42,7 @@ uniform float uSphereRadius;  /* sphere shape: ball radius */
 uniform float uSphereHeat;    /* sphere shape: emissive fire amount (0 = smoke only) */
 
 const int STEPS = 56;
+uniform int uSteps;
 
 in vec2 vUv;
 
@@ -258,6 +259,12 @@ vec3 density(float u, float v, float h)
 
 void main()
 {
+    if (uFade <= 0.001 || (uDensity <= 0.001 && uHeat <= 0.001 && uBallHeat <= 0.001 && uSphereHeat <= 0.001))
+    {
+        fragColor = vec4(texture(Sampler0, vUv).rgb, 1.0);
+        return;
+    }
+
     vec3 scene = texture(Sampler0, vUv).rgb;
     float depth = texture(Sampler1, vUv).r;
 
@@ -317,7 +324,8 @@ void main()
         return;
     }
 
-    float stepLen = (tExit - tEnter) / float(STEPS);
+    int steps = (uSteps > 0 && uSteps <= STEPS) ? uSteps : STEPS;
+    float stepLen = (tExit - tEnter) / float(steps);
     float dither = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453 + uTime);
     float t = tEnter + stepLen * dither;
 
@@ -333,6 +341,10 @@ void main()
 
     for (int i = 0; i < STEPS; i++)
     {
+        if (i >= steps)
+        {
+            break;
+        }
         vec3 sp = dir * t;
         vec3 rel = sp - uOrigin;
         float lu = dot(rel, uTanU);

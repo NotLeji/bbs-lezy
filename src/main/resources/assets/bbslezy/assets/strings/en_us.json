@@ -64,9 +64,8 @@
 	"bbslezy.config.perf_throttle_distance": "Throttle distance (blocks)",
 	"bbslezy.config.perf_skip_distance": "Skip distance (blocks)",
 	"bbslezy.config.perf_throttle_ticks": "Throttle interval (ticks)",
-	"bbslezy.config.general.guides_show_labels-comment": "Show text labels on active guide lines.",
 	"bbslezy.ui.video.gpu_unsupported_title": "GPU Encoding Unsupported",
-	"bbslezy.ui.video.gpu_unsupported_message": "Hardware acceleration is enabled, but the GPU (%s) — or the ffmpeg build it uses — does not support hardware encoding for the selected codec (%s).\n\nWould you like to render this video using the CPU instead?",
+	"bbslezy.ui.video.gpu_unsupported_message": "Hardware acceleration is enabled, but the GPU (%s) \u2014 or the ffmpeg build it uses \u2014 does not support hardware encoding for the selected codec (%s).\n\nWould you like to render this video using the CPU instead?",
 	"bbslezy.ui.video.render_cpu": "Render with CPU",
 	"bbslezy.ui.video.cancel": "Cancel",
 	"bbslezy.importer.copy_audio": "Audio (copy as-is)",
@@ -146,5 +145,9 @@
 	"bbslezy.ui.audio.reverse": "Reverse audio",
 	"bbslezy.ui.audio.reverse.tooltip": "Play this clip's audio from the end of its duration backwards",
 	"bbslezy.ui.audio.keyframes": "Volume Keyframes",
-	"bbslezy.ui.audio.keyframes.tooltip": "Open dope sheet track editor to animate audio volume over time"
+	"bbslezy.ui.audio.keyframes.tooltip": "Open dope sheet track editor to animate audio volume over time",
+	"bbslezy.config.general.vfx_quality": "VFX Preview Quality",
+	"bbslezy.config.general.vfx_quality-comment": "Quality preset for real-time VFX rendering in editor preview. Video exports always render at maximum quality regardless of this setting. Auto adjusts based on FPS, High is maximum fidelity, Medium and Low optimize raymarching steps and particle counts for higher frame rates.",
+	"bbslezy.config.general.vfx_dynamic_quality": "Auto Dynamic Quality",
+	"bbslezy.config.general.vfx_dynamic_quality-comment": "Dynamically reduces VFX shader steps and particle density during playback when FPS drops below 32, restoring full quality when frame rates recover above 48."
 }

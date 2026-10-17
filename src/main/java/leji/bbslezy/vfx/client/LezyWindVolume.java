@@ -7,6 +7,7 @@ import mchorse.bbs_mod.graphics.texture.Texture;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.ShaderProgram;
+import net.minecraft.client.gl.Uniform;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
 import net.minecraft.client.render.VertexFormat;
@@ -30,6 +31,36 @@ import java.util.List;
 public final class LezyWindVolume
 {
     public static ShaderProgram PROGRAM;
+    private static ShaderProgram lastProgram;
+    private static Uniform uInvProj, uOrigin, uUp, uTanU, uTanV;
+    private static Uniform uReach, uHeight, uDensity, uDust, uScale, uSpeed;
+    private static Uniform uWind, uTime, uColor, uMode, uCoreR, uFlare, uSteps;
+
+    private static void checkUniforms()
+    {
+        if (PROGRAM != lastProgram && PROGRAM != null)
+        {
+            lastProgram = PROGRAM;
+            uInvProj = PROGRAM.getUniformOrDefault("uInvProj");
+            uOrigin = PROGRAM.getUniformOrDefault("uOrigin");
+            uUp = PROGRAM.getUniformOrDefault("uUp");
+            uTanU = PROGRAM.getUniformOrDefault("uTanU");
+            uTanV = PROGRAM.getUniformOrDefault("uTanV");
+            uReach = PROGRAM.getUniformOrDefault("uReach");
+            uHeight = PROGRAM.getUniformOrDefault("uHeight");
+            uDensity = PROGRAM.getUniformOrDefault("uDensity");
+            uDust = PROGRAM.getUniformOrDefault("uDust");
+            uScale = PROGRAM.getUniformOrDefault("uScale");
+            uSpeed = PROGRAM.getUniformOrDefault("uSpeed");
+            uWind = PROGRAM.getUniformOrDefault("uWind");
+            uTime = PROGRAM.getUniformOrDefault("uTime");
+            uColor = PROGRAM.getUniformOrDefault("uColor");
+            uMode = PROGRAM.getUniformOrDefault("uMode");
+            uCoreR = PROGRAM.getUniformOrDefault("uCoreR");
+            uFlare = PROGRAM.getUniformOrDefault("uFlare");
+            uSteps = PROGRAM.getUniformOrDefault("uSteps");
+        }
+    }
 
     private record Entry(Matrix4f mat, float reach, float height, float density, float dust, float scale, float speed,
         float windU, float windV, float st, float colR, float colG, float colB,
@@ -175,23 +206,25 @@ public final class LezyWindVolume
             Vector3f tanU = new Vector3f(e.mat.m00(), e.mat.m01(), e.mat.m02()).normalize();
             Vector3f tanV = new Vector3f(e.mat.m20(), e.mat.m21(), e.mat.m22()).normalize();
 
-            PROGRAM.getUniformOrDefault("uInvProj").set(invProj);
-            PROGRAM.getUniformOrDefault("uOrigin").set(origin.x, origin.y, origin.z);
-            PROGRAM.getUniformOrDefault("uUp").set(up.x, up.y, up.z);
-            PROGRAM.getUniformOrDefault("uTanU").set(tanU.x, tanU.y, tanU.z);
-            PROGRAM.getUniformOrDefault("uTanV").set(tanV.x, tanV.y, tanV.z);
-            PROGRAM.getUniformOrDefault("uReach").set(e.reach);
-            PROGRAM.getUniformOrDefault("uHeight").set(e.height);
-            PROGRAM.getUniformOrDefault("uDensity").set(e.density);
-            PROGRAM.getUniformOrDefault("uDust").set(e.dust);
-            PROGRAM.getUniformOrDefault("uScale").set(e.scale);
-            PROGRAM.getUniformOrDefault("uSpeed").set(e.speed);
-            PROGRAM.getUniformOrDefault("uWind").set(e.windU, e.windV);
-            PROGRAM.getUniformOrDefault("uTime").set(e.st);
-            PROGRAM.getUniformOrDefault("uColor").set(e.colR, e.colG, e.colB);
-            PROGRAM.getUniformOrDefault("uMode").set(e.mode);
-            PROGRAM.getUniformOrDefault("uCoreR").set(e.coreR);
-            PROGRAM.getUniformOrDefault("uFlare").set(e.flare);
+            checkUniforms();
+            if (uInvProj != null) uInvProj.set(invProj);
+            if (uOrigin != null) uOrigin.set(origin.x, origin.y, origin.z);
+            if (uUp != null) uUp.set(up.x, up.y, up.z);
+            if (uTanU != null) uTanU.set(tanU.x, tanU.y, tanU.z);
+            if (uTanV != null) uTanV.set(tanV.x, tanV.y, tanV.z);
+            if (uReach != null) uReach.set(e.reach);
+            if (uHeight != null) uHeight.set(e.height);
+            if (uDensity != null) uDensity.set(e.density);
+            if (uDust != null) uDust.set(e.dust);
+            if (uScale != null) uScale.set(e.scale);
+            if (uSpeed != null) uSpeed.set(e.speed);
+            if (uWind != null) uWind.set(e.windU, e.windV);
+            if (uTime != null) uTime.set(e.st);
+            if (uColor != null) uColor.set(e.colR, e.colG, e.colB);
+            if (uMode != null) uMode.set(e.mode);
+            if (uCoreR != null) uCoreR.set(e.coreR);
+            if (uFlare != null) uFlare.set(e.flare);
+            if (uSteps != null) uSteps.set(LezyVfxQuality.getWindSteps(e.mode > 0.5F));
 
             BufferBuilder buffer = LezyVfxRenderCompat.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
 

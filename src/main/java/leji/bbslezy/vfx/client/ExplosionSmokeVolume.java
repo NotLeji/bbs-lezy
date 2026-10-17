@@ -7,6 +7,7 @@ import mchorse.bbs_mod.graphics.texture.Texture;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.ShaderProgram;
+import net.minecraft.client.gl.Uniform;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
 import net.minecraft.client.render.VertexFormat;
@@ -38,6 +39,42 @@ import java.util.List;
 public final class ExplosionSmokeVolume
 {
     public static ShaderProgram PROGRAM;
+    private static ShaderProgram lastProgram;
+    private static Uniform uInvProj, uOrigin, uUp, uTanU, uTanV;
+    private static Uniform uCapY, uCapR, uStemR, uDensity, uScale, uRise, uHeat;
+    private static Uniform uEmit, uFade, uTime, uColor, uDrift, uBallR, uBallHeat;
+    private static Uniform uShape, uSphereRadius, uSphereHeat, uSteps;
+
+    private static void checkUniforms()
+    {
+        if (PROGRAM != lastProgram && PROGRAM != null)
+        {
+            lastProgram = PROGRAM;
+            uInvProj = PROGRAM.getUniformOrDefault("uInvProj");
+            uOrigin = PROGRAM.getUniformOrDefault("uOrigin");
+            uUp = PROGRAM.getUniformOrDefault("uUp");
+            uTanU = PROGRAM.getUniformOrDefault("uTanU");
+            uTanV = PROGRAM.getUniformOrDefault("uTanV");
+            uCapY = PROGRAM.getUniformOrDefault("uCapY");
+            uCapR = PROGRAM.getUniformOrDefault("uCapR");
+            uStemR = PROGRAM.getUniformOrDefault("uStemR");
+            uDensity = PROGRAM.getUniformOrDefault("uDensity");
+            uScale = PROGRAM.getUniformOrDefault("uScale");
+            uRise = PROGRAM.getUniformOrDefault("uRise");
+            uHeat = PROGRAM.getUniformOrDefault("uHeat");
+            uEmit = PROGRAM.getUniformOrDefault("uEmit");
+            uFade = PROGRAM.getUniformOrDefault("uFade");
+            uTime = PROGRAM.getUniformOrDefault("uTime");
+            uColor = PROGRAM.getUniformOrDefault("uColor");
+            uDrift = PROGRAM.getUniformOrDefault("uDrift");
+            uBallR = PROGRAM.getUniformOrDefault("uBallR");
+            uBallHeat = PROGRAM.getUniformOrDefault("uBallHeat");
+            uShape = PROGRAM.getUniformOrDefault("uShape");
+            uSphereRadius = PROGRAM.getUniformOrDefault("uSphereRadius");
+            uSphereHeat = PROGRAM.getUniformOrDefault("uSphereHeat");
+            uSteps = PROGRAM.getUniformOrDefault("uSteps");
+        }
+    }
 
     private record Entry(Matrix4f mat, float capY, float capR, float stemR, float density, float scale,
         float rise, float heat, float emit, float fade, float st,
@@ -194,28 +231,30 @@ public final class ExplosionSmokeVolume
             Vector3f tanU = new Vector3f(e.mat.m00(), e.mat.m01(), e.mat.m02()).normalize();
             Vector3f tanV = new Vector3f(e.mat.m20(), e.mat.m21(), e.mat.m22()).normalize();
 
-            PROGRAM.getUniformOrDefault("uInvProj").set(invProj);
-            PROGRAM.getUniformOrDefault("uOrigin").set(origin.x, origin.y, origin.z);
-            PROGRAM.getUniformOrDefault("uUp").set(up.x, up.y, up.z);
-            PROGRAM.getUniformOrDefault("uTanU").set(tanU.x, tanU.y, tanU.z);
-            PROGRAM.getUniformOrDefault("uTanV").set(tanV.x, tanV.y, tanV.z);
-            PROGRAM.getUniformOrDefault("uCapY").set(e.capY);
-            PROGRAM.getUniformOrDefault("uCapR").set(e.capR);
-            PROGRAM.getUniformOrDefault("uStemR").set(e.stemR);
-            PROGRAM.getUniformOrDefault("uDensity").set(e.density);
-            PROGRAM.getUniformOrDefault("uScale").set(e.scale);
-            PROGRAM.getUniformOrDefault("uRise").set(e.rise);
-            PROGRAM.getUniformOrDefault("uHeat").set(e.heat);
-            PROGRAM.getUniformOrDefault("uEmit").set(e.emit);
-            PROGRAM.getUniformOrDefault("uFade").set(e.fade);
-            PROGRAM.getUniformOrDefault("uTime").set(e.st);
-            PROGRAM.getUniformOrDefault("uColor").set(e.colR, e.colG, e.colB);
-            PROGRAM.getUniformOrDefault("uDrift").set(e.driftX, e.driftZ);
-            PROGRAM.getUniformOrDefault("uBallR").set(e.ballR);
-            PROGRAM.getUniformOrDefault("uBallHeat").set(e.ballHeat);
-            PROGRAM.getUniformOrDefault("uShape").set(e.shape);
-            PROGRAM.getUniformOrDefault("uSphereRadius").set(e.sphereR);
-            PROGRAM.getUniformOrDefault("uSphereHeat").set(e.sphereHeat);
+            checkUniforms();
+            if (uInvProj != null) uInvProj.set(invProj);
+            if (uOrigin != null) uOrigin.set(origin.x, origin.y, origin.z);
+            if (uUp != null) uUp.set(up.x, up.y, up.z);
+            if (uTanU != null) uTanU.set(tanU.x, tanU.y, tanU.z);
+            if (uTanV != null) uTanV.set(tanV.x, tanV.y, tanV.z);
+            if (uCapY != null) uCapY.set(e.capY);
+            if (uCapR != null) uCapR.set(e.capR);
+            if (uStemR != null) uStemR.set(e.stemR);
+            if (uDensity != null) uDensity.set(e.density);
+            if (uScale != null) uScale.set(e.scale);
+            if (uRise != null) uRise.set(e.rise);
+            if (uHeat != null) uHeat.set(e.heat);
+            if (uEmit != null) uEmit.set(e.emit);
+            if (uFade != null) uFade.set(e.fade);
+            if (uTime != null) uTime.set(e.st);
+            if (uColor != null) uColor.set(e.colR, e.colG, e.colB);
+            if (uDrift != null) uDrift.set(e.driftX, e.driftZ);
+            if (uBallR != null) uBallR.set(e.ballR);
+            if (uBallHeat != null) uBallHeat.set(e.ballHeat);
+            if (uShape != null) uShape.set(e.shape);
+            if (uSphereRadius != null) uSphereRadius.set(e.sphereR);
+            if (uSphereHeat != null) uSphereHeat.set(e.sphereHeat);
+            if (uSteps != null) uSteps.set(LezyVfxQuality.getExplosionSteps());
 
             BufferBuilder buffer = LezyVfxRenderCompat.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
 

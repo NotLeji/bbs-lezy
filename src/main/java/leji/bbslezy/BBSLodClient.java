@@ -269,6 +269,7 @@ public class BBSLodClient implements BBSAddonMod
         });
 
         ClientTickEvents.END_CLIENT_TICK.register((client) -> LezyIrisHelper.tick());
+        ClientTickEvents.END_CLIENT_TICK.register(leji.bbslezy.vfx.client.LezyVfxQuality::tick);
         ClientTickEvents.END_CLIENT_TICK.register(leji.bbslezy.perf.ReplayBench::onClientTick);
         if (leji.bbslezy.perf.ui.LezyUIBench.isEnabled())
         {

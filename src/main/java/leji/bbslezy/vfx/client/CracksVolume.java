@@ -7,6 +7,7 @@ import mchorse.bbs_mod.graphics.texture.Texture;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.ShaderProgram;
+import net.minecraft.client.gl.Uniform;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
 import net.minecraft.client.render.VertexFormat;
@@ -31,6 +32,29 @@ import java.util.List;
 public final class CracksVolume
 {
     public static ShaderProgram PROGRAM;
+    private static ShaderProgram lastProgram;
+    private static Uniform uInvProj, uOrigin, uUp, uTanU, uTanV, uReach, uScale;
+    private static Uniform uThickness, uGlow, uDepth, uTime, uColor;
+
+    private static void checkUniforms()
+    {
+        if (PROGRAM != lastProgram && PROGRAM != null)
+        {
+            lastProgram = PROGRAM;
+            uInvProj = PROGRAM.getUniformOrDefault("uInvProj");
+            uOrigin = PROGRAM.getUniformOrDefault("uOrigin");
+            uUp = PROGRAM.getUniformOrDefault("uUp");
+            uTanU = PROGRAM.getUniformOrDefault("uTanU");
+            uTanV = PROGRAM.getUniformOrDefault("uTanV");
+            uReach = PROGRAM.getUniformOrDefault("uReach");
+            uScale = PROGRAM.getUniformOrDefault("uScale");
+            uThickness = PROGRAM.getUniformOrDefault("uThickness");
+            uGlow = PROGRAM.getUniformOrDefault("uGlow");
+            uDepth = PROGRAM.getUniformOrDefault("uDepth");
+            uTime = PROGRAM.getUniformOrDefault("uTime");
+            uColor = PROGRAM.getUniformOrDefault("uColor");
+        }
+    }
 
     private record Entry(Matrix4f mat, float reach, float scale, float thickness, float glow, float depth,
         float st, float colR, float colG, float colB)
@@ -168,18 +192,19 @@ public final class CracksVolume
             Vector3f tanU = new Vector3f(e.mat.m00(), e.mat.m01(), e.mat.m02()).normalize();
             Vector3f tanV = new Vector3f(e.mat.m20(), e.mat.m21(), e.mat.m22()).normalize();
 
-            PROGRAM.getUniformOrDefault("uInvProj").set(invProj);
-            PROGRAM.getUniformOrDefault("uOrigin").set(origin.x, origin.y, origin.z);
-            PROGRAM.getUniformOrDefault("uUp").set(up.x, up.y, up.z);
-            PROGRAM.getUniformOrDefault("uTanU").set(tanU.x, tanU.y, tanU.z);
-            PROGRAM.getUniformOrDefault("uTanV").set(tanV.x, tanV.y, tanV.z);
-            PROGRAM.getUniformOrDefault("uReach").set(e.reach);
-            PROGRAM.getUniformOrDefault("uScale").set(e.scale);
-            PROGRAM.getUniformOrDefault("uThickness").set(e.thickness);
-            PROGRAM.getUniformOrDefault("uGlow").set(e.glow);
-            PROGRAM.getUniformOrDefault("uDepth").set(e.depth);
-            PROGRAM.getUniformOrDefault("uTime").set(e.st);
-            PROGRAM.getUniformOrDefault("uColor").set(e.colR, e.colG, e.colB);
+            checkUniforms();
+            if (uInvProj != null) uInvProj.set(invProj);
+            if (uOrigin != null) uOrigin.set(origin.x, origin.y, origin.z);
+            if (uUp != null) uUp.set(up.x, up.y, up.z);
+            if (uTanU != null) uTanU.set(tanU.x, tanU.y, tanU.z);
+            if (uTanV != null) uTanV.set(tanV.x, tanV.y, tanV.z);
+            if (uReach != null) uReach.set(e.reach);
+            if (uScale != null) uScale.set(e.scale);
+            if (uThickness != null) uThickness.set(e.thickness);
+            if (uGlow != null) uGlow.set(e.glow);
+            if (uDepth != null) uDepth.set(e.depth);
+            if (uTime != null) uTime.set(e.st);
+            if (uColor != null) uColor.set(e.colR, e.colG, e.colB);
 
             BufferBuilder buffer = LezyVfxRenderCompat.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
 

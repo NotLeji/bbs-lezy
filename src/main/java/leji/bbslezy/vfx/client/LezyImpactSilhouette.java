@@ -93,14 +93,17 @@ public final class LezyImpactSilhouette
             return;
         }
 
-        ensureFbo(w, h);
+        float silScale = LezyVfxQuality.getSilhouetteScale();
+        int rw = Math.max(1, Math.round(w * silScale));
+        int rh = Math.max(1, Math.round(h * silScale));
+        ensureFbo(rw, rh);
 
         Matrix4f oldProj = new Matrix4f(RenderSystem.getProjectionMatrix());
         int prevDraw = GL30.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
         int prevRead = GL30.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
 
         fbo.bind();
-        GL11.glViewport(0, 0, w, h);
+        GL11.glViewport(0, 0, rw, rh);
 
         RenderSystem.colorMask(true, true, true, true);
         RenderSystem.depthMask(true);
@@ -184,6 +187,7 @@ public final class LezyImpactSilhouette
             RenderSystem.setProjectionMatrix(oldProj, VertexSorter.BY_DISTANCE);
             GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, prevDraw);
             GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, prevRead);
+            GL11.glViewport(0, 0, w, h);
 
             RenderSystem.depthMask(true);
             RenderSystem.enableDepthTest();

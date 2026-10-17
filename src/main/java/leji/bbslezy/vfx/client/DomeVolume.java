@@ -7,6 +7,7 @@ import mchorse.bbs_mod.graphics.texture.Texture;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.ShaderProgram;
+import net.minecraft.client.gl.Uniform;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
 import net.minecraft.client.render.VertexFormat;
@@ -36,6 +37,29 @@ import java.util.List;
 public final class DomeVolume
 {
     public static ShaderProgram PROGRAM;
+    private static ShaderProgram lastProgram;
+    private static Uniform uInvProj, uOrigin, uUp, uRadius, uHeightScale, uDensity;
+    private static Uniform uOpacity, uRimPow, uEmit, uTime, uTint, uRim;
+
+    private static void checkUniforms()
+    {
+        if (PROGRAM != lastProgram && PROGRAM != null)
+        {
+            lastProgram = PROGRAM;
+            uInvProj = PROGRAM.getUniformOrDefault("uInvProj");
+            uOrigin = PROGRAM.getUniformOrDefault("uOrigin");
+            uUp = PROGRAM.getUniformOrDefault("uUp");
+            uRadius = PROGRAM.getUniformOrDefault("uRadius");
+            uHeightScale = PROGRAM.getUniformOrDefault("uHeightScale");
+            uDensity = PROGRAM.getUniformOrDefault("uDensity");
+            uOpacity = PROGRAM.getUniformOrDefault("uOpacity");
+            uRimPow = PROGRAM.getUniformOrDefault("uRimPow");
+            uEmit = PROGRAM.getUniformOrDefault("uEmit");
+            uTime = PROGRAM.getUniformOrDefault("uTime");
+            uTint = PROGRAM.getUniformOrDefault("uTint");
+            uRim = PROGRAM.getUniformOrDefault("uRim");
+        }
+    }
 
     private record Entry(Matrix4f mat, float radius, float heightScale, float opacity, float density,
         float rimPow, float emit, float st, float tintR, float tintG, float tintB, float rimR, float rimG, float rimB)
@@ -172,18 +196,19 @@ public final class DomeVolume
             Vector3f origin = new Vector3f(e.mat.m30(), e.mat.m31(), e.mat.m32());
             Vector3f up = new Vector3f(e.mat.m10(), e.mat.m11(), e.mat.m12()).normalize();
 
-            PROGRAM.getUniformOrDefault("uInvProj").set(invProj);
-            PROGRAM.getUniformOrDefault("uOrigin").set(origin.x, origin.y, origin.z);
-            PROGRAM.getUniformOrDefault("uUp").set(up.x, up.y, up.z);
-            PROGRAM.getUniformOrDefault("uRadius").set(e.radius);
-            PROGRAM.getUniformOrDefault("uHeightScale").set(e.heightScale);
-            PROGRAM.getUniformOrDefault("uDensity").set(e.density);
-            PROGRAM.getUniformOrDefault("uOpacity").set(e.opacity);
-            PROGRAM.getUniformOrDefault("uRimPow").set(e.rimPow);
-            PROGRAM.getUniformOrDefault("uEmit").set(e.emit);
-            PROGRAM.getUniformOrDefault("uTime").set(e.st);
-            PROGRAM.getUniformOrDefault("uTint").set(e.tintR, e.tintG, e.tintB);
-            PROGRAM.getUniformOrDefault("uRim").set(e.rimR, e.rimG, e.rimB);
+            checkUniforms();
+            if (uInvProj != null) uInvProj.set(invProj);
+            if (uOrigin != null) uOrigin.set(origin.x, origin.y, origin.z);
+            if (uUp != null) uUp.set(up.x, up.y, up.z);
+            if (uRadius != null) uRadius.set(e.radius);
+            if (uHeightScale != null) uHeightScale.set(e.heightScale);
+            if (uDensity != null) uDensity.set(e.density);
+            if (uOpacity != null) uOpacity.set(e.opacity);
+            if (uRimPow != null) uRimPow.set(e.rimPow);
+            if (uEmit != null) uEmit.set(e.emit);
+            if (uTime != null) uTime.set(e.st);
+            if (uTint != null) uTint.set(e.tintR, e.tintG, e.tintB);
+            if (uRim != null) uRim.set(e.rimR, e.rimG, e.rimB);
 
             BufferBuilder buffer = LezyVfxRenderCompat.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
 

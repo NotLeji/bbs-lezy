@@ -32,6 +32,7 @@ uniform vec3  uColor;         /* hot core colour */
 uniform vec3  uRim;           /* cooler rim / helix colour */
 
 const int STEPS = 48;
+uniform int uSteps;
 const float PI = 3.14159265;
 
 in vec2 vUv;
@@ -126,6 +127,12 @@ vec3 emission(float h, float ru, float rv)
 
 void main()
 {
+    if (uOpacity <= 0.001 || uEmit <= 0.001)
+    {
+        fragColor = vec4(texture(Sampler0, vUv).rgb, 1.0);
+        return;
+    }
+
     vec3 scene = texture(Sampler0, vUv).rgb;
     float depth = texture(Sampler1, vUv).r;
 
@@ -174,7 +181,8 @@ void main()
         return;
     }
 
-    float stepLen = (tExit - tEnter) / float(STEPS);
+    int steps = (uSteps > 0 && uSteps <= STEPS) ? uSteps : STEPS;
+    float stepLen = (tExit - tEnter) / float(steps);
     float dither = hash(gl_FragCoord.xy + fract(uTime) * 13.0);
     float t = tEnter + stepLen * dither;
 
@@ -182,6 +190,10 @@ void main()
 
     for (int i = 0; i < STEPS; i++)
     {
+        if (i >= steps)
+        {
+            break;
+        }
         vec3 sp = dir * t;
         vec3 rel = sp - uBase;
         float h = dot(rel, uAxis);

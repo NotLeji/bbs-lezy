@@ -74,6 +74,8 @@ const vec3 LUMA = vec3(0.299, 0.587, 0.114);
 const float TAU = 6.2831853;
 const int BLUR_SAMPLES = 5;
 const int SHAPES_MAX = 24;
+uniform int uBlurSamples;
+uniform int uShapesMax;
 
 float hash(float n)
 {
@@ -231,6 +233,10 @@ float ringCoverage(vec2 q, float sz)
 // Scene colour at uv, with chromatic aberration (R/B split radially from the focus).
 vec3 sceneColor(vec2 uv, float caOff)
 {
+    if (caOff < 1e-4)
+    {
+        return texture(Sampler0, uv).rgb;
+    }
     vec2 dir = uv - Focus;
     vec3 c;
     c.r = texture(Sampler0, uv + dir * caOff).r;
@@ -301,9 +307,10 @@ float shapesAt(vec2 uv)
 
     float cover = 0.0;
 
+    int maxShapes = (uShapesMax > 0 && uShapesMax <= SHAPES_MAX) ? uShapesMax : SHAPES_MAX;
     for (int i = 0; i < SHAPES_MAX; i++)
     {
-        if (float(i) >= ShapesCount)
+        if (i >= maxShapes || float(i) >= ShapesCount)
         {
             break;
         }
@@ -435,8 +442,13 @@ void main()
     float alpha = 0.0;
     int n = 0;
 
+    int blurSamples = (uBlurSamples > 0 && uBlurSamples <= BLUR_SAMPLES) ? uBlurSamples : BLUR_SAMPLES;
     for (int i = 0; i < BLUR_SAMPLES; i++)
     {
+        if (i >= blurSamples)
+        {
+            break;
+        }
         if (i > 0 && zb < 0.001)
         {
             break;

@@ -32,6 +32,7 @@ uniform vec3  uColor;
 
 const int STEPS = 16;
 const int STEPS_VORTEX = 28;
+uniform int uSteps;
 
 in vec2 vUv;
 
@@ -192,6 +193,12 @@ vec2 density(float u, float v, float h)
 
 void main()
 {
+    if (uDensity <= 0.001 && uDust <= 0.001)
+    {
+        fragColor = vec4(texture(Sampler0, vUv).rgb, 1.0);
+        return;
+    }
+
     vec3 scene = texture(Sampler0, vUv).rgb;
     float depth = texture(Sampler1, vUv).r;
 
@@ -247,7 +254,8 @@ void main()
         return;
     }
 
-    int steps = uMode > 0.5 ? STEPS_VORTEX : STEPS;
+    int maxDefault = uMode > 0.5 ? STEPS_VORTEX : STEPS;
+    int steps = (uSteps > 0 && uSteps <= STEPS_VORTEX) ? uSteps : maxDefault;
 
     float stepLen = (tExit - tEnter) / float(steps);
     float t = tEnter + stepLen * 0.5;

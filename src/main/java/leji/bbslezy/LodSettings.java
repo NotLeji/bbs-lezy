@@ -42,6 +42,8 @@ public class LodSettings
     public static ValueBoolean guidesShowLabels;
 
     public static ValueInt destructionRoughness;
+    public static ValueInt vfxQuality;
+    public static ValueBoolean vfxDynamicQuality;
 
     public static ValueBoolean ui_async_keys;
     public static ValueBoolean ui_async_film_load;
@@ -87,6 +89,13 @@ public class LodSettings
         guidesColor = builder.getInt("guides_color", 0x88FFFFFF).colorAlpha();
         guidesShowLabels = builder.getBoolean("guides_show_labels", false);
         destructionRoughness = builder.getInt("destruction_roughness", 0, 0, 100);
+        vfxQuality = builder.getInt("vfx_quality", 0, 0, 3).modes(
+            IKey.raw("Auto"),
+            IKey.raw("High"),
+            IKey.raw("Medium"),
+            IKey.raw("Low")
+        );
+        vfxDynamicQuality = builder.getBoolean("vfx_dynamic_quality", true);
 
         ui_async_keys = builder.getBoolean("ui_async_keys", true);
         ui_async_film_load = builder.getBoolean("ui_async_film_load", true);

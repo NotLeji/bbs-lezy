@@ -462,7 +462,8 @@ public final class LezyVfxExplosionFx
             {
                 float br = Math.max(4F, form.physExplosionRadius.get() * 0.55F);
 
-                for (int i = 0; i < 360; i++)
+                int bokehCount = Math.round(360 * LezyVfxQuality.getParticleThrottle());
+                for (int i = 0; i < bokehCount; i++)
                 {
                     float h1 = hash(i, 71), h2 = hash(i, 72), h3 = hash(i, 73), h4 = hash(i, 74), h5 = hash(i, 75);
                     float spawn = h1 * emberDur;
@@ -1517,7 +1518,8 @@ public final class LezyVfxExplosionFx
         /* Air drag (1/s). Higher = sparks slow down faster, so the arcs stay visible longer. */
         float drag = 0.35F;
 
-        for (int i = 0; i < count; i++)
+        int sparkTotal = Math.round(count * LezyVfxQuality.getParticleThrottle());
+        for (int i = 0; i < sparkTotal; i++)
         {
             float h1 = hash(i, 201), h2 = hash(i, 202), h3 = hash(i, 203), h4 = hash(i, 204), h5 = hash(i, 205);
             float spawn = h1 * 0.06F;                 /* one sharp burst at detonation */
@@ -1667,7 +1669,7 @@ public final class LezyVfxExplosionFx
                     continue;
                 }
 
-                int count = Math.round((6F + 7F * hash(u, 141)) * Math.min(1F, falloff) * leafScale);
+                int count = Math.round((6F + 7F * hash(u, 141)) * Math.min(1F, falloff) * leafScale * LezyVfxQuality.getParticleThrottle());
 
                 if (count <= 0)
                 {
