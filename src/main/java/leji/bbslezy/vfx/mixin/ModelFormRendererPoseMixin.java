@@ -31,22 +31,36 @@ public abstract class ModelFormRendererPoseMixin
     public abstract Form getForm();
 
     /**
-     * Smear copies re-pose the form at earlier film times via {@code applyProperties} (a silent
-     * runtime-value write), so the form's pose version never changes between the passes of one
-     * frame. The animator channel cache keys on that version alone — its token (form, entity,
-     * transition, frame epoch, pose version) matches the base pass and
-     * {@code ModelInstance#restoreChannels} hands every copy the crisp channel state, which made
-     * the copies pixel-identical to the model and the smear invisible. Clearing the cached token
-     * forces each copy pass to re-evaluate the rewound pose. The next frame's base pass rebuilds
-     * the cache from scratch (one extra evaluation per frame).
+     * A pass that needs a DIFFERENT pose than the frame's base pass must not take the animator
+     * channel cache. The cached path ({@code ModelInstance#restoreChannels}) returns BEFORE
+     * {@code applyPose(this.getPose())}, so {@code getPose()} is never called on a hit and the
+     * per-bone hide/offset written there is lost. Two passes need that:
      *
-     * <p>The clear only runs while a smear pass is active for this very renderer, so ordinary
-     * renders keep the per-frame channel cache intact.</p>
+     * <ul>
+     *   <li><b>Smear copies</b> — re-posed at earlier film times via {@code applyProperties}, which
+     *       writes a runtime value silently so the form's pose version never changes; the token
+     *       (form, entity, transition, epoch, pose version) matched the base pass and every copy got
+     *       the crisp channels, i.e. pixel-identical copies (the smear was invisible).</li>
+     *   <li><b>Per-bone blend passes</b> — the offscreen group pass isolates its bones by setting
+     *       {@code LezyVfxBlendBoneState.hide} and hiding through the pose colour alpha in
+     *       {@code getPose()}; a cache hit skipped that, so the WHOLE model rendered into the group
+     *       buffer and the blend leaked onto bones that were not selected.</li>
+     * </ul>
+     *
+     * <p>Forcing a fresh evaluation while either pass is active for this very renderer leaves
+     * ordinary renders on the per-frame channel cache.</p>
      */
     @Inject(method = "evaluateChannels", at = @At("HEAD"))
-    private void bbslezy$freshChannelsForSmear(IEntity entity, mchorse.bbs_mod.cubic.ModelInstance model, float transition, CallbackInfo ci)
+    private void bbslezy$freshChannelsForCopies(IEntity entity, mchorse.bbs_mod.cubic.ModelInstance model, float transition, CallbackInfo ci)
     {
-        if (model != null && SmearRenderState.active && (Object) this == SmearRenderState.target)
+        if (model == null)
+        {
+            return;
+        }
+
+        boolean smearPass = SmearRenderState.active && (Object) this == SmearRenderState.target;
+
+        if (smearPass || LezyVfxBlendBoneState.active)
         {
             model.clearChannels();
         }
