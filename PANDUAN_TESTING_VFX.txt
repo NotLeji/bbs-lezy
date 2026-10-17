@@ -1,0 +1,186 @@
+*PANDUAN LENGKAP PENGUJIAN FITUR LEZY-VFX (v0.5.0)*
+==================================================
+
+> *Catatan Format:* Dokumen ini kompatibel dengan WhatsApp dan Markdown biasa. Gunakan tanda bintang tunggal (*) untuk bold dan backtick (`) untuk kode/perintah.
+
+---
+
+*1. PENGATURAN KUALITAS & PERFORMA GLOBAL*
+------------------------------------------
+*Lokasi:* Menu Esc > BBS Settings (ikon gerigi) > Kategori `BBS Lezy`
+
+- *Uji Opsi VFX Preview Quality:*
+  1. Buka settings BBS Lezy, temukan dropdown *VFX Preview Quality*.
+  2. Coba ganti opsi:
+     - `Auto`: Menyesuaikan beban raymarching & partikel secara otomatis jika FPS drop di bawah 32 FPS, dan memulihkan saat FPS stabil di atas 48 FPS.
+     - `High`: Kualitas grafis pratinjau maksimal (raymarch 36–56 steps, 4 octave noise 3D, 100% partikel).
+     - `Medium`: Kualitas seimbang (raymarch 18–28 steps, 3 octave noise, 65% partikel sekunder).
+     - `Low`: Kualitas teringan (raymarch 10–16 steps, 2 octave noise, 35% partikel sekunder, resolusi siluet separuh).
+  3. Pastikan toggle ganda sudah tidak ada (sudah disatukan ke dropdown Auto).
+
+- *Uji Integritas Export Video (Wajib):*
+  1. Atur *VFX Preview Quality* ke `Low`.
+  2. Buka film yang memiliki efek ledakan dan impact frame.
+  3. Jalankan Export / Record Video (`Ctrl + F10` atau tombol Record di BBS).
+  4. Periksa hasil video render: *Wajib tetap 100% Full Quality* (tidak terpotong atau buram seperti di pratinjau Low).
+
+---
+
+*2. FITUR IMPACT FRAME (ANIME COMIC FX)*
+----------------------------------------
+*Lokasi:* Film Editor > Camera Timeline > Add Clip > Pilih `Impact` (ikon bintang empat)
+
+- *Uji Efek Dasar & Preset:*
+  1. Klik clip Impact di timeline kamera untuk membuka panel editor.
+  2. Coba tombol preset: `Heavy Impact`, `Action Flash`, `Speed Lines`, `Comic Pop`, dan `Normal (Reset)`.
+  3. Pastikan preset `Normal (Reset)` mengembalikan semua slider ke posisi normal tanpa efek sisa.
+
+- *Uji Simetri Zoom Blur & Aberasi:*
+  1. Naikkan slider `Zoom Blur` dan ubah mode blur: `Radial (Zoom)`, `Horizontal`, `Vertical`.
+  2. Ganti kualitas pratinjau ke `Low` dan `Medium`.
+  3. *Verifikasi:* Blur wajib menyebar rata ke dua sisi secara simetris (tidak miring/terpotong ke satu arah).
+  4. Naikkan `Chroma` (Chromatic Aberration): pastikan split warna merah-biru muncul radial dari titik fokus.
+
+- *Uji Siluet & Brush Strokes:*
+  1. Tempatkan aktor/model replay tepat di depan kamera saat clip Impact aktif.
+  2. Naikkan `Silhouette` ke `1.0`.
+  3. Warna latar belakang (`BgColor`) dan warna badan (`SilColor`) berubah menjadi grafis 2D.
+  4. Naikkan `SilStrokes`: garis kuas arang muncul menonjol di tepi siluet aktor.
+
+- *Uji Ink Burst, Flash Star & Shapes:*
+  1. Naikkan `Ink Burst`: semburan tinta kasar fraktal muncul dari pusat fokus.
+  2. Naikkan `Flash Star`: bintang kilatan kontak 4 sudut tajam muncul di fokus.
+  3. Naikkan `Shapes`: taburan bintang dan cincin melayang muncul di sekitar fokus.
+
+---
+
+*3. FITUR DESTRUCTION BOX (HANCUR / BLOK PECAH)*
+-----------------------------------------------
+*Lokasi:* Replay Panel > Toolbar Atas > Tombol Capture (ikon kamera) > `Capture Destruction`
+
+- *Alur Capture Seleksi Dunia:*
+  1. Pegang item `bbs:structure_wand` (Structure Wand).
+  2. Klik Kiri untuk sudut A, Klik Kanan untuk sudut B (kotak kawat merah muncul membungkus bangunan).
+  3. Di Replay Panel, klik tombol *Capture* lalu pilih *Capture Destruction*.
+  4. *Verifikasi:* Blok dunia asli terpotong (cut), dan otomatis menjadi aktor replay baru di posisi yang sama.
+  5. Cek warna biome rumput/daun pada blok yang tertangkap: warna hijau biome tetap terjaga.
+
+- *Uji Mode Animasi Shatter (Keyframe `destruction`):*
+  1. Buka Dope Sheet / Keyframe replay aktor destruction tadi.
+  2. Geser channel `destruction` dari `0.0` (utuh) ke `1.0` (hancur menyebar).
+  3. Coba mode:
+     - *Directional & Radial:* Blok terlempar sesuai sudut Yaw/Pitch dan dorongan radial dari tengah.
+     - *Point Mode:* Letakkan titik pusat (gizmo point), hancur merambat dari titik keluar secara bergelombang (`stagger`).
+
+- *Uji Mode NVIDIA PhysX 5 (Physics Mode):*
+  1. Di panel form Destruction Box, centang opsi `Physics Mode`.
+  2. Sistem PhysX akan mem-bake simulasi secara instan di background thread (status: `Ready`).
+  3. Scrub timeline: blok runtuh dengan gravitasi, saling bertabrakan, dan memantul di tanah secara realistis.
+  4. Coba slider `phys_gravity` (nilai negatif membuat puing melayang anti-gravitasi).
+
+- *Uji Undo Restorasi Blok Dunia:*
+  1. Tekan tombol *Undo* (`Ctrl + Z`) setelah capture: balok asli dunia Minecraft harus kembali utuh seperti semula.
+
+---
+
+*4. FITUR EXPLOSION (LEDAKAN / HERO MUSHROOM)*
+----------------------------------------------
+*Lokasi:* Replay Panel Toolbar > Tombol Capture > `Capture Explosion`, atau Form Picker > `Explosion`
+
+- *Uji Visual Ledakan:*
+  1. Buat aktor Explosion Form, atur timeline simTime / scrub keyframe.
+  2. *Fase 0.0s – 0.3s:* Flash ledakan putih menyilaukan dan cincin shockwave merambat cepat di tanah.
+  3. *Fase 0.3s – 1.5s:* Bola api inti (fireball) mengembang dan membakar puing-puing sekitar.
+  4. *Fase 1.5s – 8.0s:* Hero mushroom cloud (awan cendawan fraktal 3D) membubung tinggi, mendingin dari api oranye menjadi asap gelap.
+  5. *Partikel Sekunder:* Percikan kembang api (sparks), debu tanah mengepul, dan serpihan melayang terbawa angin.
+
+- *Uji Performa Ledakan (Hasil Optimasi Baru):*
+  1. Bandingkan pemutaran ledakan di `High` vs `Medium` vs `Low`.
+  2. Di preset `Low`:
+     - Raymarch langkah asap turun drastis (10 steps, 2 octave).
+     - Partikel sekunder otomatis dirampingkan.
+     - *Verifikasi:* Tidak ada lag/freeze parah saat bola api meledak, FPS tetap stabil di kisaran 45–60 FPS.
+
+---
+
+*5. FITUR WIND FORM & FOLIAGE BENDING*
+--------------------------------------
+*Lokasi:* Form Picker > Kategori `VFX` > `Wind`
+
+- *Uji Aliran Angin Volumetrik:*
+  1. Tambahkan form `Wind` ke replay.
+  2. Pilih `Wind Type`:
+     - `0 (Directional)`: Angin berhembus searah dengan garis-garis kabut putih dan debu cokelat.
+     - `1 (Storm)`: Badai kencang dengan turbulensi tinggi.
+     - `2 (Tornado / Vortex)`: Corong pusaran tornado 3D yang berputar mengisap ke atas.
+  3. Geser gizmo sudut arah angin di preview 3D: arah hembusan angin langsung berputar mengikuti rotasi gizmo.
+
+- *Uji Interaksi Pohon & Daun Gugur:*
+  1. Tempatkan form Wind di dekat pepohonan/daun dunia.
+  2. Daun pohon di sekitar zona angin akan otomatis bergoyang/meliuk (foliage bending).
+  3. Daun-daun kecil bertumbangan dan melayang terpelintir mengikuti pusaran angin.
+
+---
+
+*6. FITUR ENERGY BEAM & EXPANDING DOME*
+---------------------------------------
+*Lokasi:* Form Picker > Kategori `VFX` > `Beam` dan `Dome`
+
+- *Uji Beam Form:*
+  1. Tambahkan form `Beam`.
+  2. Beam laser energi vertikal muncul dengan lilitan helix ganda yang berputar cepat.
+  3. Coba ubah `Color` (warna inti) dan `Rim` (warna pendar tepi).
+  4. Periksa efek distorsi panas (`Heat`) di sekitar berkas laser.
+
+- *Uji Dome Form:*
+  1. Tambahkan form `Dome`.
+  2. Geser channel `progress` 0 ke 1:
+     - Dimulai dengan tembakan beam dari langit.
+     - Terjadi dentuman kilat putih (impact lull).
+     - Kubah energi setengah bola mengembang cepat menyapu area sekitar dengan cincin gelombang kejut di tanah.
+
+---
+
+*7. FITUR 3D CURVE & FOLLOW-CURVE CAMERA*
+-----------------------------------------
+*Lokasi:* Form Picker > `Curve` & Camera Timeline > Clip `Follow Curve`
+
+- *Uji Pembuatan Spline 3D:*
+  1. Tambahkan form `Curve`.
+  2. Buka editor form Curve: klik tombol tambah titik untuk membuat node spline 3D.
+  3. Geser node kurva menggunakan gizmo panah di layar 3D: garis kurva Catmull-Rom melengkung mulus.
+
+- *Uji Kamera Mengikuti Kurva:*
+  1. Di timeline kamera, tambahkan clip `Follow Curve` (`bbslezy:follow_curve`).
+  2. Hubungkan ke form Curve yang sudah dibuat.
+  3. Mainkan timeline: kamera otomatis meluncur terbang menyusuri jalur kurva dengan kecepatan konstan.
+
+---
+
+*8. FITUR SMEAR FRAMES & MOTION LINES*
+--------------------------------------
+*Lokasi:* Dope Sheet / Pose Editor Model BBS
+
+- *Uji Smear Frames:*
+  1. Pilih replay aktor yang memiliki animasi gerak cepat (misal ayunan pedang atau pukulan).
+  2. Pada channel pose, aktifkan track `smear` atau `smear_frames`.
+  3. Bayangan duplikat badan (ghost frames) muncul meregang di antara frame pose untuk memberi efek ilusi animasi 2D/anime.
+
+- *Uji Motion Lines:*
+  1. Aktifkan channel `motion_lines` pada tulang tangan/kaki.
+  2. Garis busur aksi (arc trails) menyala melengkung mengikuti lintasan gerak tulang secara real-time.
+
+---
+
+*9. FITUR BLEND MODES (MODE CAMPURAN WARNA)*
+--------------------------------------------
+*Lokasi:* Form Modifier / Replay Channel `blend_mode` & `blend`
+
+- *Uji Mode Blending:*
+  1. Pasang modifier `Blend Mode` pada model atau partikel form.
+  2. Ganti mode campuran:
+     - `Additive`: Warna menyala terang menumpuk (cocok untuk aura, sihir, laser).
+     - `Multiply`: Warna menggelapkan latar belakang (cocok untuk bayangan gelap).
+     - `Screen`: Menerangkan dengan kontras halus.
+  3. Ubah nilai slider `blend` (0.0 = normal, 1.0 = full blend mode).
+  4. Pastikan Order-Independent Transparency (OIT) bekerja tanpa masalah sorting tembus pandang.
