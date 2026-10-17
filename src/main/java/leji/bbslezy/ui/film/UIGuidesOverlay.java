@@ -24,6 +24,7 @@ public class UIGuidesOverlay extends UIElement
     private boolean savedCinematic;
     private boolean savedCenterLines;
     private boolean savedCrosshair;
+    private boolean savedRuleOfThirds;
 
     public UIGuidesOverlay(UIFilmPreview preview)
     {
@@ -44,7 +45,8 @@ public class UIGuidesOverlay extends UIElement
             || LodSettings.guidesVertical.get()
             || LodSettings.guidesCinematic.get()
             || BBSSettings.editorCenterLines.get()
-            || BBSSettings.editorCrosshair.get();
+            || BBSSettings.editorCrosshair.get()
+            || BBSSettings.editorRuleOfThirds.get();
     }
 
     private void toggleAllGuides()
@@ -57,6 +59,7 @@ public class UIGuidesOverlay extends UIElement
             this.savedCinematic = LodSettings.guidesCinematic.get();
             this.savedCenterLines = BBSSettings.editorCenterLines.get();
             this.savedCrosshair = BBSSettings.editorCrosshair.get();
+            this.savedRuleOfThirds = BBSSettings.editorRuleOfThirds.get();
 
             LodSettings.guidesActionSafe.set(false);
             LodSettings.guidesTitleSafe.set(false);
@@ -64,11 +67,12 @@ public class UIGuidesOverlay extends UIElement
             LodSettings.guidesCinematic.set(false);
             BBSSettings.editorCenterLines.set(false);
             BBSSettings.editorCrosshair.set(false);
+            BBSSettings.editorRuleOfThirds.set(false);
         }
         else
         {
             boolean anySaved = this.savedActionSafe || this.savedTitleSafe || this.savedVertical
-                || this.savedCinematic || this.savedCenterLines || this.savedCrosshair;
+                || this.savedCinematic || this.savedCenterLines || this.savedCrosshair || this.savedRuleOfThirds;
 
             if (anySaved)
             {
@@ -78,6 +82,7 @@ public class UIGuidesOverlay extends UIElement
                 LodSettings.guidesCinematic.set(this.savedCinematic);
                 BBSSettings.editorCenterLines.set(this.savedCenterLines);
                 BBSSettings.editorCrosshair.set(this.savedCrosshair);
+                BBSSettings.editorRuleOfThirds.set(this.savedRuleOfThirds);
             }
             else
             {
@@ -95,6 +100,12 @@ public class UIGuidesOverlay extends UIElement
         menu.action(Icons.CROPS, IKey.raw("Crosshair"), BBSSettings.editorCrosshair.get(), () ->
         {
             BBSSettings.editorCrosshair.set(!BBSSettings.editorCrosshair.get());
+        });
+        /* BBS draws the rule-of-thirds lines itself (BBSSettings.editorRuleOfThirds); this only brings
+         * the toggle into the framing-guides menu / toggle-all, so it is not drawn twice. */
+        menu.action(Icons.CROPS, IKey.raw("Rule of Thirds"), BBSSettings.editorRuleOfThirds.get(), () ->
+        {
+            BBSSettings.editorRuleOfThirds.set(!BBSSettings.editorRuleOfThirds.get());
         });
         menu.action(Icons.CROPS, IKey.raw("Action Safe (90%)"), LodSettings.guidesActionSafe.get(), () ->
         {
