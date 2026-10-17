@@ -31,7 +31,7 @@ import java.util.function.Consumer;
  * block (mode + strength for the selected bone(s)). Both edit the same keyframed pose, so the whole-vs-per
  * choice and all parameters live in this one track and apply immediately. Mirrors {@code UIPoseEditorSmearMixin}.
  */
-@Mixin(UIPoseEditor.class)
+@Mixin(value = UIPoseEditor.class, remap = false)
 public abstract class UIPoseEditorBlendMixin implements IBlendPoseEditor
 {
     @Shadow

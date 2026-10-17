@@ -27,7 +27,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * <p>The render application is per-renderer for the whole-model path (model / consumer / curve / direct),
  * and a per-bone offscreen pass when {@code blend_whole} is off.</p>
  */
-@Mixin(Form.class)
+@Mixin(value = Form.class, remap = false)
 public abstract class BlendFormMixin
 {
     @Inject(method = "<init>", at = @At("TAIL"))

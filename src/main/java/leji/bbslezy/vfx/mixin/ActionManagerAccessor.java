@@ -14,7 +14,7 @@ import java.util.Map;
  * restore) the removed blocks when a film playback stops — which would otherwise make the cut house
  * reappear next to the captured structure actor.
  */
-@Mixin(ActionManager.class)
+@Mixin(value = ActionManager.class, remap = false)
 public interface ActionManagerAccessor
 {
     @Accessor("dc")
