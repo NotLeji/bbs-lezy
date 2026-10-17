@@ -119,6 +119,15 @@ Semua setting bisa diubah dari dua tempat:
 
 File setting-nya ada di `<folder config BBS>/bbs/settings/bbslezy.json`.
 
+### Performa & Kualitas VFX
+
+BBS Lezy menyediakan preset kualitas bertingkat untuk fitur VFX (Impact Frame, Smoke Volumetrik, Ledakan/Explosion, Angin/Wind, Beam, dan Dome) agar pratinjau editor tetap mulus:
+
+| Setting | Default | Keterangan |
+|---|---|---|
+| `vfx_quality` | `Auto` | Preset kualitas VFX saat pratinjau editor: `Auto`, `High` (kualitas maksimal), `Medium`, atau `Low`. **Proses rekam dan export video selalu dirender pada kualitas penuh 100% tanpa terpengaruh setting ini.** |
+| `vfx_dynamic_quality` | `nyala` | Secara otomatis memangkas langkah raymarching dan partikel sekunder jika FPS turun di bawah 32 FPS, dan memulihkan kualitas penuh secara bertahap saat FPS kembali di atas 48 FPS. |
+
 ### Performa UI Dashboard
 
 BBS Lezy menghadirkan optimisasi khusus untuk navigasi dashboard dan panel BBS yang menjaga hasil visual tetap 100% identik tanpa mengubah tampilan satu pixel pun, sekaligus menghilangkan freeze/hitch di iGPU:

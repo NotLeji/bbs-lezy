@@ -24,6 +24,7 @@ uniform float uTime;
 uniform vec3  uColor;         /* magma colour */
 
 const int   MARCH_STEPS = 24;
+uniform int uSteps;
 const float MARCH_DS = 0.5;       /* world step along the view ray */
 
 in vec2 vUv;
@@ -120,6 +121,12 @@ float crackField(float uu, float vv, float hh)
 
 void main()
 {
+    if (uGlow <= 0.001)
+    {
+        fragColor = vec4(texture(Sampler0, vUv).rgb, 1.0);
+        return;
+    }
+
     vec3 scene = texture(Sampler0, vUv).rgb;
     float depth = texture(Sampler1, vUv).r;
 
@@ -181,8 +188,13 @@ void main()
         float dither = hash(gl_FragCoord.xy + fract(uTime) * 17.0);
         vec3 rp = rel + dir * MARCH_DS * dither;
 
+        int steps = (uSteps > 0 && uSteps <= MARCH_STEPS) ? uSteps : MARCH_STEPS;
         for (int i = 0; i < MARCH_STEPS; i++)
         {
+            if (i >= steps)
+            {
+                break;
+            }
             rp += dir * MARCH_DS;
 
             float hh = dot(rp, uUp);

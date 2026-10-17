@@ -34,7 +34,7 @@ public final class SmokeVolume
     public static ShaderProgram PROGRAM;
     private static ShaderProgram lastProgram;
     private static Uniform uInvProj, uOrigin, uUp, uTanU, uTanV, uReach, uHeight;
-    private static Uniform uDensity, uScale, uRise, uCrackScale, uCrackReach, uTime, uColor;
+    private static Uniform uDensity, uScale, uRise, uCrackScale, uCrackReach, uTime, uColor, uSteps;
 
     private static void checkUniforms()
     {
@@ -55,6 +55,7 @@ public final class SmokeVolume
             uCrackReach = PROGRAM.getUniformOrDefault("uCrackReach");
             uTime = PROGRAM.getUniformOrDefault("uTime");
             uColor = PROGRAM.getUniformOrDefault("uColor");
+            uSteps = PROGRAM.getUniformOrDefault("uSteps");
         }
     }
 
@@ -203,6 +204,7 @@ public final class SmokeVolume
             if (uCrackReach != null) uCrackReach.set(e.crackReach);
             if (uTime != null) uTime.set(e.st);
             if (uColor != null) uColor.set(e.colR, e.colG, e.colB);
+            if (uSteps != null) uSteps.set(LezyVfxQuality.getSmokeSteps());
 
             BufferBuilder buffer = LezyVfxRenderCompat.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
 

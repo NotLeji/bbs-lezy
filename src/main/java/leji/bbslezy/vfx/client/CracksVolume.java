@@ -34,7 +34,7 @@ public final class CracksVolume
     public static ShaderProgram PROGRAM;
     private static ShaderProgram lastProgram;
     private static Uniform uInvProj, uOrigin, uUp, uTanU, uTanV, uReach, uScale;
-    private static Uniform uThickness, uGlow, uDepth, uTime, uColor;
+    private static Uniform uThickness, uGlow, uDepth, uTime, uColor, uSteps;
 
     private static void checkUniforms()
     {
@@ -53,6 +53,7 @@ public final class CracksVolume
             uDepth = PROGRAM.getUniformOrDefault("uDepth");
             uTime = PROGRAM.getUniformOrDefault("uTime");
             uColor = PROGRAM.getUniformOrDefault("uColor");
+            uSteps = PROGRAM.getUniformOrDefault("uSteps");
         }
     }
 
@@ -205,6 +206,7 @@ public final class CracksVolume
             if (uDepth != null) uDepth.set(e.depth);
             if (uTime != null) uTime.set(e.st);
             if (uColor != null) uColor.set(e.colR, e.colG, e.colB);
+            if (uSteps != null) uSteps.set(LezyVfxQuality.getCracksSteps());
 
             BufferBuilder buffer = LezyVfxRenderCompat.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
 

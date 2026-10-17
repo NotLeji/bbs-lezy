@@ -454,7 +454,7 @@ void main()
             break;
         }
 
-        float s = float(i) / float(BLUR_SAMPLES - 1);
+        float s = blurSamples > 1 ? float(i) / float(blurSamples - 1) : 0.0;
         vec2 uv;
 
         if (BlurMode < 0.5)

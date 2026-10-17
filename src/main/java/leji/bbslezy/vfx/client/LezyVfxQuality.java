@@ -51,6 +51,16 @@ public final class LezyVfxQuality
     /**
      * Resolves the current effective quality tier (0 = High, 1 = Medium, 2 = Low).
      */
+    public static void setDynamicTierForTest(int tier)
+    {
+        dynamicTier = Math.max(TIER_HIGH, Math.min(TIER_LOW, tier));
+    }
+
+    public static int getDynamicTier()
+    {
+        return dynamicTier;
+    }
+
     public static int getEffectiveTier()
     {
         if (isExporting())
@@ -59,21 +69,22 @@ public final class LezyVfxQuality
         }
 
         int setting = LodSettings.vfxQuality != null ? LodSettings.vfxQuality.get() : 0;
+        int baseTier = switch (setting)
+        {
+            case 1 -> TIER_HIGH;
+            case 2 -> TIER_MEDIUM;
+            case 3 -> TIER_LOW;
+            default -> TIER_HIGH;
+        };
 
-        if (setting == 1)
+        boolean dynamicEnabled = LodSettings.vfxDynamicQuality == null || LodSettings.vfxDynamicQuality.get();
+
+        if (!dynamicEnabled)
         {
-            return TIER_HIGH;
-        }
-        else if (setting == 2)
-        {
-            return TIER_MEDIUM;
-        }
-        else if (setting == 3)
-        {
-            return TIER_LOW;
+            return baseTier;
         }
 
-        return dynamicTier;
+        return Math.max(baseTier, dynamicTier);
     }
 
     /**
@@ -86,12 +97,13 @@ public final class LezyVfxQuality
             return;
         }
 
-        boolean autoDynamic = (LodSettings.vfxQuality != null && LodSettings.vfxQuality.get() == 0)
-            || (LodSettings.vfxDynamicQuality != null && LodSettings.vfxDynamicQuality.get());
+        boolean dynamicEnabled = LodSettings.vfxDynamicQuality == null || LodSettings.vfxDynamicQuality.get();
 
-        if (!autoDynamic || isExporting())
+        if (!dynamicEnabled || isExporting())
         {
             dynamicTier = TIER_HIGH;
+            lowFpsTicks = 0;
+            goodFpsTicks = 0;
             return;
         }
 

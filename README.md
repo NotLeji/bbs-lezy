@@ -119,6 +119,15 @@ Every setting is reachable from two places:
 
 The settings file lives at `<BBS config folder>/bbs/settings/bbslezy.json`.
 
+### VFX Performance & Quality
+
+BBS Lezy includes tiered rendering presets for VFX features (Impact Frames, Volumetric Smoke, Explosion, Wind, Beam, and Dome) to maintain smooth frame rates during real-time preview and editing:
+
+| Setting | Default | Description |
+|---|---|---|
+| `vfx_quality` | `Auto` | Quality preset for real-time VFX preview in editor: `Auto`, `High` (maximum fidelity), `Medium`, or `Low`. **Video recording and exports always render at 100% full quality regardless of this setting.** |
+| `vfx_dynamic_quality` | `on` | Automatically reduces shader raymarching steps and particle counts when frame rates dip below 32 FPS, restoring full quality when performance recovers above 48 FPS. |
+
 ### Dashboard UI Performance
 
 BBS Lezy includes optimizations specifically for the BBS dashboard and panel navigation, maintaining 100% visual identity while eliminating frame freezes and hitches on integrated GPUs (Intel iGPU):

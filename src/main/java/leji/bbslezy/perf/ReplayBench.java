@@ -9,7 +9,13 @@ import java.nio.file.StandardCopyOption;
 import mchorse.bbs_mod.BBSMod;
 import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.film.Film;
+import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.film.Films;
+import mchorse.bbs_mod.film.replays.Replay;
+import leji.bbslezy.vfx.camera.ImpactClip;
+import leji.bbslezy.vfx.forms.DomeForm;
+import leji.bbslezy.vfx.forms.ExplosionForm;
+import leji.bbslezy.vfx.forms.LezyWindForm;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 
@@ -273,7 +279,7 @@ public class ReplayBench
 
             for (int i = 0; i < 200; i++)
             {
-                mchorse.bbs_mod.film.replays.Replay r = film.replays.addReplay();
+                Replay r = film.replays.addReplay();
                 double rx = ((i % 20) - 10) * 3.5;
                 double rz = ((i / 20) - 5) * 3.5;
                 r.keyframes.x.insert(0F, rx);
@@ -281,24 +287,24 @@ public class ReplayBench
                 r.keyframes.z.insert(0F, rz);
             }
 
-            mchorse.bbs_mod.film.replays.Replay expReplay = film.replays.addReplay();
+            Replay expReplay = film.replays.addReplay();
             expReplay.category.set("vfx");
             expReplay.keyframes.x.insert(0F, 0.0);
             expReplay.keyframes.y.insert(0F, 64.0);
             expReplay.keyframes.z.insert(0F, 0.0);
-            leji.bbslezy.vfx.forms.ExplosionForm expForm = new leji.bbslezy.vfx.forms.ExplosionForm();
+            ExplosionForm expForm = new ExplosionForm();
             expForm.fillTestStructure(10);
             expForm.destruction.set(0.6F);
             expForm.fireCount.set(20);
             expForm.fireDuration.set(10F);
             expReplay.form.set(expForm);
 
-            mchorse.bbs_mod.film.replays.Replay windReplay = film.replays.addReplay();
+            Replay windReplay = film.replays.addReplay();
             windReplay.category.set("vfx");
             windReplay.keyframes.x.insert(0F, 8.0);
             windReplay.keyframes.y.insert(0F, 64.0);
             windReplay.keyframes.z.insert(0F, 8.0);
-            leji.bbslezy.vfx.forms.LezyWindForm windForm = new leji.bbslezy.vfx.forms.LezyWindForm();
+            LezyWindForm windForm = new LezyWindForm();
             windForm.windType.set(2);
             windForm.strength.set(8F);
             windForm.dust.set(0.8F);
@@ -307,18 +313,18 @@ public class ReplayBench
             windForm.progress.set(0.5F);
             windReplay.form.set(windForm);
 
-            mchorse.bbs_mod.film.replays.Replay domeReplay = film.replays.addReplay();
+            Replay domeReplay = film.replays.addReplay();
             domeReplay.category.set("vfx");
             domeReplay.keyframes.x.insert(0F, -8.0);
             domeReplay.keyframes.y.insert(0F, 64.0);
             domeReplay.keyframes.z.insert(0F, -8.0);
-            leji.bbslezy.vfx.forms.DomeForm domeForm = new leji.bbslezy.vfx.forms.DomeForm();
+            DomeForm domeForm = new DomeForm();
             domeForm.progress.set(0.4F);
             domeForm.maxRadius.set(24F);
             domeForm.opacity.set(0.9F);
             domeReplay.form.set(domeForm);
 
-            leji.bbslezy.vfx.camera.ImpactClip impactClip = new leji.bbslezy.vfx.camera.ImpactClip();
+            ImpactClip impactClip = new ImpactClip();
             impactClip.tick.set(0);
             impactClip.duration.set(2400);
             impactClip.zoomBlur.set(0.25F);
@@ -327,7 +333,7 @@ public class ReplayBench
             film.camera.add(impactClip);
 
             dest.getParentFile().mkdirs();
-            BBSMod.getFilms().save(filmId, (mchorse.bbs_mod.data.types.MapType) film.toData());
+            BBSMod.getFilms().save(filmId, (MapType) film.toData());
             System.out.println("BBSLezy[bench] created and saved vfx-mixed-bench film successfully");
         }
         catch (Exception e)

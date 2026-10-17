@@ -391,7 +391,7 @@ public class DestructionBoxFormRenderer extends FormRenderer<DestructionBoxForm>
                 double oz = withWorld ? context.entity.getZ() + ft.z : 0D;
 
                 ballistic = DestructionBallisticVAO.of(
-                    this.physBallisticKey(allBlocks, withWorld, ox, oy, oz), this.physSrc, allBlocks, tierC,
+                    this.physBallisticKey(allBlocks, withWorld, ox, oy, oz, tierCap), this.physSrc, allBlocks, tierC,
                     this.tierMinY, withWorld ? mc.world : null, ox, oy, oz);
             }
 
@@ -403,7 +403,7 @@ public class DestructionBoxFormRenderer extends FormRenderer<DestructionBoxForm>
             else
             {
                 /* Iris, no instancing support, or a failed build — the far bulk stays a static shell. */
-                DestructionStaticVAO shell = DestructionStaticVAO.of(this.physStaticKey(allBlocks), allBlocks, tierC);
+                DestructionStaticVAO shell = DestructionStaticVAO.of(this.physStaticKey(allBlocks, tierCap), allBlocks, tierC);
 
                 if (shell != null)
                 {
@@ -991,7 +991,7 @@ public class DestructionBoxFormRenderer extends FormRenderer<DestructionBoxForm>
     }
 
     /** Cache key of the tier-C ballistic VBO: content + every input of v0/spin/landing. */
-    private long physBallisticKey(List<DestructionBlock> allBlocks, boolean withWorld, double ox, double oy, double oz)
+    private long physBallisticKey(List<DestructionBlock> allBlocks, boolean withWorld, double ox, double oy, double oz, int tierCap)
     {
         long h = this.physBlocksContentHash(allBlocks);
 
@@ -1008,7 +1008,7 @@ public class DestructionBoxFormRenderer extends FormRenderer<DestructionBoxForm>
             h = h * 31 + Math.round(oz);
         }
 
-        h = h * 31 + this.physSrc.physMaxBodies.get();
+        h = h * 31 + tierCap;
         h = h * 31 + this.physSrc.seed.get();
         h = h * 31 + Float.floatToIntBits(this.physSrc.dirYaw.get());
         h = h * 31 + Float.floatToIntBits(this.physSrc.dirPitch.get());
@@ -1038,12 +1038,12 @@ public class DestructionBoxFormRenderer extends FormRenderer<DestructionBoxForm>
     }
 
     /** Cache key of the tier-C static shell (Iris): content + whatever moves the tier membership. */
-    private long physStaticKey(List<DestructionBlock> allBlocks)
+    private long physStaticKey(List<DestructionBlock> allBlocks, int tierCap)
     {
         long h = this.physBlocksContentHash(allBlocks);
 
         h = h * 31 + 2;
-        h = h * 31 + this.physSrc.physMaxBodies.get();
+        h = h * 31 + tierCap;
         h = h * 31 + Float.floatToIntBits(this.physSrc.pointX.get());
         h = h * 31 + Float.floatToIntBits(this.physSrc.pointY.get());
         h = h * 31 + Float.floatToIntBits(this.physSrc.pointZ.get());

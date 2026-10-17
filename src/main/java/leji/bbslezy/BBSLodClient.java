@@ -88,6 +88,9 @@ import leji.bbslezy.ui.framework.elements.input.keyframes.factories.UILensRadius
 import leji.bbslezy.utils.keyframes.factories.IllusionKeyframeFactory;
 import leji.bbslezy.ui.LezyIrisHelper;
 import leji.bbslezy.ui.LezyNightVision;
+import leji.bbslezy.perf.ReplayBench;
+import leji.bbslezy.perf.ui.LezyUIBench;
+import leji.bbslezy.vfx.client.LezyVfxQuality;
 import leji.bbslezy.utils.keyframes.factories.LensRadiusSettingsKeyframeFactory;
 import leji.bbslezy.video.LezyEncoderProbe;
 import mchorse.bbs_mod.api.client.events.FormRenderEvents;
@@ -269,11 +272,11 @@ public class BBSLodClient implements BBSAddonMod
         });
 
         ClientTickEvents.END_CLIENT_TICK.register((client) -> LezyIrisHelper.tick());
-        ClientTickEvents.END_CLIENT_TICK.register(leji.bbslezy.vfx.client.LezyVfxQuality::tick);
-        ClientTickEvents.END_CLIENT_TICK.register(leji.bbslezy.perf.ReplayBench::onClientTick);
-        if (leji.bbslezy.perf.ui.LezyUIBench.isEnabled())
+        ClientTickEvents.END_CLIENT_TICK.register(LezyVfxQuality::tick);
+        ClientTickEvents.END_CLIENT_TICK.register(ReplayBench::onClientTick);
+        if (LezyUIBench.isEnabled())
         {
-            ClientTickEvents.END_CLIENT_TICK.register(leji.bbslezy.perf.ui.LezyUIBench::tick);
+            ClientTickEvents.END_CLIENT_TICK.register(LezyUIBench::tick);
         }
         UIKeyframeFactory.register(LensRadiusSettingsKeyframeFactory.INSTANCE, UILensRadiusSettingsKeyframeFactory::new);
         UIKeyframeFactory.register(LezyVfxPoseFactories.SMEAR, UISmearKeyframeFactory::new);
