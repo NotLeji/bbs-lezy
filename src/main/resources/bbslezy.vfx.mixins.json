@@ -26,7 +26,17 @@
 		"UIPoseKeyframeFactorySmearMixin",
 		"BBSShadersDissolveMixin",
 		"TextureManagerDissolveMixin",
-		"TextureManagerVanillaDissolveMixin"
+		"TextureManagerVanillaDissolveMixin",
+		"BBSRenderingIrisAccessor",
+		"FormBlendStateMixin",
+		"ModelBlendMixin",
+		"BillboardBlendMixin",
+		"ExtrudedBlendMixin",
+		"FramebufferBlendMixin",
+		"TrailBlendMixin",
+		"ConsumerBlendMixin",
+		"RenderLayerBlendReapplyMixin",
+		"UIPoseEditorBlendMixin"
 	],
 	"mixins": [
 		"ActionManagerAccessor",
@@ -36,6 +46,8 @@
 		"WholeFormSmearMixin",
 		"ModelFormSmearChannelsMixin",
 		"PoseTransformSmearMixin",
-		"FormUtilsPoseMixin"
+		"FormUtilsPoseMixin",
+		"PoseTransformBlendMixin",
+		"BlendFormMixin"
 	]
 }

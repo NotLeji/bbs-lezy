@@ -34,6 +34,7 @@ import mchorse.bbs_mod.resources.Link;
 import mchorse.bbs_mod.ui.utils.icons.Icons;
 import mchorse.bbs_mod.camera.clips.ClipFactoryData;
 import mchorse.bbs_mod.utils.colors.Colors;
+import leji.bbslezy.vfx.forms.LezyVfxKeyframeFactories;
 import leji.bbslezy.vfx.forms.LezyVfxPoseFactories;
 import mchorse.bbs_mod.utils.keyframes.factories.KeyframeFactories;
 import leji.bbslezy.vfx.forms.LezyWindForm;
@@ -57,6 +58,8 @@ public class BBSLod implements BBSAddonMod
         KeyframeFactories.FACTORIES.put("smear", LezyVfxPoseFactories.FORM_SMEAR);
         KeyframeFactories.FACTORIES.put("xavin_smear", LezyVfxPoseFactories.SMEAR);
         KeyframeFactories.FACTORIES.put("xavin_lines", LezyVfxPoseFactories.LINES);
+        KeyframeFactories.FACTORIES.put("blend_mode", LezyVfxKeyframeFactories.BLEND_MODE);
+        KeyframeFactories.FACTORIES.put("blend", LezyVfxPoseFactories.BLEND);
     }
 
     @Subscribe
@@ -86,6 +89,8 @@ public class BBSLod implements BBSAddonMod
         event.register("smear_frames", LezyVfxPoseFactories.SMEAR);
         event.register("motion_lines", LezyVfxPoseFactories.LINES);
         event.register("smear", LezyVfxPoseFactories.FORM_SMEAR);
+        event.register("blend_mode", LezyVfxKeyframeFactories.BLEND_MODE);
+        event.register("blend", LezyVfxPoseFactories.BLEND);
     }
 
     @Subscribe

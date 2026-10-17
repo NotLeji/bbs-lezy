@@ -447,12 +447,21 @@ public class CurveFormRenderer extends FormRenderer<CurveForm>
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
         RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
+
+        /* Honour the active whole-form blend (set per top-level form by FormBlendStateMixin); plain
+         * alpha otherwise. */
+        if (!(BbsVfxBlendState.active && BbsVfxBlendGL.apply(BbsVfxBlendState.mode, BbsVfxBlendState.factor)))
+        {
+            RenderSystem.defaultBlendFunc();
+        }
+
         RenderSystem.disableCull();
     }
 
     private static void restoreState()
     {
+        /* Reset the equation in case a Darken/Lighten MIN/MAX was set; harmless when unchanged. */
+        BbsVfxBlendGL.resetEquation();
         RenderSystem.enableCull();
         RenderSystem.enableDepthTest();
         RenderSystem.disableBlend();

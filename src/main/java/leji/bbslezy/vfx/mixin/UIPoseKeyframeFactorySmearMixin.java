@@ -1,6 +1,8 @@
 package leji.bbslezy.vfx.mixin;
 
+import leji.bbslezy.vfx.client.IBlendPoseEditor;
 import leji.bbslezy.vfx.client.ISmearPoseEditor;
+import leji.bbslezy.vfx.client.UIBlendKeyframeFactory;
 import leji.bbslezy.vfx.client.UILinesKeyframeFactory;
 import leji.bbslezy.vfx.client.UISmearKeyframeFactory;
 import mchorse.bbs_mod.ui.UIKeys;
@@ -52,10 +54,7 @@ public abstract class UIPoseKeyframeFactorySmearMixin
     @Inject(method = "resize", at = @At("TAIL"))
     private void bbslezy$readdSmear(CallbackInfo ci)
     {
-        if (!(this.poseEditor instanceof ISmearPoseEditor smear))
-        {
-            return;
-        }
+        ISmearPoseEditor smear = (ISmearPoseEditor) this.poseEditor;
 
         if ((Object) this instanceof UISmearKeyframeFactory)
         {
@@ -80,9 +79,40 @@ public abstract class UIPoseKeyframeFactorySmearMixin
                 child.noCulling();
             }
         }
+        else if ((Object) this instanceof UIBlendKeyframeFactory)
+        {
+            this.poseEditor.removeAll();
+
+            UIElement boneList = this.bbslezy$boneList();
+            UIElement bones = boneList == null
+                ? UI.column(UI.label(UIKeys.FORMS_EDITOR_BONE))
+                : UI.column(UI.label(UIKeys.FORMS_EDITOR_BONE), boneList);
+
+            IBlendPoseEditor blend = (IBlendPoseEditor) this.poseEditor;
+
+            if (((UIElement) (Object) this).getFlex().getW() > 240)
+            {
+                this.poseEditor.add(UI.row(blend.bbslezy$blendBlock(), bones));
+            }
+            else
+            {
+                this.poseEditor.add(bones, blend.bbslezy$blendBlock());
+            }
+
+            for (UIElement child : ((UIKeyframeFactory) (Object) this).scroll.getChildren(UIElement.class))
+            {
+                child.noCulling();
+            }
+        }
         else if ((Object) this instanceof UILinesKeyframeFactory)
         {
             this.poseEditor.add(smear.bbslezy$linesBlock());
         }
+        else
+        {
+            return;
+        }
+
+        ((UIKeyframeFactory) (Object) this).scroll.resize();
     }
 }

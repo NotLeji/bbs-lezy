@@ -1,6 +1,8 @@
 package leji.bbslezy.vfx.mixin;
 
 import leji.bbslezy.vfx.client.BbsVfxAtlasDissolve;
+import leji.bbslezy.vfx.client.BbsVfxFormBlend;
+import leji.bbslezy.vfx.client.BbsVfxOIT;
 import leji.bbslezy.vfx.client.BbsVfxDissolveTexture;
 import leji.bbslezy.vfx.client.BeamHeat;
 import leji.bbslezy.vfx.client.BeamVolume;
@@ -27,6 +29,8 @@ public abstract class BBSRenderingVfxMixin
     {
         MinecraftClient mc = MinecraftClient.getInstance();
 
+        BbsVfxOIT.render(mc.getFramebuffer());
+
         leji.bbslezy.vfx.client.LezyWindVolume.render(mc.getFramebuffer());
         BeamVolume.render(mc.getFramebuffer());
         CracksVolume.render(mc.getFramebuffer());
@@ -34,6 +38,10 @@ public abstract class BBSRenderingVfxMixin
         SmokeVolume.render(mc.getFramebuffer());
         ExplosionSmokeVolume.render(mc.getFramebuffer());
         BeamHeat.render(mc.getFramebuffer());
+
+        /* Whole-form blend composite: re-render the captured forms in isolation (the in-world draw was
+         * cancelled for shader modes / under a shader pack) and blend them over the finished scene. */
+        BbsVfxFormBlend.render(mc.getFramebuffer());
 
         BbsVfxDissolveTexture.processPending();
         BbsVfxAtlasDissolve.processPending();
