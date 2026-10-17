@@ -1,5 +1,6 @@
 package leji.bbslezy.vfx.client;
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import leji.bbslezy.BBSLod;
 import leji.bbslezy.vfx.camera.BbsVfxImpactState;
@@ -311,7 +312,7 @@ public final class BbsVfxImpactShader
         RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
 
-        com.mojang.blaze3d.platform.GlStateManager._activeTexture(GL13.GL_TEXTURE0);
+        GlStateManager._activeTexture(GL13.GL_TEXTURE0);
 
         BbsVfxImpactState.reset();
     }

@@ -1,6 +1,9 @@
 package leji.bbslezy.vfx.camera;
 
 import org.junit.jupiter.api.AfterEach;
+import mchorse.bbs_mod.camera.data.Position;
+import mchorse.bbs_mod.utils.clips.Clip;
+import mchorse.bbs_mod.utils.clips.ClipContext;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -68,5 +71,39 @@ class ImpactClipTest
         BbsVfxImpactState.shockwave = 0F;
         BbsVfxImpactState.flashStar = 0.9F;
         assertTrue(BbsVfxImpactState.hasEffect());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void applyClip_scalingAndKeyframeOverride()
+    {
+        ImpactClip clip = new ImpactClip();
+        clip.duration.set(20);
+        clip.silhouette.set(0.8F);
+        clip.target.set(2);
+        clip.flashStar.set(1.0F);
+
+        ClipContext context = new ClipContext()
+        {
+            @Override
+            public boolean apply(Clip c, Object pos)
+            {
+                return false;
+            }
+        };
+        context.setup(5, 5, 0F);
+
+        Position pos = new Position();
+        clip.apply(context, pos);
+
+        assertTrue(BbsVfxImpactState.active);
+        assertEquals(0.8F, BbsVfxImpactState.silhouette, 1e-4F);
+        assertEquals(2, BbsVfxImpactState.silTarget);
+        assertEquals(1.0F, BbsVfxImpactState.flashStar, 1e-4F);
+
+        // Keyframe override: when channel has a keyframe at t=5, it overrides the slider
+        clip.silhouetteKf.insert(5.0F, 0.35D);
+        clip.apply(context, pos);
+        assertEquals(0.35F, BbsVfxImpactState.silhouette, 1e-4F);
     }
 }

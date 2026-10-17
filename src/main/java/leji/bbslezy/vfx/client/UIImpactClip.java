@@ -2,6 +2,7 @@ package leji.bbslezy.vfx.client;
 
 import leji.bbslezy.vfx.camera.ImpactClip;
 
+import mchorse.bbs_mod.data.types.MapType;
 import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.l10n.keys.IKey;
 import mchorse.bbs_mod.ui.Keys;
@@ -593,6 +594,41 @@ public class UIImpactClip extends UIClip<ImpactClip>
                 this.clip.focusY.set(0.5F);
                 this.clip.silColor.set(0x000000);
                 this.clip.bgColor.set(0xFFFFFF);
+                this.clip.silStrokeAngle.set(0F);
+                this.clip.silStrokeLength.set(0.04F);
+                this.clip.silStrokeScale.set(40F);
+                this.clip.silStrokeRough.set(0.6F);
+                this.clip.inkColor.set(0x000000);
+                this.clip.inkRadius.set(0.5F);
+                this.clip.inkInner.set(0.08F);
+                this.clip.inkSpikes.set(18F);
+                this.clip.inkRough.set(0.5F);
+                this.clip.inkSeed.set(0);
+                this.clip.shockwaveProgress.set(0F);
+                this.clip.shockwaveColor.set(0xFFFFFF);
+                this.clip.shockwaveRadius.set(0.7F);
+                this.clip.shockwaveWidth.set(0.04F);
+                this.clip.flashStarSize.set(0.25F);
+                this.clip.flashStarWidth.set(0.012F);
+                this.clip.flashStarGlow.set(0.3F);
+                this.clip.flashStarRotation.set(0F);
+                this.clip.flashStarColor.set(0xFFFFFF);
+                this.clip.thresholdLevel.set(0.5F);
+                this.clip.thresholdSoft.set(0.05F);
+                this.clip.darkColor.set(0x000000);
+                this.clip.lightColor.set(0xFFFFFF);
+                this.clip.blurMode.set(0);
+                this.clip.linesCount.set(60F);
+                this.clip.linesThickness.set(0.3F);
+                this.clip.linesInner.set(0.4F);
+                this.clip.linesMode.set(0);
+                this.clip.linesSeed.set(0);
+                this.clip.linesColor.set(0x000000);
+                this.clip.shapesCount.set(8F);
+                this.clip.shapesSize.set(0.05F);
+                this.clip.shapesSpread.set(0.5F);
+                this.clip.shapesColor.set(0xFFFFFF);
+                this.clip.shapesDelay.set(0F);
             }
             case 1 -> /* Charcoal Slam (B&W sumi-e) */
             {
@@ -777,5 +813,28 @@ public class UIImpactClip extends UIClip<ImpactClip>
         String label = film.replays.getList().get(index).label.get();
 
         return (label == null || label.isEmpty() ? "Actor" : label) + " #" + index;
+    }
+
+    @Override
+    public void applyUndoData(MapType data)
+    {
+        if ("impact_keyframes".equals(data.getString("embed")))
+        {
+            this.editor.embedView(this.keyframes);
+            this.keyframes.view.resetView();
+        }
+
+        super.applyUndoData(data);
+    }
+
+    @Override
+    public void collectUndoData(MapType data)
+    {
+        if (this.keyframes.hasParent())
+        {
+            data.putString("embed", "impact_keyframes");
+        }
+
+        super.collectUndoData(data);
     }
 }

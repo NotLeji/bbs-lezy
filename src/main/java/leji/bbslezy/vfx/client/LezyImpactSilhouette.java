@@ -4,7 +4,11 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.systems.VertexSorter;
 import leji.bbslezy.vfx.mixin.BBSRenderingIrisAccessor;
+import mchorse.bbs_mod.film.replays.Replay;
+import mchorse.bbs_mod.forms.FormTranslucentQueue;
+import mchorse.bbs_mod.forms.FormUtilsClient;
 import mchorse.bbs_mod.forms.entities.IEntity;
+import net.minecraft.client.render.OverlayTexture;
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.renderers.FormRenderType;
 import mchorse.bbs_mod.forms.renderers.FormRenderer;
@@ -40,7 +44,7 @@ public final class LezyImpactSilhouette
 
     private record Cap(FormRenderer renderer, Form form, IEntity entity, Matrix4f proj, Matrix4f model,
         Matrix4f world, int light, int color, float transition,
-        mchorse.bbs_mod.film.replays.Replay bridgeReplay, int bridgeTick, float bridgeTransition, int bridgeIndex)
+        Replay bridgeReplay, int bridgeTick, float bridgeTransition, int bridgeIndex)
     {}
 
     private static final List<Cap> LIST = new ArrayList<>();
@@ -118,7 +122,7 @@ public final class LezyImpactSilhouette
 
         boolean prevIris = BBSRenderingIrisAccessor.bbslezy$getIris();
         BBSRenderingIrisAccessor.bbslezy$setIris(false);
-        boolean wasQueueActive = mchorse.bbs_mod.forms.FormTranslucentQueue.suspend();
+        boolean wasQueueActive = FormTranslucentQueue.suspend();
 
         try
         {
@@ -146,7 +150,7 @@ public final class LezyImpactSilhouette
                     ctx.stack = stack;
                     ctx.world = world;
                     ctx.light = c.light;
-                    ctx.overlay = net.minecraft.client.render.OverlayTexture.DEFAULT_UV;
+                    ctx.overlay = OverlayTexture.DEFAULT_UV;
                     ctx.color = c.color;
                     ctx.transition = c.transition;
                     ctx.stencilMap = null;
@@ -156,7 +160,7 @@ public final class LezyImpactSilhouette
                         SmearReplayState.begin(c.bridgeReplay, c.entity, c.bridgeTick, c.bridgeTransition, c.bridgeIndex);
                     }
 
-                    mchorse.bbs_mod.forms.FormUtilsClient.render(c.form, ctx);
+                    FormUtilsClient.render(c.form, ctx);
                 }
                 catch (Throwable e)
                 {
@@ -173,7 +177,7 @@ public final class LezyImpactSilhouette
         }
         finally
         {
-            mchorse.bbs_mod.forms.FormTranslucentQueue.restore(wasQueueActive);
+            FormTranslucentQueue.restore(wasQueueActive);
             replaying = false;
             BBSRenderingIrisAccessor.bbslezy$setIris(prevIris);
 

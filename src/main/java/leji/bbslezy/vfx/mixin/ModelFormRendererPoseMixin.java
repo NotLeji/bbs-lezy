@@ -1,7 +1,9 @@
 package leji.bbslezy.vfx.mixin;
 
 import leji.bbslezy.vfx.client.LezyVfxBlendBoneState;
+import leji.bbslezy.vfx.client.LezyImpactSilhouette;
 import leji.bbslezy.vfx.client.SmearRenderState;
+import mchorse.bbs_mod.cubic.ModelInstance;
 import leji.bbslezy.vfx.forms.IModelSmearChannels;
 import leji.bbslezy.vfx.forms.ISmearBone;
 import mchorse.bbs_mod.forms.entities.IEntity;
@@ -51,7 +53,7 @@ public abstract class ModelFormRendererPoseMixin
      * ordinary renders on the per-frame channel cache.</p>
      */
     @Inject(method = "evaluateChannels", at = @At("HEAD"))
-    private void bbslezy$freshChannelsForCopies(IEntity entity, mchorse.bbs_mod.cubic.ModelInstance model, float transition, CallbackInfo ci)
+    private void bbslezy$freshChannelsForCopies(IEntity entity, ModelInstance model, float transition, CallbackInfo ci)
     {
         if (model == null)
         {
@@ -60,14 +62,14 @@ public abstract class ModelFormRendererPoseMixin
 
         boolean smearPass = SmearRenderState.active && (Object) this == SmearRenderState.target;
 
-        if (smearPass || LezyVfxBlendBoneState.active || leji.bbslezy.vfx.client.LezyImpactSilhouette.replaying)
+        if (smearPass || LezyVfxBlendBoneState.active || LezyImpactSilhouette.replaying)
         {
             model.clearChannels();
         }
     }
 
     @Inject(method = "applyPhysics", at = @At("HEAD"), cancellable = true)
-    private void bbslezy$skipPhysicsInCopies(IEntity target, mchorse.bbs_mod.cubic.ModelInstance model, float transition, Matrix4f baseTransform, CallbackInfo ci)
+    private void bbslezy$skipPhysicsInCopies(IEntity target, ModelInstance model, float transition, Matrix4f baseTransform, CallbackInfo ci)
     {
         if (SmearRenderState.active && (Object) this == SmearRenderState.target)
         {
@@ -85,7 +87,7 @@ public abstract class ModelFormRendererPoseMixin
             return;
         }
 
-        if (leji.bbslezy.vfx.client.LezyImpactSilhouette.replaying)
+        if (LezyImpactSilhouette.replaying)
         {
             for (PoseTransform pt : pose.transforms.values())
             {

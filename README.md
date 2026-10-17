@@ -43,7 +43,7 @@ https://github.com/user-attachments/assets/169defa4-20fe-452a-8dac-c3a78e5c6c52
 - **Vignette** — radial darkening toward the frame edges.
 - **Letterbox** — cinematic bars with aspect-ratio presets (Scope 2.39:1, Cinema, Univisium, Flat, 16:9, 4:3, Square, 9:16 Shorts, Custom), pillarbox support for vertical video, inner-edge feathering, color, offset, rotation and zoom.
 - **Camera Shake** — procedural handheld shake with Gentle / Action / Explosion presets and per-axis amplitude control.
-- **Impact Frame** — freeze frame, screen flash, FOV punch-in and shake impulse in one clip, with Anime Impact / Hard Hit / Explosion / Dramatic presets.
+- **Impact Frame** — full-screen anime/sakuga impact post-processing: actor silhouette (flat/negative space with directional charcoal strokes), radial ink burst, expanding shockwave ring, contact flash star, threshold duotone, chromatic aberration, zoom blur, speed lines, and debris sparkles, with curated anime presets.
 - **Per-track clip hierarchy** — effects follow the camera timeline's track order, bottom track first, so an upper-track grade layers over the lower tracks instead of merging into one look. Same-track clips still stack, and a single-track film still costs a single pass.
 
 **5. Illusion (visual duplication)**

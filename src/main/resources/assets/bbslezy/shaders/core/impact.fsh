@@ -293,7 +293,7 @@ float shapesAt(vec2 uv)
         return 0.0;
     }
 
-    float maxReach = (ShapesSpread * 0.5 + ShapesSize) * 1.5 + 0.05;
+    float maxReach = 0.5 * ShapesSpread * sqrt(Aspect * Aspect + 1.0) + 1.5 * ShapesSize + 0.05;
     if (length((uv - Focus) * vec2(Aspect, 1.0)) > maxReach)
     {
         return 0.0;

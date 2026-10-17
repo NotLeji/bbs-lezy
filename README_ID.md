@@ -43,7 +43,7 @@ https://github.com/user-attachments/assets/169defa4-20fe-452a-8dac-c3a78e5c6c52
 - **Vignette** — penggelapan radial di tepi frame.
 - **Letterbox** — bar sinematik dengan preset rasio aspek (Scope 2.39:1, Cinema, Univisium, Flat, 16:9, 4:3, Square, 9:16 Shorts, Custom), dukungan pillarbox buat video vertikal, feather tepi dalam, warna, offset, rotasi, dan zoom.
 - **Camera Shake** — goyangan handheld prosedural dengan preset Gentle / Action / Explosion plus atur amplitudo per sumbu.
-- **Impact Frame** — freeze frame, flash layar, punch-in FOV, dan impulse shake dalam satu clip, dengan preset Anime Impact / Hard Hit / Explosion / Dramatic.
+- **Impact Frame** — post-processing impact frame anime/sakuga layar penuh: siluet aktor (ruang negatif datar dengan goresan charcoal terarah), ink burst radial, cincin shockwave mengembang, contact flash star, duotone threshold, chromatic aberration, zoom blur, speed lines, dan serpihan debris, lengkap dengan preset anime pilihan.
 - **Hierarki clip per track** — efek ngikutin urutan track di camera timeline, dari track paling bawah ke atas, jadi grade di track atas jadi lapisan di atas grade track bawah — bukan kecampur jadi satu look. Clip yang se-track tetap ditumpuk seperti biasa, dan film yang semuanya se-track tetap cuma satu pass.
 
 **5. Illusion (duplikasi visual)**
