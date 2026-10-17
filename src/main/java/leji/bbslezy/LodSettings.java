@@ -43,7 +43,6 @@ public class LodSettings
 
     public static ValueInt destructionRoughness;
     public static ValueInt vfxQuality;
-    public static ValueBoolean vfxDynamicQuality;
 
     public static ValueBoolean ui_async_keys;
     public static ValueBoolean ui_async_film_load;
@@ -95,7 +94,6 @@ public class LodSettings
             IKey.raw("Medium"),
             IKey.raw("Low")
         );
-        vfxDynamicQuality = builder.getBoolean("vfx_dynamic_quality", true);
 
         ui_async_keys = builder.getBoolean("ui_async_keys", true);
         ui_async_film_load = builder.getBoolean("ui_async_film_load", true);

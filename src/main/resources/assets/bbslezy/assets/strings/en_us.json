@@ -147,7 +147,5 @@
 	"bbslezy.ui.audio.keyframes": "Volume Keyframes",
 	"bbslezy.ui.audio.keyframes.tooltip": "Open dope sheet track editor to animate audio volume over time",
 	"bbslezy.config.general.vfx_quality": "VFX Preview Quality",
-	"bbslezy.config.general.vfx_quality-comment": "Quality preset for real-time VFX rendering in editor preview. Video exports always render at maximum quality regardless of this setting. Auto adjusts based on FPS, High is maximum fidelity, Medium and Low optimize raymarching steps and particle counts for higher frame rates.",
-	"bbslezy.config.general.vfx_dynamic_quality": "Auto Dynamic Quality",
-	"bbslezy.config.general.vfx_dynamic_quality-comment": "Dynamically reduces VFX shader steps and particle density during playback when FPS drops below 32, restoring full quality when frame rates recover above 48."
+	"bbslezy.config.general.vfx_quality-comment": "Quality preset for real-time VFX rendering in editor preview. Auto dynamically scales shader steps and particle density based on live FPS. High, Medium, and Low lock to fixed fidelity tiers. Video exports always render at maximum quality (High) regardless of this setting."
 }

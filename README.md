@@ -125,8 +125,7 @@ BBS Lezy includes tiered rendering presets for VFX features (Impact Frames, Volu
 
 | Setting | Default | Description |
 |---|---|---|
-| `vfx_quality` | `Auto` | Quality preset for real-time VFX preview in editor: `Auto`, `High` (maximum fidelity), `Medium`, or `Low`. **Video recording and exports always render at 100% full quality regardless of this setting.** |
-| `vfx_dynamic_quality` | `on` | Automatically reduces shader raymarching steps and particle counts when frame rates dip below 32 FPS, restoring full quality when performance recovers above 48 FPS. |
+| `vfx_quality` | `Auto` | Quality preset for real-time VFX preview in editor: `Auto` (dynamically adapts steps and particle density based on live FPS), `High` (maximum fidelity), `Medium`, or `Low`. **Video recording and exports always render at 100% full quality regardless of this setting.** |
 
 ### Dashboard UI Performance
 

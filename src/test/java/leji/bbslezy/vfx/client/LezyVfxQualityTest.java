@@ -19,10 +19,6 @@ public class LezyVfxQualityTest
         {
             LodSettings.vfxQuality.set(0); // Auto
         }
-        if (LodSettings.vfxDynamicQuality != null)
-        {
-            LodSettings.vfxDynamicQuality.set(false); // disable dynamic shift by default in tests
-        }
         LezyVfxQuality.setDynamicTierForTest(LezyVfxQuality.TIER_HIGH);
     }
 
@@ -82,27 +78,31 @@ public class LezyVfxQualityTest
     }
 
     @Test
-    public void testDynamicQualityToggle()
+    public void testDynamicQualityAuto()
     {
-        if (LodSettings.vfxQuality != null && LodSettings.vfxDynamicQuality != null)
+        if (LodSettings.vfxQuality != null)
         {
-            LodSettings.vfxQuality.set(1); // High base
+            // Preset High (1) ignores dynamicTier
+            LodSettings.vfxQuality.set(1);
             LezyVfxQuality.setDynamicTierForTest(LezyVfxQuality.TIER_LOW);
-
-            // With dynamic quality OFF, effective tier stays at baseTier (High)
-            LodSettings.vfxDynamicQuality.set(false);
             assertEquals(LezyVfxQuality.TIER_HIGH, LezyVfxQuality.getEffectiveTier());
 
-            // With dynamic quality ON, drops to degraded dynamicTier (Low)
-            LodSettings.vfxDynamicQuality.set(true);
+            // Preset Medium (2) ignores dynamicTier
+            LodSettings.vfxQuality.set(2);
+            assertEquals(LezyVfxQuality.TIER_MEDIUM, LezyVfxQuality.getEffectiveTier());
+
+            // Preset Low (3) ignores dynamicTier
+            LodSettings.vfxQuality.set(3);
             assertEquals(LezyVfxQuality.TIER_LOW, LezyVfxQuality.getEffectiveTier());
 
-            // Under Auto (0), follows dynamicTier when ON
+            // Auto (0) dynamically follows dynamicTier
             LodSettings.vfxQuality.set(0);
             assertEquals(LezyVfxQuality.TIER_LOW, LezyVfxQuality.getEffectiveTier());
 
-            // Under Auto (0), defaults to High when toggle is OFF
-            LodSettings.vfxDynamicQuality.set(false);
+            LezyVfxQuality.setDynamicTierForTest(LezyVfxQuality.TIER_MEDIUM);
+            assertEquals(LezyVfxQuality.TIER_MEDIUM, LezyVfxQuality.getEffectiveTier());
+
+            LezyVfxQuality.setDynamicTierForTest(LezyVfxQuality.TIER_HIGH);
             assertEquals(LezyVfxQuality.TIER_HIGH, LezyVfxQuality.getEffectiveTier());
         }
     }

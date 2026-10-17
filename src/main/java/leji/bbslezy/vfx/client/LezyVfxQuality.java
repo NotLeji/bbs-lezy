@@ -69,22 +69,14 @@ public final class LezyVfxQuality
         }
 
         int setting = LodSettings.vfxQuality != null ? LodSettings.vfxQuality.get() : 0;
-        int baseTier = switch (setting)
+
+        return switch (setting)
         {
             case 1 -> TIER_HIGH;
             case 2 -> TIER_MEDIUM;
             case 3 -> TIER_LOW;
-            default -> TIER_HIGH;
+            default -> dynamicTier; // 0 = Auto (Dynamic based on FPS)
         };
-
-        boolean dynamicEnabled = LodSettings.vfxDynamicQuality == null || LodSettings.vfxDynamicQuality.get();
-
-        if (!dynamicEnabled)
-        {
-            return baseTier;
-        }
-
-        return Math.max(baseTier, dynamicTier);
     }
 
     /**
@@ -97,9 +89,9 @@ public final class LezyVfxQuality
             return;
         }
 
-        boolean dynamicEnabled = LodSettings.vfxDynamicQuality == null || LodSettings.vfxDynamicQuality.get();
+        boolean isAuto = LodSettings.vfxQuality == null || LodSettings.vfxQuality.get() == 0;
 
-        if (!dynamicEnabled || isExporting())
+        if (!isAuto || isExporting())
         {
             dynamicTier = TIER_HIGH;
             lowFpsTicks = 0;

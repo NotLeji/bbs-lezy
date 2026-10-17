@@ -125,8 +125,7 @@ BBS Lezy menyediakan preset kualitas bertingkat untuk fitur VFX (Impact Frame, S
 
 | Setting | Default | Keterangan |
 |---|---|---|
-| `vfx_quality` | `Auto` | Preset kualitas VFX saat pratinjau editor: `Auto`, `High` (kualitas maksimal), `Medium`, atau `Low`. **Proses rekam dan export video selalu dirender pada kualitas penuh 100% tanpa terpengaruh setting ini.** |
-| `vfx_dynamic_quality` | `nyala` | Secara otomatis memangkas langkah raymarching dan partikel sekunder jika FPS turun di bawah 32 FPS, dan memulihkan kualitas penuh secara bertahap saat FPS kembali di atas 48 FPS. |
+| `vfx_quality` | `Auto` | Preset kualitas VFX saat pratinjau editor: `Auto` (menyesuaikan langkah raymarch dan partikel secara dinamis berbasis FPS live), `High` (kualitas maksimal), `Medium`, atau `Low`. **Proses rekam dan export video selalu dirender pada kualitas penuh 100% tanpa terpengaruh setting ini.** |
 
 ### Performa UI Dashboard
 
