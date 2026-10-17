@@ -43,7 +43,7 @@ public final class ExplosionSmokeVolume
     private static Uniform uInvProj, uOrigin, uUp, uTanU, uTanV;
     private static Uniform uCapY, uCapR, uStemR, uDensity, uScale, uRise, uHeat;
     private static Uniform uEmit, uFade, uTime, uColor, uDrift, uBallR, uBallHeat;
-    private static Uniform uShape, uSphereRadius, uSphereHeat, uSteps;
+    private static Uniform uShape, uSphereRadius, uSphereHeat, uSteps, uOctaves;
 
     private static void checkUniforms()
     {
@@ -73,6 +73,7 @@ public final class ExplosionSmokeVolume
             uSphereRadius = PROGRAM.getUniformOrDefault("uSphereRadius");
             uSphereHeat = PROGRAM.getUniformOrDefault("uSphereHeat");
             uSteps = PROGRAM.getUniformOrDefault("uSteps");
+            uOctaves = PROGRAM.getUniformOrDefault("uOctaves");
         }
     }
 
@@ -255,6 +256,7 @@ public final class ExplosionSmokeVolume
             if (uSphereRadius != null) uSphereRadius.set(e.sphereR);
             if (uSphereHeat != null) uSphereHeat.set(e.sphereHeat);
             if (uSteps != null) uSteps.set(LezyVfxQuality.getExplosionSteps());
+            if (uOctaves != null) uOctaves.set(LezyVfxQuality.getExplosionOctaves());
 
             BufferBuilder buffer = LezyVfxRenderCompat.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
 

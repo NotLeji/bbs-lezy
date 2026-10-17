@@ -34,7 +34,8 @@ public class LezyVfxQualityTest
             // High (1)
             LodSettings.vfxQuality.set(1);
             assertEquals(LezyVfxQuality.TIER_HIGH, LezyVfxQuality.getEffectiveTier());
-            assertEquals(56, LezyVfxQuality.getExplosionSteps());
+            assertEquals(36, LezyVfxQuality.getExplosionSteps());
+            assertEquals(4, LezyVfxQuality.getExplosionOctaves());
             assertEquals(28, LezyVfxQuality.getWindSteps(true));
             assertEquals(16, LezyVfxQuality.getWindSteps(false));
             assertEquals(48, LezyVfxQuality.getBeamSteps());
@@ -49,7 +50,8 @@ public class LezyVfxQualityTest
             // Medium (2)
             LodSettings.vfxQuality.set(2);
             assertEquals(LezyVfxQuality.TIER_MEDIUM, LezyVfxQuality.getEffectiveTier());
-            assertEquals(28, LezyVfxQuality.getExplosionSteps());
+            assertEquals(18, LezyVfxQuality.getExplosionSteps());
+            assertEquals(3, LezyVfxQuality.getExplosionOctaves());
             assertEquals(20, LezyVfxQuality.getWindSteps(true));
             assertEquals(12, LezyVfxQuality.getWindSteps(false));
             assertEquals(24, LezyVfxQuality.getBeamSteps());
@@ -64,7 +66,8 @@ public class LezyVfxQualityTest
             // Low (3)
             LodSettings.vfxQuality.set(3);
             assertEquals(LezyVfxQuality.TIER_LOW, LezyVfxQuality.getEffectiveTier());
-            assertEquals(16, LezyVfxQuality.getExplosionSteps());
+            assertEquals(10, LezyVfxQuality.getExplosionSteps());
+            assertEquals(2, LezyVfxQuality.getExplosionOctaves());
             assertEquals(14, LezyVfxQuality.getWindSteps(true));
             assertEquals(8, LezyVfxQuality.getWindSteps(false));
             assertEquals(16, LezyVfxQuality.getBeamSteps());
@@ -118,6 +121,7 @@ public class LezyVfxQualityTest
             assertTrue(LezyVfxQuality.isExporting());
             assertEquals(LezyVfxQuality.TIER_HIGH, LezyVfxQuality.getEffectiveTier());
             assertEquals(56, LezyVfxQuality.getExplosionSteps());
+            assertEquals(4, LezyVfxQuality.getExplosionOctaves());
             assertEquals(48, LezyVfxQuality.getBeamSteps());
             assertEquals(20, LezyVfxQuality.getSmokeSteps());
             assertEquals(24, LezyVfxQuality.getCracksSteps());

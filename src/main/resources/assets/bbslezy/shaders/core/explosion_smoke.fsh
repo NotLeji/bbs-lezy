@@ -43,6 +43,7 @@ uniform float uSphereHeat;    /* sphere shape: emissive fire amount (0 = smoke o
 
 const int STEPS = 56;
 uniform int uSteps;
+uniform int uOctaves;
 
 in vec2 vUv;
 
@@ -78,9 +79,14 @@ float vnoise3(vec3 x)
 float fbm3d(vec3 p)
 {
     float s = 0.0, a = 0.5;
+    int octaves = (uOctaves > 0 && uOctaves <= 4) ? uOctaves : 4;
 
     for (int i = 0; i < 4; i++)
     {
+        if (i >= octaves)
+        {
+            break;
+        }
         s += a * vnoise3(p);
         p = p * 2.03 + vec3(11.0, 17.0, 23.0);
         a *= 0.5;
@@ -121,6 +127,10 @@ vec3 density(float u, float v, float h)
         float sr = max(uSphereRadius, 0.5);
         vec3 q = vec3(u - uDrift.x, h - (sr * 0.55 + 1.0), v - uDrift.y);
         float distS = length(q);
+        if (distS > sr * 1.55)
+        {
+            return vec3(0.0);
+        }
 
         /* Cauliflower displacement, the same noise family as the mushroom so the two shapes read as
          * one effect; the domain drifts DOWN so the ball appears to boil upward. */
@@ -167,6 +177,17 @@ vec3 density(float u, float v, float h)
     v -= uDrift.y * lean;
 
     float r = sqrt(u * u + v * v);
+    float dyC = (h - uCapY) / 0.72;
+    float distCap = sqrt(r * r + dyC * dyC);
+    float f = clamp(h / max(uCapY, 0.001), 0.0, 1.0);
+    float rs = uStemR * (1.0 + 0.9 * (1.0 - f));
+
+    /* Quick analytic distance probe: disp can never exceed 0.55 * uCapR. If outside, skip expensive 3D fbm. */
+    float roughDist = min(distCap - uCapR, max(r - rs, h - uCapY));
+    if (roughDist > uCapR * 0.60)
+    {
+        return vec3(0.0);
+    }
 
     /* Cauliflower displacement. The domain drifts DOWN over time so the cloud appears to boil upward. */
     vec3 nc = vec3(u, h - uTime * uRise, v) * (0.055 * uScale);
@@ -174,13 +195,9 @@ vec3 density(float u, float v, float h)
     float disp = (n - 0.45) * uCapR * 0.60;
 
     /* CAP: a vertically squashed sphere. */
-    float dyC = (h - uCapY) / 0.72;
-    float distCap = sqrt(r * r + dyC * dyC);
     float dCap = distCap - (uCapR + disp);
 
     /* STEM: a cylinder that flares toward the ground, cut off under the cap. */
-    float f = clamp(h / max(uCapY, 0.001), 0.0, 1.0);
-    float rs = uStemR * (1.0 + 0.9 * (1.0 - f));
     float dStem = max(r - (rs + disp * 0.5), h - uCapY);
 
     float d = min(dCap, dStem);

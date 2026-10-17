@@ -173,7 +173,8 @@ public final class LezyVfxExplosionFx
         if (bake != null && blockFirstUnit != null && smoke > 0F)
         {
             int trailBlocks = bake.count;
-            int trailCount = Math.min(26, trailBlocks);
+            int trailCount = Math.max(6, Math.round(Math.min(26, trailBlocks) * LezyVfxQuality.getParticleThrottle()));
+            int maxPuffs = LezyVfxQuality.getEffectiveTier() == LezyVfxQuality.TIER_LOW ? 3 : (LezyVfxQuality.getEffectiveTier() == LezyVfxQuality.TIER_MEDIUM ? 4 : 6);
 
             for (int s = 0; s < trailCount; s++)
             {
@@ -198,7 +199,7 @@ public final class LezyVfxExplosionFx
                     continue;
                 }
 
-                for (int p = 0; p < 6; p++)
+                for (int p = 0; p < maxPuffs; p++)
                 {
                     float back = 0.08F + p * 0.14F;
                     float ts = simTime - back;
@@ -228,7 +229,8 @@ public final class LezyVfxExplosionFx
          * passes and staying — the ground should not look untouched past the crater lip. --- */
         if (inWorld && mc.world != null)
         {
-            for (int i = 0; i < 44; i++)
+            int scorchCount = Math.max(12, Math.round(44 * LezyVfxQuality.getParticleThrottle()));
+            for (int i = 0; i < scorchCount; i++)
             {
                 float h1 = hash(i, 85), h2 = hash(i, 86), h3 = hash(i, 87);
                 float ang = i * 2.399963F + h1 * 0.6F;
@@ -357,7 +359,10 @@ public final class LezyVfxExplosionFx
                 float rc = Math.max(4F, form.physExplosionRadius.get() * 0.45F) * mushF;
                 float riseHc = rc * 2.8F;
 
-                for (int i = 0; i < 120; i++)
+                int fountainCount = Math.max(24, Math.round(120 * LezyVfxQuality.getParticleThrottle()));
+                int maxFountainTrail = LezyVfxQuality.getEffectiveTier() == LezyVfxQuality.TIER_LOW ? 2 : (LezyVfxQuality.getEffectiveTier() == LezyVfxQuality.TIER_MEDIUM ? 3 : 5);
+
+                for (int i = 0; i < fountainCount; i++)
                 {
                     float h1 = hash(i, 101), h2 = hash(i, 102), h3 = hash(i, 103), h4 = hash(i, 104), h5 = hash(i, 105);
                     float spawn = h1 * 0.3F;             /* a quick burst, not a sustained fountain */
@@ -390,7 +395,7 @@ public final class LezyVfxExplosionFx
                     float headFade = (float) Math.cos(age / life * 1.5708F) * fw;
 
                     /* Head + a short SMOKE TRAIL sampled from the ember's own past trajectory. */
-                    for (int j = 0; j <= 5; j++)
+                    for (int j = 0; j <= maxFountainTrail; j++)
                     {
                         float a = age - j * 0.07F;
 
@@ -634,7 +639,8 @@ public final class LezyVfxExplosionFx
             /* CAP: puffs ride a TOROIDAL ROLL — the real mushroom physics (a buoyant vortex ring):
              * each puff orbits in its vertical (radial, up) plane — up through the middle, outward
              * over the top, DOWN the outer face — while the ring itself rises and widens. */
-            for (int k = 0; k < 30; k++)
+            int capCount = Math.max(10, Math.round(30 * LezyVfxQuality.getParticleThrottle()));
+            for (int k = 0; k < capCount; k++)
             {
                 float ha = hash(k, 31), hb = hash(k, 32), hc = hash(k, 33);
                 float az = k * 2.399963F + ha;
@@ -667,7 +673,8 @@ public final class LezyVfxExplosionFx
             }
 
             /* STEM: a dust column the cap leaves behind, flaring at the base. */
-            for (int k = 0; k < 22; k++)
+            int stemCount = Math.max(8, Math.round(22 * LezyVfxQuality.getParticleThrottle()));
+            for (int k = 0; k < stemCount; k++)
             {
                 float f = (k + 0.5F) / 22F;
                 float hk = hash(k, 34);
@@ -781,7 +788,8 @@ public final class LezyVfxExplosionFx
                 float puffLife = 3.5F * (0.8F + 0.4F * h2) * Math.max(0.4F, smoke);
                 int last = (int) (age / period);
 
-                for (int k = Math.max(0, last - 9); k <= last; k++)
+                int puffWin = LezyVfxQuality.getEffectiveTier() == LezyVfxQuality.TIER_LOW ? 3 : (LezyVfxQuality.getEffectiveTier() == LezyVfxQuality.TIER_MEDIUM ? 5 : 9);
+                for (int k = Math.max(0, last - puffWin); k <= last; k++)
                 {
                     float spawn = k * period + hash(s, 5 + (k & 7)) * 0.2F;
                     float puffAge = age - spawn;
@@ -831,7 +839,8 @@ public final class LezyVfxExplosionFx
             float reach = Math.max(6F, form.physExplosionRadius.get() * 0.9F);
             float linger = 3.5F;
 
-            for (int j = 0; j < 44; j++)
+            int dustRays = Math.max(14, Math.round(44 * LezyVfxQuality.getParticleThrottle()));
+            for (int j = 0; j < dustRays; j++)
             {
                 float hj = hash(j, 21);
                 float az = j * 2.399963F + hj * 0.5F;
@@ -890,11 +899,12 @@ public final class LezyVfxExplosionFx
         if (inWorld && mc.world != null && groundWave > 0F)
         {
             /* Wider reach = coarser bands, so the alive-quad budget stays flat. */
-            float spacing = Math.max(4F, reactReach / 48F);
+            float spacing = Math.max(4F, (reactReach / 48F) / Math.max(0.25F, LezyVfxQuality.getParticleThrottle()));
             int bands = (int) (reactReach / spacing);
             net.minecraft.util.math.BlockPos.Mutable surfPos = new net.minecraft.util.math.BlockPos.Mutable();
+            int waveRays = Math.max(16, Math.round(56 * LezyVfxQuality.getParticleThrottle()));
 
-            for (int j = 0; j < 56; j++)
+            for (int j = 0; j < waveRays; j++)
             {
                 float hj = hash(j, 121);
                 float ang = j * 2.399963F + hj * 0.9F;
@@ -964,7 +974,8 @@ public final class LezyVfxExplosionFx
 
             /* --- Ground LITTER skitter: pebbles/splinters chased downwind along the surface with
              * decaying hops — the small stuff near the ground is what sells the WIND. --- */
-            for (int i = 0; i < 120; i++)
+            int litterCount = Math.max(24, Math.round(120 * LezyVfxQuality.getParticleThrottle()));
+            for (int i = 0; i < litterCount; i++)
             {
                 float h1 = hash(i, 125), h2 = hash(i, 126), h3 = hash(i, 127), h4 = hash(i, 128);
                 float ang = h1 * 6.2832F;
@@ -1018,7 +1029,8 @@ public final class LezyVfxExplosionFx
          * rising column (the suction). Bonus: atmospheric perspective makes the mushroom read BIGGER. --- */
         if (inWorld && mc.world != null && haze > 0F)
         {
-            for (int i = 0; i < 48; i++)
+            int hazeCount = Math.max(12, Math.round(48 * LezyVfxQuality.getParticleThrottle()));
+            for (int i = 0; i < hazeCount; i++)
             {
                 float h1 = hash(i, 131), h2 = hash(i, 132), h3 = hash(i, 133);
                 float ang = i * 2.399963F + h1;

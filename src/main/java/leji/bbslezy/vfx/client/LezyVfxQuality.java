@@ -148,11 +148,31 @@ public final class LezyVfxQuality
 
     public static int getExplosionSteps()
     {
+        if (isExporting())
+        {
+            return 56;
+        }
+
         return switch (getEffectiveTier())
         {
-            case TIER_LOW -> 16;
-            case TIER_MEDIUM -> 28;
-            default -> 56;
+            case TIER_LOW -> 10;
+            case TIER_MEDIUM -> 18;
+            default -> 36;
+        };
+    }
+
+    public static int getExplosionOctaves()
+    {
+        if (isExporting())
+        {
+            return 4;
+        }
+
+        return switch (getEffectiveTier())
+        {
+            case TIER_LOW -> 2;
+            case TIER_MEDIUM -> 3;
+            default -> 4;
         };
     }
 

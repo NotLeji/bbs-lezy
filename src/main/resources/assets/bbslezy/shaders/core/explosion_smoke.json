@@ -277,6 +277,14 @@
 			"values": [
 				56
 			]
+		},
+		{
+			"name": "uOctaves",
+			"type": "int",
+			"count": 1,
+			"values": [
+				4
+			]
 		}
 	]
 }
