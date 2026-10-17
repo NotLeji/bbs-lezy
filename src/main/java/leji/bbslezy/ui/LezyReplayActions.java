@@ -1,4 +1,5 @@
 package leji.bbslezy.ui;
+
 import mchorse.bbs_mod.actions.ActionState;
 import mchorse.bbs_mod.film.Film;
 import mchorse.bbs_mod.ui.film.UIFilmPanel;
@@ -7,11 +8,14 @@ import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.forms.forms.ModelForm;
 import mchorse.bbs_mod.ui.film.replays.ReplayListEntry;
 import mchorse.bbs_mod.ui.film.replays.UIReplayList;
+import mchorse.bbs_mod.utils.categories.CategoryPath;
 
 import mchorse.bbs_mod.network.ClientNetwork;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -94,7 +98,6 @@ public class LezyReplayActions
             ClientNetwork.sendSyncData(film.getId(), film);
         }
     }
-
 
     /**
      * Everything that shares a model with the picked replays: the point is a duplicate farm,
@@ -223,5 +226,83 @@ public class LezyReplayActions
         }
 
         return prefix + System.nanoTime();
+    }
+
+    /**
+     * Resolves all replays represented by the current selection: individual replays plus
+     * any replays contained within selected category folders.
+     */
+    public static List<Replay> getSelectedOrFolderReplays(UIReplayList list, Film film)
+    {
+        if (list == null || film == null)
+        {
+            return Collections.emptyList();
+        }
+
+        Set<Replay> out = new LinkedHashSet<>();
+        Set<String> folderPaths = new HashSet<>();
+
+        for (ReplayListEntry entry : list.selection.getItems())
+        {
+            if (entry.isReplay() && entry.replay != null)
+            {
+                out.add(entry.replay);
+            }
+            else if (entry.isFolder() && entry.folderPath != null)
+            {
+                folderPaths.add(entry.folderPath);
+            }
+        }
+
+        if (!folderPaths.isEmpty())
+        {
+            for (Replay replay : film.replays.getList())
+            {
+                String cat = Replay.normalizeCategory(replay.category.get());
+
+                for (String folder : folderPaths)
+                {
+                    if (CategoryPath.isInside(cat, folder))
+                    {
+                        out.add(replay);
+                        break;
+                    }
+                }
+            }
+        }
+
+        return new ArrayList<>(out);
+    }
+
+    /**
+     * Batch sets the enabled state for all selected replays (and replays in selected folders).
+     */
+    public static void setSelectedReplaysEnabled(UIReplayList list, Film film, UIFilmPanel panel, boolean enabled)
+    {
+        List<Replay> replays = getSelectedOrFolderReplays(list, film);
+
+        if (replays.isEmpty())
+        {
+            return;
+        }
+
+        for (Replay replay : replays)
+        {
+            replay.enabled.set(enabled);
+        }
+
+        if (panel != null)
+        {
+            if (panel.getController() != null)
+            {
+                panel.getController().createEntities();
+            }
+            if (panel.replayEditor != null)
+            {
+                panel.replayEditor.updateChannelsList();
+            }
+        }
+
+        list.refreshReplayList();
     }
 }

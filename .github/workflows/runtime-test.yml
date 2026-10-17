@@ -17,7 +17,7 @@ on:
 
 env:
   BBS_VERSION: 2.7-1.20.1
-  FABRIC_API: 0.92.12+1.20.1  # versi terbaru buat 1.20.1 di Modrinth
+  FABRIC_API: 0.92.12
 
 jobs:
   runtime-test:
@@ -25,13 +25,17 @@ jobs:
     steps:
       - name: Checkout bbs-lezy
         uses: actions/checkout@v6
+      - name: Set up Java 17 (buat runtime test)
+        uses: actions/setup-java@v5
+        with:
+          distribution: microsoft
+          java-version: 17
 
       - name: Set up Java 25 (buat build bbs-lezy)
         uses: actions/setup-java@v5
         with:
           distribution: microsoft
           java-version: 25
-
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v6
 

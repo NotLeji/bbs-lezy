@@ -57,5 +57,8 @@ AGENTS.md
 # local AI tooling state — stays on disk, never part of the mod
 /.agents/
 /.omp/
+/.superpowers/
+/HeadlessMC/
+headlessmc.jar
 /dump_session/
 skills-lock.json

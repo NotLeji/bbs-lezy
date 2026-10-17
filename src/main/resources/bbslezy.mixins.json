@@ -32,7 +32,21 @@
         "UIAudioClipMixin",
         "AudioClientClipMixin",
         "SoundManagerMixin",
-        "AudioRendererMixin"
+        "AudioRendererMixin",
+        "FormStableIdsMixin",
+        "UIClipsMixin",
+        "FilmKeyframeInsertionMixin",
+        "BaseFilmControllerMixin",
+        "FilmEntityRendererMixin",
+        "FrustumInvoker",
+        "LightmapTextureManagerMixin",
+        "GameRendererMixin",
+        "BackgroundRendererMixin",
+        "MinecraftClientMixin",
+        "FolderManagerRepositoryMixin",
+        "FolderManagerMutationsMixin",
+        "BaseManagerMutationsMixin",
+        "LivingEntityMixin"
     ],
     "injectors": {
         "defaultRequire": 0

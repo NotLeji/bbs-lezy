@@ -69,6 +69,14 @@ https://github.com/user-attachments/assets/169defa4-20fe-452a-8dac-c3a78e5c6c52
 
 Hal-hal kecil yang nggak dapat section sendiri: clip halftone, channel motion blur & pixelation, skin search dengan preview 3D, Look At batch baking, damage action clip, snap-player-to-preview, reverse audio dengan volume keyframes, open-folder-on-import, perbaikan cursor wrap Linux & Iris depth, toggle shader dashboard (K).
 
+**9. Replay performance budgeting**
+
+Untuk scene film raksasa dengan ratusan hingga ribuan replay actor:
+- **perf_enabled** (default: nonaktif) — mengaktifkan pembatasan evaluasi pose replay berdasarkan jarak kamera.
+- **perf_throttle_distance** (default: 32 blok) — replay di luar jarak ini di-update dengan interval tick bertingkat untuk menghemat CPU.
+- **perf_skip_distance** (default: 96 blok) — replay di luar jarak ini di-skip total evaluasi keyframe dan posenya setiap frame.
+- **perf_throttle_ticks** (default: 4 tick) — jeda interval evaluasi di pita jarak throttle.
+
 ## Dokumentasi
 
 ### Requirement
@@ -110,6 +118,19 @@ Semua setting bisa diubah dari dua tempat:
 **Lewat toolbar preview film editor** — klik ikon mata (sebelah tombol motion path) untuk buka popup: toggle On/Off, slider Render Limit, slider Focus Distance. Perubahan otomatis kesimpan ke `bbslezy.json`.
 
 File setting-nya ada di `<folder config BBS>/bbs/settings/bbslezy.json`.
+
+### Performa UI Dashboard
+
+BBS Lezy menghadirkan optimisasi khusus untuk navigasi dashboard dan panel BBS yang menjaga hasil visual tetap 100% identik tanpa mengubah tampilan satu pixel pun, sekaligus menghilangkan freeze/hitch di iGPU:
+
+| Setting | Default | Keterangan |
+|---|---|---|
+| `ui_async_keys` | nyala | Memindahkan pemindaian disk (folder film, model, partikel) ke background thread dengan cache 2 detik dan invalidasi otomatis saat ada perubahan (save, rename, delete), mencegah render thread tersendat saat membuka panel. |
+| `ui_async_film_load` | nyala | Memuat dan mem-parse data film `.dat` besar secara asinkron di worker thread, mencegah freeze saat memilih film berat. |
+| `ui_world_skip` | nyala | Melewati render dunia 3D hanya saat panel dashboard solid dan opak menutup layar penuh tanpa transparansi. |
+
+Benchmark Headless:
+Jalankan benchmark otomatis via flag `-Dbbslezy.uibench=true`. Hasil metrik per fase (`launch_wait`, `dashboard_open`, `film_panel`, `model_panel`) otomatis tersimpan di `build/uibench/summary.txt`.
 
 ### Build dari source
 

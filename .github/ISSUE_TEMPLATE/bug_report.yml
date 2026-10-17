@@ -1,0 +1,88 @@
+name: 🐛 Bug report
+description: Laporkan bug — format AI-friendly, isi selengkap mungkin biar langsung bisa di-fix
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: ringkasan
+    attributes:
+      label: Ringkasan
+      description: Satu-dua kalimat, apa yang rusak
+      placeholder: "Contoh: Replay panel crash pas klik kanan di list actor"
+    validations:
+      required: true
+
+  - type: input
+    id: versi-mod
+    attributes:
+      label: Versi bbs-lezy
+      placeholder: "Contoh: 0.3.1"
+    validations:
+      required: true
+
+  - type: input
+    id: versi-bbs
+    attributes:
+      label: Versi BBS
+      placeholder: "Contoh: 2.7-1.20.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Client (singleplayer)
+        - Client (multiplayer)
+        - Server (dedicated)
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Langkah reproduksi
+      description: Urutan langkah 1, 2, 3... sampai bug muncul. Harus bisa diulang dari awal.
+      placeholder: |
+        1. Buka film editor
+        2. Klik kanan di replay list
+        3. Crash
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Hasil yang diharapkan
+      placeholder: "Seharusnya muncul context menu"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Hasil aktual
+      placeholder: "Game crash"
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Log / stack trace
+      description: Paste potongan relevan dari logs/latest.log atau crash-reports/
+      render: shell
+
+  - type: textarea
+    id: area-kode
+    attributes:
+      label: Dugaan area kode (opsional)
+      description: Kalau udah tahu kira-kira file/class/method mana yang bermasalah, tulis di sini biar AI langsung fokus
+      placeholder: "Contoh: LezyReplayActions.java, method duplicateToTotal"
+
+  - type: textarea
+    id: tambahan
+    attributes:
+      label: Tambahan (opsional)
+      description: Screenshot, video, atau info lain yang membantu

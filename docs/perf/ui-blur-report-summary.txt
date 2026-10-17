@@ -1,0 +1,5 @@
+ui-blur-report summary:
+- InterfaceBlur.applyUnder() structure: lines 79-83 in bbsrc, line 82 resets 'applied = false'.
+- JFR baseline: 1 sample in InterfaceBlur.run (0.1% CPU time).
+- GPU cost: 5 down + 5 up Dual Kawase passes per invocation.
+- Decision: No code changes (visual sacredness preserved; any visual alterations deferred out-of-plan).

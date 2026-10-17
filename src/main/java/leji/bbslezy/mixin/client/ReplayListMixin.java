@@ -23,13 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Three additions to the replay list's own right-click menu, added after BBS's own so the
- * existing entries are untouched: select everything, select the same model, and a duplicate that
- * counts the whole selection.
- *
- * <p>The list's context consumers are additive and run after BBS's own, so injecting at the tail
- * of the constructor appends rather than replaces — BBS's entries keep their order and behaviour,
- * and a failure here leaves the menu as BBS made it.</p>
+ * Additions to the replay list's own right-click menu: select everything, enable/disable selected,
+ * select the same model, and a duplicate that counts the whole selection.
  */
 @Mixin(value = UIReplayList.class, remap = false)
 public class ReplayListMixin
@@ -61,6 +56,19 @@ public class ReplayListMixin
         {
             LezyReplayActions.selectAll(self);
         });
+
+        if (!self.selection.isEmpty())
+        {
+            menu.action(Icons.INVISIBLE, L10n.lang("bbslezy.ui.replays.disable_selected"), () ->
+            {
+                LezyReplayActions.setSelectedReplaysEnabled(self, film, this.panel, false);
+            });
+
+            menu.action(Icons.VISIBLE, L10n.lang("bbslezy.ui.replays.enable_selected"), () ->
+            {
+                LezyReplayActions.setSelectedReplaysEnabled(self, film, this.panel, true);
+            });
+        }
 
         if (self.getSelectedReplayFirst() == null)
         {

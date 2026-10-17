@@ -13,10 +13,43 @@ public class LezyPreviewSnap
 {
     public static double[] snapshot;
     public static boolean active;
+    private static double lastSnapX = Double.NaN;
+    private static double lastSnapY = Double.NaN;
+    private static double lastSnapZ = Double.NaN;
+    private static float lastSnapYaw = Float.NaN;
+    private static float lastSnapPitch = Float.NaN;
 
     public static boolean shouldSnap(boolean setting, boolean hasContext, boolean controlling)
     {
         return setting && hasContext && !controlling;
+    }
+
+    public static void onManualTeleport(UIFilmPanel panel)
+    {
+        if (panel == null)
+        {
+            return;
+        }
+
+        Camera camera = panel.getWorldCamera();
+        if (camera == null || camera.position == null)
+        {
+            return;
+        }
+
+        snapshot = new double[] {
+            camera.position.x,
+            camera.position.y,
+            camera.position.z,
+            MathUtils.toDeg(camera.rotation.y) - 180F,
+            MathUtils.toDeg(camera.rotation.x)
+        };
+        active = true;
+    }
+
+    public static void onManualTeleport()
+    {
+        active = true;
     }
 
     public static void onEnter(UIFilmPanel panel)
@@ -87,6 +120,11 @@ public class LezyPreviewSnap
     {
         try
         {
+            if (panel != null && panel.playerToCamera)
+            {
+                return;
+            }
+
             if (active && snapshot != null)
             {
                 MinecraftClient mc = MinecraftClient.getInstance();
@@ -102,6 +140,11 @@ public class LezyPreviewSnap
         {
             active = false;
             snapshot = null;
+            lastSnapX = Double.NaN;
+            lastSnapY = Double.NaN;
+            lastSnapZ = Double.NaN;
+            lastSnapYaw = Float.NaN;
+            lastSnapPitch = Float.NaN;
         }
     }
 
@@ -119,10 +162,34 @@ public class LezyPreviewSnap
             return;
         }
 
+        float targetYaw = MathUtils.toDeg(camera.rotation.y) - 180F;
+        float targetPitch = MathUtils.toDeg(camera.rotation.x);
+
+        /* Deadband: avoid sending network packets if camera hasn't moved */
+        if (!Double.isNaN(lastSnapX))
+        {
+            double dx = cameraPos.x - lastSnapX;
+            double dy = cameraPos.y - lastSnapY;
+            double dz = cameraPos.z - lastSnapZ;
+            float dyaw = Math.abs(targetYaw - lastSnapYaw);
+            float dpitch = Math.abs(targetPitch - lastSnapPitch);
+
+            if (dx * dx + dy * dy + dz * dz < 0.0025D && dyaw < 0.5F && dpitch < 0.5F)
+            {
+                return;
+            }
+        }
+
+        lastSnapX = cameraPos.x;
+        lastSnapY = cameraPos.y;
+        lastSnapZ = cameraPos.z;
+        lastSnapYaw = targetYaw;
+        lastSnapPitch = targetPitch;
+
         PlayerUtils.teleport(
             cameraPos.x, cameraPos.y, cameraPos.z,
-            MathUtils.toDeg(camera.rotation.y) - 180F,
-            MathUtils.toDeg(camera.rotation.x)
+            targetYaw,
+            targetPitch
         );
     }
 }
