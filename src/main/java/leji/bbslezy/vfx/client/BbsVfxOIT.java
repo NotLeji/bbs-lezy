@@ -122,7 +122,7 @@ public final class BbsVfxOIT
 
             if (id.getPath().contains("/core/"))
             {
-                return manager.getResource(Identifier.of("bbs", id.getPath()));
+                return manager.getResource(new Identifier(leji.bbslezy.BBSLod.MOD_ID, id.getPath()));
             }
 
             return manager.getResource(id);
