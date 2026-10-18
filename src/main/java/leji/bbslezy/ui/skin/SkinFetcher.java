@@ -132,7 +132,7 @@ public class SkinFetcher
                 {
                     for (Property property : profile.getProperties().get("textures"))
                     {
-                        String url = skinUrlFromTextures(property.getValue());
+                        String url = skinUrlFromTextures(property.value());
                         if (url != null)
                         {
                             return url;

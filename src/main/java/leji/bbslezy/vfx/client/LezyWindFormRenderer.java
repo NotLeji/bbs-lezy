@@ -58,7 +58,7 @@ public class LezyWindFormRenderer extends FormRenderer<LezyWindForm>
             return;
         }
 
-        double tFlow = (mc.world.getTime() + mc.getTickDelta()) / 20.0;
+        double tFlow = (mc.world.getTime() + mc.getRenderTickCounter().getTickDelta(false)) / 20.0;
 
         Vector3f dir = this.form.point();
         float len = (float) Math.sqrt(dir.x * dir.x + dir.z * dir.z);

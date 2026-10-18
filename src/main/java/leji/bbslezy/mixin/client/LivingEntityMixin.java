@@ -3,6 +3,7 @@ package leji.bbslezy.mixin.client;
 import leji.bbslezy.ui.LezyNightVision;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
@@ -15,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class LivingEntityMixin
 {
     @Inject(method = "hasStatusEffect", at = @At("HEAD"), cancellable = true)
-    public void bbslezy$hasStatusEffect(StatusEffect effect, CallbackInfoReturnable<Boolean> cir)
+    public void bbslezy$hasStatusEffect(RegistryEntry<StatusEffect> effect, CallbackInfoReturnable<Boolean> cir)
     {
         if (effect == StatusEffects.NIGHT_VISION && LezyNightVision.isEnabled())
         {
@@ -29,7 +30,7 @@ public abstract class LivingEntityMixin
     }
 
     @Inject(method = "getStatusEffect", at = @At("HEAD"), cancellable = true)
-    public void bbslezy$getStatusEffect(StatusEffect effect, CallbackInfoReturnable<StatusEffectInstance> cir)
+    public void bbslezy$getStatusEffect(RegistryEntry<StatusEffect> effect, CallbackInfoReturnable<StatusEffectInstance> cir)
     {
         if (effect == StatusEffects.NIGHT_VISION && LezyNightVision.isEnabled())
         {

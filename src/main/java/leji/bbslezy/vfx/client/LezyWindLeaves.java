@@ -37,7 +37,7 @@ public final class LezyWindLeaves
 {
     private static final int MAX_LEAVES = 60;
 
-    private static final Identifier WHITE_TEX = new Identifier(BBSLod.MOD_ID, "wind_leaf_white");
+    private static final Identifier WHITE_TEX = Identifier.of(BBSLod.MOD_ID, "wind_leaf_white");
     private static boolean texReady;
 
     private static final List<float[]> CROWNS = new ArrayList<>();

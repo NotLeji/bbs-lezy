@@ -102,11 +102,11 @@ public final class DestructionBlockDraw
         /* Tint applies only to tinted quads — same rule as BlockModelRenderer.render. */
         if (quad.hasColor())
         {
-            vc.quad(entry, quad, r, g, b, light, overlay);
+            vc.quad(entry, quad, r, g, b, 1.0F, light, overlay);
         }
         else
         {
-            vc.quad(entry, quad, 1F, 1F, 1F, light, overlay);
+            vc.quad(entry, quad, 1.0F, 1.0F, 1.0F, 1.0F, light, overlay);
         }
     }
 }

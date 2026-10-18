@@ -105,7 +105,7 @@ public final class BbsVfxOIT
 
         try
         {
-            accum = new ShaderProgram(factory(), "oit_accum", VertexFormats.POSITION_COLOR_TEXTURE);
+            accum = new ShaderProgram(factory(), "oit_accum", LezyVfxRenderCompat.positionColorTexture());
             composite = new ShaderProgram(factory(), "oit_composite", VertexFormats.POSITION_TEXTURE);
         }
         catch (Exception e)
@@ -122,7 +122,7 @@ public final class BbsVfxOIT
 
             if (id.getPath().contains("/core/"))
             {
-                return manager.getResource(new Identifier(leji.bbslezy.BBSLod.MOD_ID, id.getPath()));
+                return manager.getResource(Identifier.of(leji.bbslezy.BBSLod.MOD_ID, id.getPath()));
             }
 
             return manager.getResource(id);

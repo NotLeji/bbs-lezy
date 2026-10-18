@@ -170,7 +170,7 @@ public final class BeamHeat
             PROGRAM.getUniformOrDefault("uTime").set(e.st);
             PROGRAM.getUniformOrDefault("uStrength").set(e.strength);
 
-            BufferBuilder buffer = LezyVfxRenderCompat.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE);
+            BufferBuilder buffer = LezyVfxRenderCompat.begin(VertexFormat.DrawMode.QUADS, LezyVfxRenderCompat.positionColorTexture());
 
             emitColumn(buffer, e);
             BufferRenderer.drawWithGlobalProgram(buffer.end());

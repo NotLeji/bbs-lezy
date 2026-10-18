@@ -324,43 +324,43 @@ public class BBSLodClient implements BBSAddonMod
         TrackStyle.registerLabel("follow_offset", IKey.constant("Follow offset"));
         TrackStyle.registerLabel("progress", IKey.constant("Progress"));
         CoreShaderRegistrationCallback.EVENT.register(ctx ->
-            ctx.register(new Identifier(BBSLod.MOD_ID, "destruction_box"),
+            ctx.register(Identifier.of(BBSLod.MOD_ID, "destruction_box"),
                 VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL,
                 prog -> DestructionShader.PROGRAM = prog));
         CoreShaderRegistrationCallback.EVENT.register(ctx ->
-            ctx.register(new Identifier(BBSLod.MOD_ID, "destruction_ballistic"),
+            ctx.register(Identifier.of(BBSLod.MOD_ID, "destruction_ballistic"),
                 VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL,
                 prog -> DestructionShader.BALLISTIC = prog));
         CoreShaderRegistrationCallback.EVENT.register(ctx ->
-            ctx.register(new Identifier(BBSLod.MOD_ID, "cracks_volume"),
+            ctx.register(Identifier.of(BBSLod.MOD_ID, "cracks_volume"),
                 VertexFormats.POSITION_TEXTURE,
                 prog -> CracksVolume.PROGRAM = prog));
         CoreShaderRegistrationCallback.EVENT.register(ctx ->
-            ctx.register(new Identifier(BBSLod.MOD_ID, "smoke_volume"),
+            ctx.register(Identifier.of(BBSLod.MOD_ID, "smoke_volume"),
                 VertexFormats.POSITION_TEXTURE,
                 prog -> SmokeVolume.PROGRAM = prog));
         CoreShaderRegistrationCallback.EVENT.register(ctx ->
-            ctx.register(new Identifier(BBSLod.MOD_ID, "explosion_smoke"),
+            ctx.register(Identifier.of(BBSLod.MOD_ID, "explosion_smoke"),
                 VertexFormats.POSITION_TEXTURE,
                 prog -> ExplosionSmokeVolume.PROGRAM = prog));
         CoreShaderRegistrationCallback.EVENT.register(ctx ->
-            ctx.register(new Identifier(BBSLod.MOD_ID, "beam_heat"),
-                VertexFormats.POSITION_COLOR_TEXTURE,
+            ctx.register(Identifier.of(BBSLod.MOD_ID, "beam_heat"),
+                leji.bbslezy.vfx.client.LezyVfxRenderCompat.positionColorTexture(),
                 prog -> BeamHeat.PROGRAM = prog));
         CoreShaderRegistrationCallback.EVENT.register(ctx ->
-            ctx.register(new Identifier(BBSLod.MOD_ID, "beam_volume"),
+            ctx.register(Identifier.of(BBSLod.MOD_ID, "beam_volume"),
                 VertexFormats.POSITION_TEXTURE,
                 prog -> BeamVolume.PROGRAM = prog));
         CoreShaderRegistrationCallback.EVENT.register(ctx ->
-            ctx.register(new Identifier(BBSLod.MOD_ID, "dome_volume"),
+            ctx.register(Identifier.of(BBSLod.MOD_ID, "dome_volume"),
                 VertexFormats.POSITION_TEXTURE,
                 prog -> DomeVolume.PROGRAM = prog));
         CoreShaderRegistrationCallback.EVENT.register(ctx ->
-            ctx.register(new Identifier(BBSLod.MOD_ID, "dome_level_inst"),
+            ctx.register(Identifier.of(BBSLod.MOD_ID, "dome_level_inst"),
                 VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL,
                 prog -> DestructionShader.DOME = prog));
         CoreShaderRegistrationCallback.EVENT.register(ctx ->
-            ctx.register(new Identifier(BBSLod.MOD_ID, "wind_volume"),
+            ctx.register(Identifier.of(BBSLod.MOD_ID, "wind_volume"),
                 VertexFormats.POSITION_TEXTURE,
                 prog -> LezyWindVolume.PROGRAM = prog));
 

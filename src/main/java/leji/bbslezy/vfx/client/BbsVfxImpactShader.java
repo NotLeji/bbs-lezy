@@ -185,7 +185,7 @@ public final class BbsVfxImpactShader
 
             if (id.getPath().contains("/core/"))
             {
-                return manager.getResource(new Identifier(BBSLod.MOD_ID, id.getPath()));
+                return manager.getResource(Identifier.of(BBSLod.MOD_ID, id.getPath()));
             }
 
             return manager.getResource(id);

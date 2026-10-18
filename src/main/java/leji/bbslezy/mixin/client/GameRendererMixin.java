@@ -37,8 +37,8 @@ public abstract class GameRendererMixin
      * menampakkan world (tint transluen, background image, editor film) tetap
      * dirender. Fail-open: race render normal kalau apapun selain skip terjadi.
      */
-    @Inject(method = "renderWorld", at = @At("HEAD"), cancellable = true)
-    private void bbslezy$skipWorldBehindOpaqueDashboard(CallbackInfo ci)
+    @Inject(method = "renderWorld(Lnet/minecraft/client/render/RenderTickCounter;)V", at = @At("HEAD"), cancellable = true)
+    private void bbslezy$skipWorldBehindOpaqueDashboard(net.minecraft.client.render.RenderTickCounter tickCounter, CallbackInfo ci)
     {
         try
         {
