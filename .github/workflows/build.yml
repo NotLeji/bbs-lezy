@@ -21,6 +21,12 @@ jobs:
           distribution: 'microsoft'
       - name: make gradle wrapper executable
         run: chmod +x ./gradlew
+      - name: Install BBS ke Maven Local (dari vendor/)
+        run: |
+          BBS_DIR=~/.m2/repository/mchorse/bbs/2.7-1.21.1
+          mkdir -p "$BBS_DIR"
+          cp vendor/bbs-2.7-1.21.1.jar vendor/bbs-2.7-1.21.1.pom "$BBS_DIR/"
+        run: chmod +x ./gradlew
       - name: build
         run: ./gradlew build
       - name: capture build artifacts

@@ -16,8 +16,8 @@ on:
   workflow_dispatch:  # boleh di-trigger manual dari tab Actions
 
 env:
-  BBS_VERSION: 2.7-1.20.1
-  FABRIC_API: 0.92.12
+  BBS_VERSION: 2.7-1.21.1
+  FABRIC_API: 0.116.12+1.21.1
 
 jobs:
   runtime-test:
@@ -25,11 +25,11 @@ jobs:
     steps:
       - name: Checkout bbs-lezy
         uses: actions/checkout@v6
-      - name: Set up Java 17 (buat runtime test)
+      - name: Set up Java 21 (buat runtime test)
         uses: actions/setup-java@v5
         with:
           distribution: microsoft
-          java-version: 17
+          java-version: 21
 
       - name: Set up Java 25 (buat build bbs-lezy)
         uses: actions/setup-java@v5
@@ -68,13 +68,19 @@ jobs:
       - name: Run Minecraft test client (headless)
         uses: headlesshq/mc-runtime-test@4.5.2
         with:
-          mc: 1.20.1
+          mc: 1.21.1
           modloader: fabric
           regex: .*fabric.* # WAJIB — input ini required di action.yml
-          java: 17 # 1.20.1 jalan di Java 17
+          java: 21 # 1.21.1 jalan di Java 21
           mc-runtime-test: fabric
           fabric-api: ${{ env.FABRIC_API }}
           # --- opsional: buka kalau udah nulis GameTest sendiri ---
           # Maksa CI gagal kalau ternyata NOL test yang kejalan
           # (biar nggak lolos diam-diam):
           # headlessmc-command: --jvm "-DMcRuntimeGameTestMinExpectedGameTests=1"
+      - name: Fail on stale bbslezy mixins
+        if: always()
+        run: |
+          if [ -f run/logs/latest.log ]; then
+            ! grep -q "Mixin apply for mod bbslezy failed" run/logs/latest.log
+          fi
