@@ -6,6 +6,7 @@ import mchorse.bbs_mod.ui.film.clips.UIClip;
 import leji.bbslezy.actions.LezyDamageActionClip;
 import leji.bbslezy.client.screen.LezyFrameOverlays;
 import leji.bbslezy.audio.LezyCopyAudioImporter;
+import leji.bbslezy.video.LezyCopyVideoImporter;
 import leji.bbslezy.camera.clips.screen.CinematicClip;
 import leji.bbslezy.camera.clips.screen.ColorClip;
 import leji.bbslezy.camera.clips.screen.LetterboxClip;
@@ -156,6 +157,7 @@ public class BBSLodClient implements BBSAddonMod
     public void onImporters(RegisterImportersEvent event)
     {
         event.register(new LezyCopyAudioImporter());
+        event.register(new LezyCopyVideoImporter());
     }
 
     @Subscribe

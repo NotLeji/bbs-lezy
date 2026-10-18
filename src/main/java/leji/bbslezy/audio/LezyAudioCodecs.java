@@ -7,7 +7,6 @@ import mchorse.bbs_mod.utils.FFMpegUtils;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.List;
 
 /**
  * Extra audio codecs read on demand through ffmpeg — the same backend BBS
@@ -55,17 +54,13 @@ public class LezyAudioCodecs
         return false;
     }
 
-    public static boolean allVideo(List<File> files)
+    /**
+     * Extensions the video copy importer claims. A dropped video must stay a video: BBS plays it
+     * from the link and reads its audio track on demand.
+     */
+    public static String[] videoExtensions()
     {
-        for (File file : files)
-        {
-            if (!isVideo(file.getName().toLowerCase()))
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return VIDEO.clone();
     }
 
     /**

@@ -69,6 +69,7 @@
 	"bbslezy.ui.video.render_cpu": "Render with CPU",
 	"bbslezy.ui.video.cancel": "Cancel",
 	"bbslezy.importer.copy_audio": "Audio (copy as-is)",
+	"bbslezy.importer.copy_video": "Video (copy as-is)",
 	"bbslezy.ui.replays.select_all": "Select all replays",
 	"bbslezy.ui.replays.disable_selected": "Disable selected (turn OFF)",
 	"bbslezy.ui.replays.enable_selected": "Enable selected (turn ON)",
