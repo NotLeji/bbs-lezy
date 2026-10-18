@@ -43,8 +43,8 @@ dependencies {
 	/* Sodium so the dev client matches a real setup: BBS's sodium mixins apply, and the form
 	 * render path goes through the sodium vertex pipeline. Iris is still excluded — add
 	 * maven.modrinth:iris:1.7.0+1.20.1 the same way if shader rendering needs exercising. */
-	modImplementation "maven.modrinth:sodium:mc1.20.1-0.5.8"
-	modRuntimeOnly "maven.modrinth:iris:1.7.0+1.20.1"
+	modImplementation "maven.modrinth:sodium:mc1.21.1-0.6.13-fabric"
+	modRuntimeOnly "maven.modrinth:iris:1.8.8+1.21.1-fabric"
 	runtimeOnly "org.anarres:jcpp:1.4.14"
 	runtimeOnly "io.github.douira:glsl-transformer:2.0.0-pre13"
 	modRuntimeOnly "maven.modrinth:resourcify:yUt9B3ZX"
@@ -137,12 +137,12 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 17
+	it.options.release = 21
 }
 
 java {
-	sourceCompatibility = JavaVersion.VERSION_17
-	targetCompatibility = JavaVersion.VERSION_17
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
 }
 
 /* Stage Prism launcher mods into run/mods/ for headless mc-runtime-test runs */
