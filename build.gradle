@@ -47,8 +47,6 @@ dependencies {
 	modRuntimeOnly "maven.modrinth:iris:1.8.8+1.21.1-fabric"
 	runtimeOnly "org.anarres:jcpp:1.4.14"
 	runtimeOnly "io.github.douira:glsl-transformer:2.0.0-pre13"
-	modRuntimeOnly "maven.modrinth:resourcify:yUt9B3ZX"
-	modRuntimeOnly "net.fabricmc:fabric-language-kotlin:1.12.3+kotlin.2.0.21"
 
 	/* transitive = false keeps BBS's own Iris and glsl-transformer out of this build; Sodium is
 	 * declared above instead so the dev client runs with it. */
