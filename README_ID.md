@@ -83,7 +83,13 @@ Untuk scene film raksasa dengan ratusan hingga ribuan replay actor:
 
 | Item      | Versi                                    |
 | --------- | ---------------------------------------- |
-| Minecraft | 1.20.1                                   |
+| Minecraft | 1.21.1                                   |
+| Java      | 21+                                      |
+| Fabric    | Loader 0.16.14, Fabric API 0.116.12+1.21.1 |
+| BBS FS    | 2.7-1.21.1                               |
+| Sodium    | 0.6.13+ (atau stabil 1.21.1)             |
+| Iris      | 1.8.8+ (Opsional, untuk dukungan shader) |
+| More Culling | Kompatibel penuh (teruji)                |
 | Java      | 17+                                      |
 | Fabric    | Loader 0.16.14, Fabric API 0.92.1+1.20.1 |
 | BBS FS    | 2.7-1.20.1                               |
@@ -148,7 +154,7 @@ sh ./gradlew build
 
 Hasilnya ada di `build/libs/bbs-lezy-<versi>.jar`.
 
-> Catatan: BBS-nya sendiri harus sudah ter-publish ke maven local dulu (`sh ./gradlew publishToMavenLocal` dari folder BBS). Addon ini dikunci ke BBS 2.7-1.20.1 — versi BBS beda bikin dev environment aneh.
+> Catatan: BBS-nya sendiri harus sudah ter-publish ke maven local dulu (`sh ./gradlew publishToMavenLocal` dari folder BBS). Addon ini dikunci ke BBS 2.7-1.21.1 — versi BBS beda bikin dev environment aneh.
 
 ### Catatan teknis
 
