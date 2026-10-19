@@ -33,12 +33,7 @@ public class LezyPreviewSnap
         }
 
         MinecraftClient mc = MinecraftClient.getInstance();
-        if (mc == null)
-        {
-            return false;
-        }
-
-        return isPlayerEntity(entity, mc.player, mc.cameraEntity);
+        return mc != null && isPlayerEntity(entity, mc.player, mc.cameraEntity);
     }
 
     public static boolean isPlayerEntity(Entity entity, Entity player, Entity cameraEntity)
@@ -53,12 +48,7 @@ public class LezyPreviewSnap
             return true;
         }
 
-        if (player != null && (entity == player.getVehicle() || entity.hasPassengerDeep(player)))
-        {
-            return true;
-        }
-
-        return false;
+        return player != null && (entity == player.getVehicle() || entity.hasPassengerDeep(player));
     }
 
     public static void onManualTeleport(UIFilmPanel panel)

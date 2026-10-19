@@ -12,6 +12,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+/**
+ * Suppresses local player rendering and shadow passes while camera snap preview is active (#6).
+ * Returning false from shouldRender culls the player from Iris shadow passes and WorldRenderer.
+ * Cancelling render at HEAD stops model parts, vanilla blob shadows, and fire/nametags.
+ */
 @Mixin(EntityRenderDispatcher.class)
 public abstract class EntityRenderDispatcherMixin
 {
