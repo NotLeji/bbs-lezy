@@ -46,7 +46,8 @@
         "FolderManagerRepositoryMixin",
         "FolderManagerMutationsMixin",
         "BaseManagerMutationsMixin",
-        "LivingEntityMixin"
+        "LivingEntityMixin",
+        "EntityRenderDispatcherMixin"
     ],
     "injectors": {
         "defaultRequire": 0

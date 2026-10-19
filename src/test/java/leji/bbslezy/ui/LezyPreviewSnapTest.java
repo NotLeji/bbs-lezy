@@ -3,6 +3,7 @@ package leji.bbslezy.ui;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LezyPreviewSnapTest
@@ -32,6 +33,14 @@ class LezyPreviewSnapTest
         LezyPreviewSnap.onManualTeleport();
 
         assertTrue(LezyPreviewSnap.active);
-        org.junit.jupiter.api.Assertions.assertNotNull(LezyPreviewSnap.snapshot);
+        assertNotNull(LezyPreviewSnap.snapshot);
+    }
+
+    @Test
+    void testShouldHidePlayerInactiveOrNull()
+    {
+        LezyPreviewSnap.active = false;
+        assertFalse(LezyPreviewSnap.shouldHidePlayer(null));
+        assertFalse(LezyPreviewSnap.isPlayerEntity(null, null, null));
     }
 }

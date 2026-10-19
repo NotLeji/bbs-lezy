@@ -3,6 +3,9 @@ package leji.bbslezy.mixin.client;
 import leji.bbslezy.LodSettings;
 import leji.bbslezy.perf.ui.LezyUIWorldSkip;
 import leji.bbslezy.ui.LezyNightVision;
+import leji.bbslezy.ui.LezyPreviewSnap;
+import net.minecraft.client.render.Camera;
+import net.minecraft.client.util.math.MatrixStack;
 import mchorse.bbs_mod.BBSSettings;
 import mchorse.bbs_mod.ui.dashboard.UIDashboard;
 import mchorse.bbs_mod.ui.framework.UIScreen;
@@ -26,6 +29,15 @@ public abstract class GameRendererMixin
         if (LezyNightVision.isEnabled())
         {
             cir.setReturnValue(1.0F);
+        }
+    }
+
+    @Inject(method = "renderHand", at = @At("HEAD"), cancellable = true)
+    private void bbslezy$cancelRenderHand(MatrixStack matrices, Camera camera, float tickDelta, CallbackInfo ci)
+    {
+        if (LezyPreviewSnap.active)
+        {
+            ci.cancel();
         }
     }
 

@@ -7,6 +7,7 @@ import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.PlayerUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.Entity;
 import org.joml.Vector3d;
 
 public class LezyPreviewSnap
@@ -22,6 +23,42 @@ public class LezyPreviewSnap
     public static boolean shouldSnap(boolean setting, boolean hasContext, boolean controlling)
     {
         return setting && hasContext && !controlling;
+    }
+
+    public static boolean shouldHidePlayer(Entity entity)
+    {
+        if (!active || entity == null)
+        {
+            return false;
+        }
+
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc == null)
+        {
+            return false;
+        }
+
+        return isPlayerEntity(entity, mc.player, mc.cameraEntity);
+    }
+
+    public static boolean isPlayerEntity(Entity entity, Entity player, Entity cameraEntity)
+    {
+        if (entity == null)
+        {
+            return false;
+        }
+
+        if (entity == player || (cameraEntity != null && entity == cameraEntity))
+        {
+            return true;
+        }
+
+        if (player != null && (entity == player.getVehicle() || entity.hasPassengerDeep(player)))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     public static void onManualTeleport(UIFilmPanel panel)
@@ -91,6 +128,16 @@ public class LezyPreviewSnap
         {
             if (LodSettings.snapPlayerToPreview == null || !LodSettings.snapPlayerToPreview.get())
             {
+                if (active)
+                {
+                    onLeave(panel);
+                }
+                return;
+            }
+
+            if (!active)
+            {
+                onEnter(panel);
                 return;
             }
 
