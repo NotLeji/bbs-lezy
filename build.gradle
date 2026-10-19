@@ -41,10 +41,15 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	/* Sodium so the dev client matches a real setup: BBS's sodium mixins apply, and the form
-	 * render path goes through the sodium vertex pipeline. Iris is still excluded — add
-	 * maven.modrinth:iris:1.7.0+1.20.1 the same way if shader rendering needs exercising. */
-	modImplementation "maven.modrinth:sodium:mc1.21.1-0.6.13-fabric"
-	modRuntimeOnly "maven.modrinth:iris:1.8.8+1.21.1-fabric"
+	 * render path goes through the sodium vertex pipeline. Iris and More Culling are runtime
+	 * extras for the shader and culling compat checks, not compile dependencies; BBS stays the
+	 * only compile-time mod API. Sodium 0.8 is required by More Culling 1.0.10
+	 * (`breaks sodium <=0.6.13`), so Iris must be the 0.8-compatible build. */
+	modImplementation "maven.modrinth:sodium:mc1.21.1-0.8.13-fabric"
+	modRuntimeOnly "maven.modrinth:iris:1.8.14-beta.1+1.21.1-fabric"
+	/* More Culling is pinned by version ID: the ambiguous version_number resolves to the
+	 * NeoForge jar, which has no fabric.mod.json and fails to load. */
+	modRuntimeOnly "maven.modrinth:moreculling:wUYbHzXF"
 	runtimeOnly "org.anarres:jcpp:1.4.14"
 	runtimeOnly "io.github.douira:glsl-transformer:2.0.0-pre13"
 

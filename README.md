@@ -87,9 +87,9 @@ For massive film scenes with hundreds or thousands of replay actors:
 | Java      | 21+                                             |
 | Fabric    | Loader 0.16.14, Fabric API 0.116.12+1.21.1      |
 | BBS FS    | 2.7-1.21.1                                      |
-| Sodium    | 0.6.13+ (or stable 1.21.1)                      |
-| Iris      | 1.8.8+ (Optional, for shader support)           |
-| More Culling | Fully compatible (tested)                    |
+| Sodium    | 0.8.13 (1.21.1)                                  |
+| Iris      | 1.8.14-beta.1+ (Optional, needs Sodium 0.8)      |
+| More Culling | 1.0.10 compatible (needs Sodium 0.8; tested) |
 | ffmpeg    | You install it yourself (not bundled)       |
 
 ### Install

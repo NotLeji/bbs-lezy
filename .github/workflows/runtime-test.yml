@@ -65,6 +65,17 @@ jobs:
           rm -f run/mods/*-sources.jar run/mods/*-javadoc.jar
           ls -la run/mods/
 
+      # More Culling + Cloth Config: the compat check, so a future mixin/culling drift
+      # fails CI instead of only the local headless run. Pinned by version ID because the
+      # ambiguous version_number resolves to the NeoForge (metadata-less) jar.
+      - name: Stage More Culling (compat check)
+        run: |
+          curl -fsSL -o run/mods/moreculling.jar \
+            https://api.modrinth.com/maven/maven/modrinth/moreculling/wUYbHzXF/moreculling-wUYbHzXF.jar
+          curl -fsSL -o run/mods/cloth-config.jar \
+            https://api.modrinth.com/maven/maven/modrinth/cloth-config/HpMb5wGb/cloth-config-HpMb5wGb.jar
+          ls -la run/mods/
+
       - name: Run Minecraft test client (headless)
         uses: headlesshq/mc-runtime-test@4.5.2
         with:
