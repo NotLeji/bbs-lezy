@@ -83,7 +83,11 @@ public abstract class FormBlendStateMixin
 
         PoseTransform wp = pose != null ? pose.transforms.get(IBlendBone.WHOLE_BONE) : null;
 
-        if (wp != null)
+        if (wp instanceof IBlendBone bone)
+{
+            mode = bone.bbslezy$blendMode();
+            factor = bone.bbslezy$blendFactor();
+        }
         {
             mode = ((IBlendBone) wp).bbslezy$blendMode();
             factor = ((IBlendBone) wp).bbslezy$blendFactor();

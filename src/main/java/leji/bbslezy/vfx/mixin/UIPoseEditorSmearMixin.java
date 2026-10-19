@@ -299,7 +299,13 @@ public abstract class UIPoseEditorSmearMixin implements ISmearPoseEditor
     @Unique
     private void bbslezy$forEach(Consumer<ISmearBone> action)
     {
-        this.forEachSelectedPose((pt) -> action.accept((ISmearBone) pt));
+        this.forEachSelectedPose((pt) ->
+        {
+            if (pt instanceof ISmearBone bone)
+            {
+                action.accept(bone);
+            }
+        });
     }
 
     @Unique

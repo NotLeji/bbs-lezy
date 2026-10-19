@@ -124,7 +124,13 @@ public abstract class UIPoseEditorBlendMixin implements IBlendPoseEditor
     @Unique
     private void bbslezy$forEach(Consumer<IBlendBone> action)
     {
-        this.forEachSelectedPose((pt) -> action.accept((IBlendBone) pt));
+        this.forEachSelectedPose((pt) ->
+        {
+            if (pt instanceof IBlendBone bone)
+            {
+                action.accept(bone);
+            }
+        });
     }
 
     @Unique

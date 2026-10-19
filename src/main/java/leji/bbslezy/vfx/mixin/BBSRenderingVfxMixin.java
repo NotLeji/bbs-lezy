@@ -13,6 +13,7 @@ import leji.bbslezy.vfx.client.SmokeVolume;
 import leji.bbslezy.vfx.camera.BbsVfxImpactState;
 import leji.bbslezy.vfx.client.BbsVfxImpactShader;
 import leji.bbslezy.vfx.client.LezyImpactSilhouette;
+import leji.bbslezy.vfx.client.LezyVfxSupport;
 import mchorse.bbs_mod.client.BBSRendering;
 import net.minecraft.client.MinecraftClient;
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,12 +24,32 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * Composite deferred VFX volumetric passes (Cracks, Smoke, and Explosion Mushroom/Fireball Volume)
  * at onWorldRenderEnd, mirroring BBSVFX's BBSRenderingImpactMixin.
+ *
+ * <p>The whole chain is fail-soft: VFX was ported by hand onto BBS 2.7 and has no upstream 1.21.1
+ * source to verify against, so one broken pass must not take the render thread down every frame.</p>
  */
 @Mixin(value = BBSRendering.class, remap = false)
 public abstract class BBSRenderingVfxMixin
 {
     @Inject(method = "onWorldRenderEnd", at = @At("HEAD"))
     private static void bbslezy$onWorldRenderEnd(CallbackInfo ci)
+    {
+        if (LezyVfxSupport.isCompositeFailed())
+        {
+            return;
+        }
+
+        try
+        {
+            bbslezy$composite();
+        }
+        catch (Throwable t)
+        {
+            LezyVfxSupport.fail("onWorldRenderEnd", t);
+        }
+    }
+
+    private static void bbslezy$composite()
     {
         MinecraftClient mc = MinecraftClient.getInstance();
 

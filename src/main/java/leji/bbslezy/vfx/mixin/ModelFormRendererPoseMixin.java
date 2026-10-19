@@ -135,7 +135,7 @@ public abstract class ModelFormRendererPoseMixin
 
                 for (PoseTransform pt : pose.transforms.values())
                 {
-                    if (((ISmearBone) pt).bbslezy$smearArc() > 0F)
+                    if (pt instanceof ISmearBone bone && bone.bbslezy$smearArc() > 0F)
                     {
                         pt.scale.x *= across * shrink;
                         pt.scale.y *= along * shrink;

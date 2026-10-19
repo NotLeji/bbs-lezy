@@ -25,6 +25,9 @@ public class UIBlendKeyframeFactory extends UIPoseKeyframeFactory
             this.poseEditor.setPose(keyframe.getValue(), "");
         }
 
-        ((IBlendPoseEditor) this.poseEditor).bbslezy$syncBlend();
+        if (this.poseEditor instanceof IBlendPoseEditor blendEditor)
+        {
+            blendEditor.bbslezy$syncBlend();
+        }
     }
 }

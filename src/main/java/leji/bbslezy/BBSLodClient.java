@@ -16,6 +16,7 @@ import leji.bbslezy.camera.clips.modifiers.ProceduralShakeClip;
 import leji.bbslezy.vfx.camera.ImpactClip;
 import leji.bbslezy.client.screen.ScreenEffectRenderer;
 import leji.bbslezy.vfx.client.BeamFormRenderer;
+import leji.bbslezy.vfx.client.LezyVfxSupport;
 import leji.bbslezy.vfx.client.UIFormSmearKeyframeFactory;
 import leji.bbslezy.vfx.client.UILinesKeyframeFactory;
 import leji.bbslezy.vfx.client.UISmearKeyframeFactory;
@@ -257,6 +258,7 @@ public class BBSLodClient implements BBSAddonMod
     {
         LodEngine.register();
         LezyEncoderProbe.startProbeAsync();
+        LezyVfxSupport.probe();
 
         nightVisionKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
             "key.bbslezy.night_vision",
