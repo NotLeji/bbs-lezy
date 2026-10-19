@@ -13,12 +13,10 @@ uniform mat4  uInvProj;       /* inverse of the captured world projection (NDC -
 uniform vec3  uOrigin;        /* dome centre, VIEW space */
 uniform vec3  uUp;            /* dome up axis, VIEW space (normalized) */
 uniform float uRadius;
-uniform float uHeightScale;   /* reserved (ellipsoid), v1 treats the dome as a sphere clipped to up>=0 */
 uniform float uDensity;       /* Beer-Lambert absorption strength of a shell wall */
 uniform float uOpacity;
 uniform float uRimPow;
 uniform float uEmit;          /* overall brightness multiplier (1 = tinting dome; >1 = emissive flash) */
-uniform float uTime;
 uniform vec3  uTint;          /* body/absorption colour (what the world behind is tinted toward) */
 uniform vec3  uRim;           /* additive silhouette-rim glow colour */
 

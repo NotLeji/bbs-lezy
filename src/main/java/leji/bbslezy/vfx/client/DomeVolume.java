@@ -39,7 +39,7 @@ public final class DomeVolume
     public static ShaderProgram PROGRAM;
     private static ShaderProgram lastProgram;
     private static Uniform uInvProj, uOrigin, uUp, uRadius, uHeightScale, uDensity;
-    private static Uniform uOpacity, uRimPow, uEmit, uTime, uTint, uRim;
+    private static Uniform uOpacity, uRimPow, uEmit, uTint, uRim;
 
     private static void checkUniforms()
     {
@@ -55,7 +55,6 @@ public final class DomeVolume
             uOpacity = PROGRAM.getUniformOrDefault("uOpacity");
             uRimPow = PROGRAM.getUniformOrDefault("uRimPow");
             uEmit = PROGRAM.getUniformOrDefault("uEmit");
-            uTime = PROGRAM.getUniformOrDefault("uTime");
             uTint = PROGRAM.getUniformOrDefault("uTint");
             uRim = PROGRAM.getUniformOrDefault("uRim");
         }
@@ -206,7 +205,6 @@ public final class DomeVolume
             if (uOpacity != null) uOpacity.set(e.opacity);
             if (uRimPow != null) uRimPow.set(e.rimPow);
             if (uEmit != null) uEmit.set(e.emit);
-            if (uTime != null) uTime.set(e.st);
             if (uTint != null) uTint.set(e.tintR, e.tintG, e.tintB);
             if (uRim != null) uRim.set(e.rimR, e.rimG, e.rimB);
 
