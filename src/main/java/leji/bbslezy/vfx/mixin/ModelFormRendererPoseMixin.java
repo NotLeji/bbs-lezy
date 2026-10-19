@@ -153,7 +153,10 @@ public abstract class ModelFormRendererPoseMixin
 
         for (PoseTransform pt : pose.transforms.values())
         {
-            ISmearBone smear = (ISmearBone) pt;
+            if (!(pt instanceof ISmearBone smear))
+            {
+                continue;
+            }
 
             if (!smear.bbslezy$hasSmear())
             {
