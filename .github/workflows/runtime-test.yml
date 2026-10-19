@@ -17,7 +17,8 @@ on:
 
 env:
   BBS_VERSION: 2.7-1.21.1
-  FABRIC_API: 0.116.12+1.21.1
+  # Tanpa suffix MC: action mc-runtime-test menambahkan `+<mc>` sendiri ke tag Fabric API.
+  FABRIC_API: 0.116.12
 
 jobs:
   runtime-test:
