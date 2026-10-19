@@ -90,11 +90,6 @@ For massive film scenes with hundreds or thousands of replay actors:
 | Sodium    | 0.6.13+ (or stable 1.21.1)                      |
 | Iris      | 1.8.8+ (Optional, for shader support)           |
 | More Culling | Fully compatible (tested)                    |
-| Java      | 17+                                         |
-| Fabric    | Loader 0.16.14, Fabric API 0.92.1+1.20.1    |
-| BBS FS    | 2.7-1.20.1                                  |
-| Sodium    | 0.5.8                                       |
-| Iris      | Optional (for shader support)               |
 | ffmpeg    | You install it yourself (not bundled)       |
 
 ### Install
@@ -132,6 +127,8 @@ BBS Lezy includes tiered rendering presets for VFX features (Impact Frames, Volu
 | Setting | Default | Description |
 |---|---|---|
 | `vfx_quality` | `Auto` | Quality preset for real-time VFX preview in editor: `Auto` (dynamically adapts steps and particle density based on live FPS), `High` (maximum fidelity), `Medium`, or `Low`. **Video recording and exports always render at 100% full quality regardless of this setting.** |
+
+VFX is the one module without an upstream 1.21.1 build of its own, so its hooks target BBS 2.7 internals directly. On startup the addon logs `VFX hooks: N/9 applied`; if a hook is missing on a future BBS build, the affected effects disable themselves and the log names them instead of crashing the client or failing silently.
 
 ### Dashboard UI Performance
 

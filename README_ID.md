@@ -90,11 +90,6 @@ Untuk scene film raksasa dengan ratusan hingga ribuan replay actor:
 | Sodium    | 0.6.13+ (atau stabil 1.21.1)             |
 | Iris      | 1.8.8+ (Opsional, untuk dukungan shader) |
 | More Culling | Kompatibel penuh (teruji)                |
-| Java      | 17+                                      |
-| Fabric    | Loader 0.16.14, Fabric API 0.92.1+1.20.1 |
-| BBS FS    | 2.7-1.20.1                               |
-| Sodium    | 0.5.8                                    |
-| Iris      | Opsional (untuk dukungan shader)         |
 | ffmpeg    | Kamu install sendiri (tidak dibundel)    |
 
 ### Install
@@ -132,6 +127,8 @@ BBS Lezy menyediakan preset kualitas bertingkat untuk fitur VFX (Impact Frame, S
 | Setting | Default | Keterangan |
 |---|---|---|
 | `vfx_quality` | `Auto` | Preset kualitas VFX saat pratinjau editor: `Auto` (menyesuaikan langkah raymarch dan partikel secara dinamis berbasis FPS live), `High` (kualitas maksimal), `Medium`, atau `Low`. **Proses rekam dan export video selalu dirender pada kualitas penuh 100% tanpa terpengaruh setting ini.** |
+
+VFX adalah satu-satunya modul tanpa build 1.21.1 dari upstream, jadi hook-nya menarget internals BBS 2.7 langsung. Saat start, addon menulis `VFX hooks: N/9 applied` di log; kalau ada hook yang hilang di build BBS berikutnya, efek terkait menonaktifkan diri dan namanya disebut di log, bukan crash atau diam-diam tidak jalan.
 
 ### Performa UI Dashboard
 
